@@ -1,22 +1,39 @@
 @import "tailwindcss";
 
+/* 사용법 -> color: var(--gray-1) */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #262529;
+  --foreground: #fafafa;
+  --gray-1: #f6f8fb;
+  --gray-2: #e1e4ee;
+  --gray-3: #cccfd8;
+  --gray-4: #a8adbe;
+  --gray-5: #828797;
+  --gray-6: #484d5a;
+  --main-1: #0b7de2;
+  --main-2: #334ebe;
+  --main-3: #ff9b43;
 }
 
+/* 사용법 -> ClassName: text-gray-1 */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-gray-1: var(--gray-1);
+  --color-gray-2: var(--gray-2);
+  --color-gray-3: var(--gray-3);
+  --color-gray-4: var(--gray-4);
+  --color-gray-5: var(--gray-5);
+  --color-gray-6: var(--gray-6);
+  --color-main-1: var(--main-1);
+  --color-main-2: var(--main-2);
+  --color-main-3: var(--main-3);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* 사용자 OS가 다크 모드일 때 */
 }
 
 body {
