@@ -21,6 +21,8 @@
   --main-1: #0b7de2;
   --main-2: #334ebe;
   --main-3: #ff9b43;
+  --red-1: #fb1d1d;
+  --green-1: #19c524;
 }
 
 /* 사용법 -> ClassName: text-gray-1 */
@@ -36,6 +38,8 @@
   --color-main-1: var(--main-1);
   --color-main-2: var(--main-2);
   --color-main-3: var(--main-3);
+  --color-red-1: var(--red-1);
+  --color-green-1: var(--green-1);
   --font-sans: "Pretendard", "Noto Sans KR", Arial, sans-serif;
   --font-mono: var(--font-geist-mono);
 }
