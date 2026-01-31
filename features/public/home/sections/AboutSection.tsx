@@ -1,10 +1,11 @@
 export default function AboutSection() {
   return (
-    <section className="bg-background pt-36.75 rounded-t-[150px] -my-28.75">
+    <div className="bg-background">
       {/* FIXME: margin값 알잘딱 조절 */}
       <div className="mx-auto flex flex-col">
         <h2 className="font-bold text-5xl mx-auto">ABOUT</h2>
         {/* FIXME: 라이온 이미지 삽입 */}
+        {/** 카드 영역 */}
         <div className="mt-8 p-7 rounded-[40px] bg-linear-to-b from-[#5B6171] to-[#31353E] max-w-251.75 mx-auto flex gap-19.25">
           <div className="w-71 h-71 rounded-full bg-white/15 grid place-items-center text-sm">
             로고 자리
@@ -37,6 +38,6 @@ export default function AboutSection() {
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
