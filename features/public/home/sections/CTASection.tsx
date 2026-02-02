@@ -1,6 +1,6 @@
 export default function CTASection() {
   return (
-    <section className="py-[54px] bg-[#262529]">
+    <section className="pt-[54px] pb-[365px] bg-[#262529]">
       <div className="px-4.5 lg:px-[clamp(18px,12vw,392px)]">
         <div className="flex flex-col items-center justify-between">
           <h2 className="text-[48px] font-bold leading-[1.27] text-center text-[#fafafa]">
