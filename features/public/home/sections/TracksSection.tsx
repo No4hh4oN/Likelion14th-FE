@@ -37,7 +37,7 @@ export default function TracksSection() {
   return (
     <section className="pt-65.75 pb-101 bg-background text-[#141621]">
       <div className="w-[min(1120px,92%)] mx-auto">
-        <h2 className="mb-38.25 text-white text-[48px] font-bold leading-[1.27] text-center">
+        <h2 className="mb-7.25 lg:mb-38.25 text-white-1 text-[22px] lg:text-[48px] font-bold leading-[1.27] text-center">
           멋쟁이사자처럼 삼육대학교만의 <br />
           세분화된 트랙별 커리큘럼
         </h2>
@@ -50,9 +50,12 @@ export default function TracksSection() {
                 i % 2 === 1 ? "lg:flex-row-reverse" : ""
               }`}
             >
-              {/* 캐릭터 이미지 */}
+              {/** 캐릭터 이미지
+               * i가 홀수일 때는 가로 반전
+               * 백엔드(part 3, i=2)일 때는 약간 회전
+               */}
               <div
-                className={`flex shrink-0 items-center justify-center ${
+                className={`flex shrink-0 items-center justify-center -mb-5 lg:mb-0 ${
                   track.imageSize
                 } ${i % 2 !== 0 ? "scale-x-[-1]" : ""} ${
                   i === 2 ? "-rotate-[11.5deg]" : ""
@@ -67,24 +70,24 @@ export default function TracksSection() {
 
               {/* 카드 + PART */}
               <div
-                className={`flex w-full max-w-[620px] flex-col gap-3 ${
+                className={`flex w-full max-w-155 flex-col gap-1 items-end lg:gap-3 ${
                   i % 2 === 0 ? "lg:items-end" : "lg:items-start"
-                } lg:max-w-[500px] xl:max-w-[620px]`}
+                }`}
               >
-                <span className="text-2xl mx-5.25 font-semibold text-white">
+                <span className="text-[12px] lg:text-2xl mx-3.25 lg:mx-5.25 font-semibold text-white">
                   PART {track.part}
                 </span>
                 <div
-                  className={`flex h-auto w-[324px] lg:w-[587px] flex-col justify-center gap-[34px] rounded-[20px] bg-white-1 px-8 py-10 lg:h-auto lg:py-12 lg:px-[56px] xl:h-[242px] xl:py-0 ${
-                    i % 2 === 0 ? "text-left" : "lg:text-right"
+                  className={`flex h-auto w-[min(324px, 100%)] lg:w-146.75 text-center flex-col justify-center gap-2.25 lg:gap-8.5 rounded-[10px] lg:rounded-[20px] bg-white-1 px-3.5 py-3 lg:py-11 lg:px-[56px] ${
+                    i % 2 === 0 ? "lg:text-left" : "lg:text-right"
                   }`}
                 >
                   <h3
-                    className={`text-3xl font-bold xl:text-4xl ${track.titleColor}`}
+                    className={`text-[18px] lg:text-4xl font-bold  ${track.titleColor}`}
                   >
                     {track.title}
                   </h3>
-                  <p className="break-keep font-sans text-base font-normal leading-[143%] text-[#7b7b7b] xl:text-[18px]">
+                  <p className="break-keep text-sm lg:text-base font-normal leading-[143%] text-gray-5">
                     {track.description}
                   </p>
                 </div>
