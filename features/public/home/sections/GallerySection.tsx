@@ -1,3 +1,7 @@
+"use client";
+
+import { useRef, useState, MouseEvent } from "react";
+
 const galleryItems = [
   {
     title: "정기세션",
@@ -29,98 +33,142 @@ const galleryItems = [
 ];
 
 export default function GallerySection() {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  const onMouseDown = (e: MouseEvent<HTMLDivElement>) => {
+    if (!scrollRef.current) return;
+    setIsDragging(true);
+    setStartX(e.pageX - scrollRef.current.offsetLeft);
+    setScrollLeft(scrollRef.current.scrollLeft);
+  };
+
+  const onMouseLeave = () => {
+    setIsDragging(false);
+  };
+
+  const onMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const onMouseMove = (e: MouseEvent<HTMLDivElement>) => {
+    if (!isDragging || !scrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    scrollRef.current.scrollLeft = scrollLeft - walk;
+  };
+
   return (
-    <section className="pt-[240px] bg-[#fafafa] text-[#141621]">
-      <div className="px-4.5 lg:px-[clamp(18px,12vw,392px)]">
-        <div className="flex gap-[50px] items-center">
-          <div className="relative flex flex-col gap-[19px]">
-            <h2 className="text-[48px] font-bold leading-[1.27]">
+    <section className="pt-[80px] bg-[#fafafa] text-[#141621] overflow-hidden">
+      <div className="px-4 lg:px-[clamp(18px,12vw,120px)] max-w-[1400px] mx-auto">
+        {/* 헤더 섹션 */}
+        <div className="flex flex-col lg:flex-row gap-12 lg:gap-20 items-start lg:items-center mb-20">
+          <div className="flex-1">
+            <h2 className="text-[40px] lg:text-[48px] font-bold leading-tight mb-6">
               지난
               <br />
-              삼육멋사 13기는 <br />
+              삼육멋사 13기는
+              <br />
               이런 <span className="text-main-3">활동</span>들을 했어요
             </h2>
-            <p className="mb-[107px] font-medium text-[22px] text-[#868686]">
+            <p className="text-[16px] lg:text-[22px] text-[#868686] font-medium">
               열심히 활동했던 13기 아기사자들의 1년간의 활동을 소개합니다!
             </p>
           </div>
-          <div className="absolute left-1/2 h-[480px] w-[480px] bg-background text-gray-2">
-            FIXME: 이미지 삽입
+
+          {/* 마스코트 이미지 자리 */}
+          <div className="flex-shrink-0 w-full lg:w-auto">
+            <div className="w-[280px] h-[280px] lg:w-[380px] lg:h-[380px] rounded-full bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center">
+              <span className="text-gray-300 text-center">
+                마스코트 이미지
+                <br />
+                (480x480)
+              </span>
+            </div>
           </div>
         </div>
+      </div>
 
-        <section className="relative">
-          {/* 데코 라인: 큰 원 + 작은 점 4개 반복 */}
-          <div className="flex items-center gap-[113px] pb-[915px] pl-[279px] overflow-x-auto scrollbar-hide touch-pan-x">
-            {galleryItems.map((item, index) => (
-              <div
-                key={`dot-${index}`}
-                className="flex items-start gap-[113px]"
-              >
-                <div className="relative flex flex-col items-center">
-                  <div className="h-5 w-5 rounded-full bg-main-1" />
-                  <svg
-                    className="mt-7"
-                    width="41"
-                    height="67"
-                    viewBox="0 0 41 67"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M15.2981 3.69736C16.6282 -1.23279 23.6228 -1.23277 24.9529 3.69739L40.0758 59.7518C40.9331 62.9294 38.5396 66.0542 35.2484 66.0542H5.00257C1.71138 66.0542 -0.682107 62.9294 0.175172 59.7518L15.2981 3.69736Z"
-                      fill="#0B7DE2"
-                    />
-                  </svg>
-
-                  <div className="absolute mt-[104px]">
-                    <div className="relative w-[557px] h-[332px]">
-                      <div className="w-full h-full rounded-[20px] border-[11px] border-main-1">
-                        <div className="relative w-full h-full overflow-hidden rounded-[9px]">
-                          <img
-                            src={item.image}
-                            alt={item.title}
-                            className="absolute bottom-0 w-full z-0"
-                          />
-                          <div className="absolute flex justify-center items-end bottom-0 h-[116px] left-0 right-0 bg-gradient-to-b from-transparent to-[#0071C8] z-10">
-                            <span className="mb-2.25 text-white font-bold text-[40px] ">
-                              {item.title}
-                            </span>
-                          </div>
-                        </div>
+      {/* 갤러리 카드 - 가로 스크롤 */}
+      <div
+        ref={scrollRef}
+        className="w-full overflow-x-auto scrollbar-hide pb-24 cursor-grab active:cursor-grabbing"
+        onMouseDown={onMouseDown}
+        onMouseLeave={onMouseLeave}
+        onMouseUp={onMouseUp}
+        onMouseMove={onMouseMove}
+      >
+        <div className="flex px-[max(16px,calc((100vw_-_1400px)_/_2_+_16px))] lg:px-[max(clamp(18px,12vw,120px),calc((100vw_-_1400px)_/_2_+_clamp(18px,12vw,120px)))] min-w-max">
+          {galleryItems.map((item, index) => (
+            <div
+              key={item.title}
+              className="flex flex-col items-center flex-shrink-0 mr-8 last:mr-0"
+            >
+              {/* 프로그레스 점 표시 */}
+              <div className="relative flex justify-center items-center w-full mb-8 h-8">
+                <div
+                  className={`z-10 rounded-full ${
+                    index === 0
+                      ? "bg-[var(--main-1)] w-4 h-4"
+                      : "bg-[#75acd6] w-3 h-3"
+                  }`}
+                />
+                {index < galleryItems.length - 1 && (
+                  <div className="absolute left-1/2 top-0 w-[calc(100%_+_32px)] h-full flex pointer-events-none">
+                    {[0, 1, 2, 3, 4].map((i) => (
+                      <div key={i} className="flex-1 relative">
+                        {i < 4 && (
+                          <span className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 h-2 w-2 rounded-full bg-[#b8d5e8]" />
+                        )}
                       </div>
-                    </div>
-                    <div className="text-left ml-1 mt-8 flex flex-col gap-5">
-                      <h3
-                        className={`text-[40px] font-bold ${item.titleColor}`}
-                      >
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="w-[320px] lg:w-[420px]">
+                {/* 말풍선 포인터 */}
+                <div className="flex justify-center mb-6">
+                  <div className="relative w-0 h-0 border-l-[20px] border-r-[20px] border-t-[30px] border-l-transparent border-r-transparent border-t-[var(--main-1)]" />
+                </div>
+
+                {/* 이미지 카드 */}
+                <div className="mb-8 relative">
+                  <div className="relative w-full aspect-video rounded-[20px] border-[8px] border-[var(--main-1)] overflow-hidden bg-gray-200">
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="w-full h-full object-cover"
+                    />
+                    {/* 그라데이션 오버레이 */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0071C8] via-transparent to-transparent opacity-60" />
+                    {/* 카드 내 타이틀 */}
+                    <div className="absolute bottom-0 left-0 right-0 h-[80px] flex items-end justify-center pb-4">
+                      <span className="text-white font-bold text-[32px]">
                         {item.title}
-                      </h3>
-                      <p className="text-[20px] font-regular text-gray-5 leading-[1.27]">
-                        {item.description.split("\n").map((line, i) => (
-                          <span key={i}>
-                            {line}
-                            <br />
-                          </span>
-                        ))}
-                      </p>
+                      </span>
                     </div>
                   </div>
                 </div>
-                {index < galleryItems.length - 1 && (
-                  <>
-                    {[0, 1, 2, 3].map((dot) => (
-                      <span
-                        key={`small-${index}-${dot}`}
-                        className="mt-1.25 h-2.5 w-2.5 rounded-full bg-[#75acd6]"
-                      />
-                    ))}
-                  </>
-                )}
+
+                {/* 텍스트 콘텐츠 */}
+                <div className="px-2">
+                  <h3
+                    className={`text-[32px] font-bold mb-4 ${item.titleColor}`}
+                  >
+                    {item.title}
+                  </h3>
+                  <p className="text-[15px] text-[#666666] leading-relaxed whitespace-pre-line">
+                    {item.description}
+                  </p>
+                </div>
               </div>
-            ))}
-          </div>
-        </section>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
