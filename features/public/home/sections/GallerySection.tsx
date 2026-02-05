@@ -28,7 +28,7 @@ const galleryItems = [
     image: "/images/home/act-4.jpg",
     titleColor: "text-[#7C2CD8]",
     description:
-      "학교를 넘어 열정적인 멋사인들과 프로젝트를 만들어보세요.\n타대학 멋사인들과 협력하며 프로젝트를 완성한 결과\n삼육멋사가 소속된 팀에서 대상 & 최우수상 & 우수상을 수상했습니다.",
+      "학교를 넘어 열정적인 멋사인들과 프로젝트를 만들어보세요.\n타대학 멋사인들과 협력하며 프로젝트를 완성한 결과,\n삼육멋사가 소속된 팀에서 대상 & 최우수상 & 우수상을 수상했습니다.",
   },
 ];
 
@@ -62,31 +62,32 @@ export default function GallerySection() {
   };
 
   return (
-    <section className="pt-[80px] bg-[#fafafa] text-[#141621] overflow-hidden">
-      <div className="px-4 lg:px-[clamp(18px,12vw,120px)] max-w-[1400px] mx-auto">
+    <section className="pt-60 bg-[#fafafa] text-[#141621] overflow-hidden">
+      <div className="relative px-[clamp(18px,6vw,48px)] lg:px-[clamp(18px,12vw,120px)] max-w-350 mx-auto">
         {/* 헤더 섹션 */}
-        <div className="flex flex-col lg:flex-row gap-12 lg:gap-20 items-start lg:items-center mb-20">
-          <div className="flex-1">
-            <h2 className="text-[40px] lg:text-[48px] font-bold leading-tight mb-6">
+        <div className="relative flex items-center mb-8 lg:mb-[107px]">
+          <div className="flex-1 z-20">
+            <h2 className="text-[22px] lg:text-[48px] font-bold leading-tight mb-4 lg:mb-6">
               지난
               <br />
               삼육멋사 13기는
               <br />
               이런 <span className="text-main-3">활동</span>들을 했어요
             </h2>
-            <p className="text-[16px] lg:text-[22px] text-[#868686] font-medium">
+            <p className="w-[170px] lg:w-auto text-[12px] lg:text-[22px] text-[#868686] font-medium">
               열심히 활동했던 13기 아기사자들의 1년간의 활동을 소개합니다!
             </p>
           </div>
 
           {/* 마스코트 이미지 자리 */}
-          <div className="flex-shrink-0 w-full lg:w-auto">
-            <div className="w-[280px] h-[280px] lg:w-[380px] lg:h-[380px] rounded-full bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center">
-              <span className="text-gray-300 text-center">
-                마스코트 이미지
-                <br />
-                (480x480)
-              </span>
+          <div className="absolute -right-10 -top-13 lg:top-auto lg:left-[600px]">
+            <div className="relative top-4 z-10 w-[200px] h-[200px] lg:w-[clamp(500px,20vw,635px)] lg:h-[clamp(500px,20vw,635px)]">
+              <img
+                src="/images/home/GallerySection/lion.png"
+                alt="멋삼이"
+                className="w-full h-full object-contain rotate-[8.03deg] lg:rotate-[4.29deg]"
+              />
+              <div className="absolute bottom-0 left-0 w-full h-23/50 bg-linear-to-t from-[#fafafa] via-[#fafafa] to-transparent" />
             </div>
           </div>
         </div>
@@ -95,33 +96,27 @@ export default function GallerySection() {
       {/* 갤러리 카드 - 가로 스크롤 */}
       <div
         ref={scrollRef}
-        className="w-full overflow-x-auto scrollbar-hide pb-24 cursor-grab active:cursor-grabbing"
+        className="relative z-20 w-full overflow-x-auto scrollbar-hide pb-24 cursor-grab active:cursor-grabbing"
         onMouseDown={onMouseDown}
         onMouseLeave={onMouseLeave}
         onMouseUp={onMouseUp}
         onMouseMove={onMouseMove}
       >
-        <div className="flex px-[max(16px,calc((100vw_-_1400px)_/_2_+_16px))] lg:px-[max(clamp(18px,12vw,120px),calc((100vw_-_1400px)_/_2_+_clamp(18px,12vw,120px)))] min-w-max">
+        <div className="flex px-[clamp(18px,6vw,48px)] lg:px-[max(clamp(18px,12vw,120px),calc((100vw-1400px)/2+clamp(18px,12vw,120px)))] min-w-max">
           {galleryItems.map((item, index) => (
             <div
               key={item.title}
               className="flex flex-col items-center flex-shrink-0 mr-8 last:mr-0"
             >
               {/* 프로그레스 점 표시 */}
-              <div className="relative flex justify-center items-center w-full mb-8 h-8">
-                <div
-                  className={`z-10 rounded-full ${
-                    index === 0
-                      ? "bg-[var(--main-1)] w-4 h-4"
-                      : "bg-[#75acd6] w-3 h-3"
-                  }`}
-                />
+              <div className="relative flex justify-center items-center w-full mb-2 lg:mb-5 h-8">
+                <div className="z-10 rounded-full bg-main-1 w-2.5 lg:w-5 h-2.5 lg:h-5" />
                 {index < galleryItems.length - 1 && (
-                  <div className="absolute left-1/2 top-0 w-[calc(100%_+_32px)] h-full flex pointer-events-none">
+                  <div className="absolute left-1/2 top-0 w-[calc(100%+32px)] h-full flex pointer-events-none">
                     {[0, 1, 2, 3, 4].map((i) => (
                       <div key={i} className="flex-1 relative">
                         {i < 4 && (
-                          <span className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 h-2 w-2 rounded-full bg-[#b8d5e8]" />
+                          <span className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 h-1.75 lg:h-2.5 w-1.75 lg:w-2.5 rounded-full bg-[#75acd6]" />
                         )}
                       </div>
                     ))}
@@ -129,25 +124,36 @@ export default function GallerySection() {
                 )}
               </div>
 
-              <div className="w-[320px] lg:w-[420px]">
+              <div className="w-61.75 lg:w-139.25">
                 {/* 말풍선 포인터 */}
-                <div className="flex justify-center mb-6">
-                  <div className="relative w-0 h-0 border-l-[20px] border-r-[20px] border-t-[30px] border-l-transparent border-r-transparent border-t-[var(--main-1)]" />
+                <div className="flex justify-center">
+                  {/* <div className="relative w-0 h-0 border-l-[20px] border-r-[20px] border-t-[30px] border-l-transparent border-r-transparent border-t-[var(--main-1)]" /> */}
+                  <svg
+                    className="w-6 h-10 lg:w-10.25 lg:h-16.75"
+                    viewBox="0 0 41 67"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M15.2981 3.69736C16.6282 -1.23279 23.6228 -1.23277 24.9529 3.69739L40.0758 59.7518C40.9331 62.9294 38.5396 66.0542 35.2484 66.0542H5.00257C1.71138 66.0542 -0.682107 62.9294 0.175172 59.7518L15.2981 3.69736Z"
+                      fill="#0B7DE2"
+                    />
+                  </svg>
                 </div>
 
                 {/* 이미지 카드 */}
-                <div className="mb-8 relative">
-                  <div className="relative w-full aspect-video rounded-[20px] border-[8px] border-[var(--main-1)] overflow-hidden bg-gray-200">
+                <div className="mb-8 -mt-2 relative">
+                  <div className="relative w-[247px] h-[147px] lg:w-[557px] lg:h-[332px] rounded-[20px] border-[8px] border-main-1 overflow-hidden">
                     <img
                       src={item.image}
                       alt={item.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover object-[50%_90%]"
                     />
                     {/* 그라데이션 오버레이 */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0071C8] via-transparent to-transparent opacity-60" />
+                    <div className="absolute w-full h-3/5 lg:h-4/5 bottom-0 bg-gradient-to-t from-[#0071C8] via-transparent to-transparent" />
                     {/* 카드 내 타이틀 */}
-                    <div className="absolute bottom-0 left-0 right-0 h-[80px] flex items-end justify-center pb-4">
-                      <span className="text-white font-bold text-[32px]">
+                    <div className="absolute bottom-0 left-0 right-0 flex items-end justify-center lg:pb-4">
+                      <span className="text-white font-bold text-[20px] lg:text-[40px]">
                         {item.title}
                       </span>
                     </div>
@@ -157,11 +163,11 @@ export default function GallerySection() {
                 {/* 텍스트 콘텐츠 */}
                 <div className="px-2">
                   <h3
-                    className={`text-[32px] font-bold mb-4 ${item.titleColor}`}
+                    className={`text-[32px] font-bold mb-5 ${item.titleColor}`}
                   >
                     {item.title}
                   </h3>
-                  <p className="text-[15px] text-[#666666] leading-relaxed whitespace-pre-line">
+                  <p className="text-[14px] lg:text-[20px] font-normal text-[#666666] leading-relaxed whitespace-pre-line">
                     {item.description}
                   </p>
                 </div>
