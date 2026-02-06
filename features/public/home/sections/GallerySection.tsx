@@ -8,7 +8,7 @@ const galleryItems = [
     image: "/images/home/act-1.jpg",
     titleColor: "text-[var(--green-1)]",
     description:
-      "개발, 기획, 디자인까지 실무 중심의 배움과 네트워킹을 경험하세요.\n매주 새로운 인사이트와 실전 노하우를 얻을 수 있는 기회!",
+      "개발, 기획, 디자인까지 실무 중심의 배움과 네트워킹을 경험하세요. 매주 새로운 인사이트와 실전 노하우를 얻을 수 있는 기회!",
   },
   {
     title: "아이디어톤",
@@ -21,14 +21,14 @@ const galleryItems = [
     image: "/images/home/act-3.jpg",
     titleColor: "text-[var(--main-1)]",
     description:
-      "멋쟁이사자처럼 중앙 해커톤에서 아이디어를 현실로 구현해 볼 수 있는 경험.\n개발자, 디자이너, 기획자가 한 팀이 되어 프로젝트를 만들어보세요!",
+      "멋쟁이사자처럼 중앙 해커톤에서 아이디어를 현실로 구현해 볼 수 있는 경험. 개발자, 디자이너, 기획자가 한 팀이 되어 프로젝트를 만들어보세요!",
   },
   {
     title: "연합해커톤",
     image: "/images/home/act-4.jpg",
     titleColor: "text-[#7C2CD8]",
     description:
-      "학교를 넘어 열정적인 멋사인들과 프로젝트를 만들어보세요.\n타대학 멋사인들과 협력하며 프로젝트를 완성한 결과,\n삼육멋사가 소속된 팀에서 대상 & 최우수상 & 우수상을 수상했습니다.",
+      "학교를 넘어 열정적인 멋사인들과 프로젝트를 만들어보세요. 타대학 멋사인들과 협력하며 프로젝트를 완성한 결과, 삼육멋사가 소속된 팀에서 대상 & 최우수상 & 우수상을 수상했습니다.",
   },
 ];
 
@@ -142,12 +142,12 @@ export default function GallerySection() {
                 </div>
 
                 {/* 이미지 카드 */}
-                <div className="mb-8 -mt-2 relative">
-                  <div className="relative w-[247px] h-[147px] lg:w-[557px] lg:h-[332px] rounded-[20px] border-[8px] border-main-1 overflow-hidden">
+                <div className="mb-2.5 lg:mb-8 -mt-2 relative">
+                  <div className="relative w-[247px] h-[147px] lg:w-[557px] lg:h-[332px] rounded-[10px] lg:rounded-[20px] border-5 lg:border-13 border-main-1 overflow-hidden">
                     <img
                       src={item.image}
                       alt={item.title}
-                      className="w-full h-full object-cover object-[50%_90%]"
+                      className="w-full h-full object-cover object-[50%_100%]"
                     />
                     {/* 그라데이션 오버레이 */}
                     <div className="absolute w-full h-3/5 lg:h-4/5 bottom-0 bg-gradient-to-t from-[#0071C8] via-transparent to-transparent" />
@@ -161,13 +161,13 @@ export default function GallerySection() {
                 </div>
 
                 {/* 텍스트 콘텐츠 */}
-                <div className="px-2">
+                <div className="px-1.25 lg:px-2">
                   <h3
-                    className={`text-[32px] font-bold mb-5 ${item.titleColor}`}
+                    className={`text-[18px] lg:text-[40px] font-bold mb-1.75 lg:mb-5 ${item.titleColor}`}
                   >
                     {item.title}
                   </h3>
-                  <p className="text-[14px] lg:text-[20px] font-normal text-[#666666] leading-relaxed whitespace-pre-line">
+                  <p className="text-[14px] lg:text-[20px] font-normal text-gray-5 whitespace-pre-line break-keep">
                     {item.description}
                   </p>
                 </div>
