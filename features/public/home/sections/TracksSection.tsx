@@ -78,7 +78,7 @@ export default function TracksSection() {
                   PART {track.part}
                 </span>
                 <div
-                  className={`flex h-auto w-[min(324px, 100%)] lg:w-146.75 text-center flex-col justify-center gap-2.25 lg:gap-8.5 rounded-[10px] lg:rounded-[20px] bg-white-1 px-3.5 py-3 lg:py-11 lg:px-[56px] ${
+                  className={`flex h-auto w-[min(324px, 100%)] lg:w-146.75 text-center flex-col justify-center gap-2.25 lg:gap-8.5 rounded-[10px] lg:rounded-[20px] bg-white-1 px-3.5 py-3 lg:py-11 lg:px-14 ${
                     i % 2 === 0 ? "lg:text-left" : "lg:text-right"
                   }`}
                 >

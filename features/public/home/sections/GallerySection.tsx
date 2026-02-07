@@ -65,7 +65,7 @@ export default function GallerySection() {
     <section className="pt-60 bg-[#fafafa] text-[#141621] overflow-hidden">
       <div className="relative px-[clamp(18px,6vw,48px)] lg:px-[clamp(18px,12vw,120px)] max-w-350 mx-auto">
         {/* 헤더 섹션 */}
-        <div className="relative flex items-center mb-8 lg:mb-[107px]">
+        <div className="relative flex items-center mb-8 lg:mb-26.75">
           <div className="flex-1 z-20">
             <h2 className="text-[22px] lg:text-[48px] font-bold leading-tight mb-4 lg:mb-6">
               지난
@@ -74,14 +74,14 @@ export default function GallerySection() {
               <br />
               이런 <span className="text-main-3">활동</span>들을 했어요
             </h2>
-            <p className="w-[170px] lg:w-auto text-[12px] lg:text-[22px] text-[#868686] font-medium">
+            <p className="w-42.5 lg:w-auto text-[12px] lg:text-[22px] text-[#868686] font-medium">
               열심히 활동했던 13기 아기사자들의 1년간의 활동을 소개합니다!
             </p>
           </div>
 
           {/* 마스코트 이미지 자리 */}
-          <div className="absolute -right-10 -top-13 lg:top-auto lg:left-[600px]">
-            <div className="relative top-4 z-10 w-[200px] h-[200px] lg:w-[clamp(500px,20vw,635px)] lg:h-[clamp(500px,20vw,635px)]">
+          <div className="absolute -right-10 -top-13 lg:top-auto lg:left-150">
+            <div className="relative top-4 z-10 w-50 h-50 lg:w-[clamp(500px,20vw,635px)] lg:h-[clamp(500px,20vw,635px)]">
               <img
                 src="/images/home/GallerySection/lion.png"
                 alt="멋삼이"
@@ -96,7 +96,7 @@ export default function GallerySection() {
       {/* 갤러리 카드 - 가로 스크롤 */}
       <div
         ref={scrollRef}
-        className="relative z-20 w-full overflow-x-auto scrollbar-hide pb-24 cursor-grab active:cursor-grabbing"
+        className="relative z-20 w-full overflow-x-auto scrollbar-hide pb-32.5 lg:pb-100 cursor-grab active:cursor-grabbing"
         onMouseDown={onMouseDown}
         onMouseLeave={onMouseLeave}
         onMouseUp={onMouseUp}
@@ -106,7 +106,7 @@ export default function GallerySection() {
           {galleryItems.map((item, index) => (
             <div
               key={item.title}
-              className="flex flex-col items-center flex-shrink-0 mr-8 last:mr-0"
+              className="flex flex-col items-center shrink-0 mr-8 last:mr-0"
             >
               {/* 프로그레스 점 표시 */}
               <div className="relative flex justify-center items-center w-full mb-2 lg:mb-5 h-8">
@@ -127,7 +127,6 @@ export default function GallerySection() {
               <div className="w-61.75 lg:w-139.25">
                 {/* 말풍선 포인터 */}
                 <div className="flex justify-center">
-                  {/* <div className="relative w-0 h-0 border-l-[20px] border-r-[20px] border-t-[30px] border-l-transparent border-r-transparent border-t-[var(--main-1)]" /> */}
                   <svg
                     className="w-6 h-10 lg:w-10.25 lg:h-16.75"
                     viewBox="0 0 41 67"
@@ -143,14 +142,14 @@ export default function GallerySection() {
 
                 {/* 이미지 카드 */}
                 <div className="mb-2.5 lg:mb-8 -mt-2 relative">
-                  <div className="relative w-[247px] h-[147px] lg:w-[557px] lg:h-[332px] rounded-[10px] lg:rounded-[20px] border-5 lg:border-13 border-main-1 overflow-hidden">
+                  <div className="relative w-61.75 h-36.75 lg:w-139.25 lg:h-83 rounded-[10px] lg:rounded-[20px] border-5 lg:border-13 border-main-1 overflow-hidden">
                     <img
                       src={item.image}
                       alt={item.title}
                       className="w-full h-full object-cover object-[50%_100%]"
                     />
                     {/* 그라데이션 오버레이 */}
-                    <div className="absolute w-full h-3/5 lg:h-4/5 bottom-0 bg-gradient-to-t from-[#0071C8] via-transparent to-transparent" />
+                    <div className="absolute w-full h-3/5 lg:h-4/5 bottom-0 bg-linear-to-t from-[#0071C8] via-transparent to-transparent" />
                     {/* 카드 내 타이틀 */}
                     <div className="absolute bottom-0 left-0 right-0 flex items-end justify-center lg:pb-4">
                       <span className="text-white font-bold text-[20px] lg:text-[40px]">
