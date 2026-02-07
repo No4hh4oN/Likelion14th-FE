@@ -55,45 +55,61 @@ const reviews = [
   },
 ];
 
+type ReviewSummary = {
+  summary: {
+    title: string;
+    content: string;
+    people: string;
+  }[];
+};
+
+function ReviewCards({ summary }: ReviewSummary) {
+  return (
+    <div className="flex w-full flex-col lg:flex-row gap-6 lg:gap-20">
+      {summary.map((item) => (
+        <div className="relative flex flex-1 basis-0 min-w-0 flex-col gap-1.75 lg:gap-4 border-gray-2 border-2 rounded-[10px] lg:rounded-[30px] py-5.75 lg:py-10.75 px-3.75 lg:px-8.75">
+          <div className="flex flex-col lg:flex-row gap-1.75 lg:gap-2.75 w-full items-center">
+            <img
+              className="w-10.5 h-9.75 lg:w-7.25 lg:h-6.75"
+              src="/images/home/meotsam.png"
+              alt="#"
+            />
+            <h4 className="text-[16px] lg:text-[clamp(12px,1.4vw,28px)] font-semibold text-main-1">
+              {item.title}
+            </h4>
+          </div>
+          <p className="text-gray-6 font-normal text-[14px] lg:text-base leading-[1.65] tracking-[-0.022em] break-keep">
+            {item.content}
+          </p>
+          <p className="absolute text-[12px] lg:text-[16px] bottom-auto lg:bottom-3 top-2.75 lg:top-auto right-2.75 lg:right-8 text-gray-5">
+            {item.people}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function ReviewSection() {
   return (
-    <section className="relative bg-[#fafafa] pb-[514px] overflow-y-hidden scrollbar-hide">
+    <section className="relative bg-[#fafafa] pb-45 lg:pb-128.5 overflow-y-hidden scrollbar-hide">
       <div className="px-4.5 lg:px-[clamp(18px,12vw,392px)]">
-        <h2 className="text-[48px] font-semibold leading-[1.27] text-center text-[#262529] mb-[139px]">
+        <h2 className="text-[22px] lg:text-[48px] font-semibold leading-[1.27] text-center text-background mb-8.5 lg:mb-34.75">
           삼육멋사 <span className="text-main-3">13기</span> <br />
           아기사자들의 생생한 후기
         </h2>
-        <div className="flex flex-col gap-[73px] items-center">
+        <div className="flex flex-col gap-15 lg:gap-18.25 items-center">
           {reviews.map((review) => (
-            <div className="flex flex-col gap-8" key={review.title}>
-              <h3 className={`text-[32px] font-bold ${review.titleColor}`}>
+            <div
+              className="flex flex-col w-full gap-2.25 lg:gap-8"
+              key={review.title}
+            >
+              <h3
+                className={`text-[18px] lg:text-[32px] font-bold ${review.titleColor}`}
+              >
                 {review.title}
               </h3>
-              <div className="flex gap-[80px]">
-                {review.summary.map((item, index) => (
-                  <div
-                    key={index}
-                    className="relative max-w-[540px] flex flex-1 basis-0 min-w-0 flex-col gap-4 border border-gray-2 border-2 rounded-[30px] pt-[43px] pb-[35px] px-[35px]"
-                  >
-                    <div className="flex gap-[11px] w-full items-center w-full">
-                      <img
-                        className="w-[29px] h-[27px]"
-                        src="/images/home/meotsam.png"
-                        alt="#"
-                      />
-                      <h4 className="truncate text-[clamp(16px,1.4vw,28px)] font-semibold text-main-1">
-                        {item.title}
-                      </h4>
-                    </div>
-                    <p className="text-gray-6 font-normal text-base leading-[1.65] tracking-[-0.022em] break-keep">
-                      {item.content}
-                    </p>
-                    <p className="absolute bottom-[19px] right-[35px] text-gray-5">
-                      {item.people}
-                    </p>
-                  </div>
-                ))}
-              </div>
+              <ReviewCards summary={review.summary} />
             </div>
           ))}
         </div>
