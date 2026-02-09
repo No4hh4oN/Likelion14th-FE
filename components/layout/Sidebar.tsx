@@ -1,13 +1,40 @@
 "use client"
 
 import Image from "next/image"
+import type { MouseEvent, ReactNode } from "react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 type SidebarProps = {
     isOpen: boolean
     onClose: () => void
+    authSection?: ReactNode
 }
 
-export default function Sidebar({ isOpen, onClose }: SidebarProps) {
+export default function Sidebar({ isOpen, onClose, authSection }: SidebarProps) {
+    const pathname = usePathname()
+    const menus = [
+        { label: "Main", href: "/" },
+        { label: "About", href: "/about" },
+        { label: "FAQ", href: "/faq" },
+        { label: "Archive", href: "/archive" },
+    ] as const
+
+    const activeIndex = menus.findIndex((menu) =>
+        menu.href === "/" ? pathname === "/" : pathname.startsWith(menu.href),
+    )
+
+    const handleActionClickCapture = (event: MouseEvent<HTMLElement>) => {
+        const target = event.target
+        if (!(target instanceof HTMLElement)) {
+            return
+        }
+
+        if (target.closest("a, button")) {
+            onClose()
+        }
+    }
+
     return (
         <>
             <button
@@ -18,7 +45,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     }`}
             />
             <aside
-                className={`fixed right-0 top-0 z-50 h-full w-[450px] bg-[#303136] shadow-xl transition-transform duration-500 ease-out ${isOpen ? "translate-x-0" : "translate-x-full"
+                className={`fixed right-0 top-0 z-50 h-full w-[412px] bg-[#303136] shadow-xl transition-transform duration-500 ease-out ${isOpen ? "translate-x-0" : "translate-x-full"
                     }`}
                 role="dialog"
                 aria-modal="true"
@@ -40,8 +67,26 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                         />
                     </button>
                 </div>
-                <div className="p-4">
-                    
+                <div className="p-4" onClickCapture={handleActionClickCapture}>
+                    <div>{authSection}</div>
+                    <ul className="mt-8">
+                        {menus.map((menu, index) => {
+                            const isActive = index === activeIndex
+                            const marginTop =
+                                index === 0 ? "mt-0" : index - 1 === activeIndex || isActive ? "mt-[38px]" : "mt-[28px]"
+
+                            return (
+                                <li key={menu.href} className={marginTop}>
+                                    <Link
+                                        href={menu.href}
+                                        className={`leading-none ${isActive ? "text-[32px] font-bold text-foreground" : "text-[24px] font-medium text-gray-3"}`}
+                                    >
+                                        {menu.label}
+                                    </Link>
+                                </li>
+                            )
+                        })}
+                    </ul>
                 </div>
             </aside>
         </>

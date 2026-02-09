@@ -1,12 +1,64 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import Sidebar from "@/components/layout/Sidebar"
+import Login from "@/components/layout/Login"
+import UserInfo from "@/components/layout/UserInfo"
+import { getMyInfo } from "@/features/public/api"
+import type { MeResponse } from "@/features/public/type"
+import { AUTH_CHANGED_EVENT } from "@/lib/axios"
 
 export default function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
+    const [me, setMe] = useState<MeResponse | null>(null)
+
+    const checkAuth = useCallback(async () => {
+        try {
+            const response = await getMyInfo()
+            setMe(response)
+        } catch {
+            setMe(null)
+        }
+    }, [])
+
+    useEffect(() => {
+        queueMicrotask(() => {
+            void checkAuth()
+        })
+    }, [checkAuth])
+
+    useEffect(() => {
+        const handleAuthChanged = () => {
+            checkAuth()
+        }
+
+        window.addEventListener(AUTH_CHANGED_EVENT, handleAuthChanged)
+        return () => {
+            window.removeEventListener(AUTH_CHANGED_EVENT, handleAuthChanged)
+        }
+    }, [checkAuth])
+
+    useEffect(() => {
+        if (isMenuOpen) {
+            queueMicrotask(() => {
+                void checkAuth()
+            })
+        }
+    }, [isMenuOpen, checkAuth])
+
+    const authSection = me ? (
+        <UserInfo
+            name={me.homepage.name}
+            generation={me.roles[0]?.generation}
+            role={me.roles[0]?.level}
+            track={me.roles[0]?.track}
+            onLoggedOut={() => setMe(null)}
+        />
+    ) : (
+        <Login />
+    )
 
     return (
         <>
@@ -43,7 +95,11 @@ export default function Header() {
                 </div>
             </header>
 
-            <Sidebar isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+            <Sidebar
+                isOpen={isMenuOpen}
+                onClose={() => setIsMenuOpen(false)}
+                authSection={authSection}
+            />
         </>
     )
 }
