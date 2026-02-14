@@ -89,7 +89,7 @@ const DAY_CLASS_BY_TYPE: Record<DayType, string> = {
   "dark-mid": "bg-main-2 text-white",
   "dark-end": "bg-main-2 text-white rounded-r-full mr-0.5",
   orange:
-    "mx-auto mt-0.5 h-[30px] w-[30px] rounded-full bg-main-3 text-main-2 sm:h-11 sm:w-11 lg:h-[80px] lg:w-[80px]",
+    "mx-auto h-[30px] w-[30px] rounded-full bg-main-3 text-main-2 sm:h-11 sm:w-11 lg:h-[80px] lg:w-[80px]",
   disabled: "text-gray-4",
 };
 
@@ -229,12 +229,12 @@ const ScheduleSection = () => {
   const finalResultEvent = SCHEDULE_EVENTS[3];
 
   return (
-    <section className="w-full bg-foreground py-[108px] sm:py-[286px]">
+    <section className="w-full bg-foreground pt-[108px] sm:pt-[286px]">
       <div className="mx-auto w-full px-[20px] max-w-[1080px]">
         <h2 className="text-center text-[22px] font-semibold text-background sm:text-4xl">
           14기 아기사자 <span className="text-main-1">모집 일정</span>
         </h2>
-        ` `
+
         <div className="relative mt-[57px] lg:mt-[96px] lg:px-[158px]">
           <div className="grid grid-cols-7 text-center text-[14px] font-medium text-gray-5 sm:text-[36px]">
             {WEEK_DAYS.map((weekDay) => (
