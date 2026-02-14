@@ -41,17 +41,17 @@ const NoticeSection = () => {
               <h3 className="text-[18px] lg:text-[24px] font-bold text-background">
                 이런 <span className="text-main-3">아기사자</span>를 찾아요!
               </h3>
-              <ul className="mt-2.5 lg:mt-6 pl-5 text-[14px] lg:text-[18px] font-normal list-disc list-outside marker:text-[0.5em] leading-[1.66] text-background">
-                <li className="pl-1">
+              <ul className="mt-2.5 lg:mt-6 pl-5 text-[14px] lg:text-[18px] font-normal list-disc list-outside marker:text-[0.6em] leading-[1.66] text-background">
+                <li>
                   <span className="font-bold">개인 노트북</span>을 보유하고 있는
                   분
                 </li>
-                <li className="pl-1">
+                <li>
                   삼육대학교 학부{" "}
                   <span className="font-bold">재학생, 휴학생</span> 또는{" "}
                   <span className="font-bold">졸업 유예자</span>
                 </li>
-                <li className="pl-1">
+                <li>
                   동아리{" "}
                   <span className="font-bold">
                     수료 조건을 모두 성실히 이행
@@ -65,27 +65,27 @@ const NoticeSection = () => {
               <h3 className="text-[18px] lg:text-[24px] font-bold text-background">
                 <span className="text-main-3">정기세션</span> 안내
               </h3>
-              <ul className="mt-2.5 lg:mt-6 pl-5 text-[14px] lg:text-[18px] text-background list-disc list-outside marker:text-[0.5em] leading-[1.66] font-normal">
-                <li className="pl-1">
+              <ul className="mt-2.5 lg:mt-6 pl-5 text-[14px] lg:text-[18px] text-background list-disc list-outside marker:text-[0.6em] leading-[1.66] font-normal">
+                <li>
                   정기 세션은{" "}
                   <span className="font-semibold">매주 화요일 18시</span>에
                   진행됩니다.
                 </li>
-                <li className="pl-1 lg:whitespace-nowrap">
+                <li className="lg:whitespace-nowrap">
                   각 파트별 세션 일정은 해당 파트의 일정에 따라 추후 조정될
                   예정입니다.
                 </li>
-                <li className="pl-1">
+                <li>
                   {" "}
                   <span className="font-semibold">시험 전 주 및 시험 기간</span>
                   에는 세션이 진행되지 않습니다.
                 </li>
-                <li className="pl-1">
+                <li>
                   활동은{" "}
                   <span className="font-semibold">1학기, 여름방학, 2학기</span>{" "}
                   동안 모두 진행됩니다.
                 </li>
-                <li className="pl-1">
+                <li>
                   활동 장소는 삼육대학교 교내 강의실 등으로, 추후 공지될
                   예정입니다.
                 </li>
@@ -116,12 +116,12 @@ const NoticeSection = () => {
             <div className="relative z-10 rounded-[20px] border border-gray-2 bg-gray-1 px-[15px] py-8 lg:px-10">
               <div className="grid gap-10 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] lg:gap-12">
                 {/* 구분선용 박스 */}
-                <div className="border-b border-gray-2 lg:border-r pb-7 lg:pr-10">
+                <div className="border-b border-gray-2 lg:border-b-0 lg:border-r pb-7 lg:pr-10">
                   <h3 className="text-[18px] text-center lg:text-left lg:text-[20px] font-bold text-background">
                     <span className="text-main-3">교내</span> 활동 평가 기준
                     안내
                   </h3>
-                  <ul className="mt-[10px] lg:mt-[26px] leading-[1.48] text-[14px] lg:text-[16px] text-background list-disc list-outside pl-5 marker:text-[0.5em]">
+                  <ul className="mt-[10px] lg:mt-[26px] leading-[1.48] text-[14px] lg:text-[16px] text-background list-disc list-outside pl-5 marker:text-[0.6em]">
                     <li>
                       동아리 활동은{" "}
                       <span className="rounded bg-main-3 px-1">
@@ -142,22 +142,22 @@ const NoticeSection = () => {
                     </li>
                   </ul>
 
-                  <h4 className="mt-[20px] lg:mt-[37px] text-center lg:text-left text-[16px] lg:text-[20px] font-bold text-background">
+                  <h4 className="mt-5 lg:mt-9.25 text-center lg:text-left text-[16px] lg:text-[20px] font-bold text-background">
                     감점 기준
                   </h4>
-                  <ul className="mt-[10px] lg:mt-[15px] leading-[1.48] text-[14px] lg:text-[16px] text-background list-none">
+                  <ul className="mt-2.5 lg:mt-3.75 leading-[1.48] text-[14px] lg:text-[16px] text-background list-none">
                     <li>[ 결석 및 지각 ]</li>
-                    <li className="list-disc list-outside ml-5 marker:text-[0.5em]">
+                    <li className="list-disc list-outside ml-5 marker:text-[0.6em]">
                       지각 : 10분 이하 지각: 0.5점 / 10분 초과 지각: 1점
                     </li>
-                    <li className="list-disc list-outside ml-5 marker:text-[0.5em]">
+                    <li className="list-disc list-outside ml-5 marker:text-[0.6em]">
                       무단결석: 2점 / 사전 고지된 일반 결석: 1점
                     </li>
-                    <li className="mt-[20px]">[ 과제 제출 ]</li>
-                    <li className="list-disc list-outside ml-5 marker:text-[0.5em]">
+                    <li className="mt-5">[ 과제 제출 ]</li>
+                    <li className="list-disc list-outside ml-5 marker:text-[0.6em]">
                       과제 미제출: 2점
                     </li>
-                    <li className="list-disc list-outside ml-5 marker:text-[0.5em]">
+                    <li className="list-disc list-outside ml-5 marker:text-[0.6em]">
                       지각 제출 또는 승인되지 않은 제출: 1점
                     </li>
                   </ul>
@@ -167,7 +167,7 @@ const NoticeSection = () => {
                   <h3 className="text-[18px] lg:text-[20px] text-center lg:text-left font-bold text-background">
                     <span className="text-main-3">주요 행사 </span>참여
                   </h3>
-                  <ul className="mt-[10px] lg:mt-[26px] leading-[1.48] font-normal text-[14px] lg:text-[16px] text-background list-disc list-outside pl-5 marker:text-[0.5em]">
+                  <ul className="mt-[10px] lg:mt-[26px] leading-[1.48] font-normal text-[14px] lg:text-[16px] text-background list-disc list-outside pl-5 marker:text-[0.6em]">
                     <li>아이디어톤 참여 (5월 중)</li>
                     <li>중앙해커톤 참여 (8월 중)</li>
                     <li>연합해커톤 참여 (11월 중)</li>
@@ -180,7 +180,7 @@ const NoticeSection = () => {
                     행사 중 1회만 참여하시면 됩니다.
                   </p>
 
-                  <ul className="mt-[31px] leading-[1.48] text-[14px] lg:text-[16px] font-normal text-background list-disc list-outside pl-5 marker:text-[0.5em]">
+                  <ul className="mt-[31px] leading-[1.48] text-[14px] lg:text-[16px] font-normal text-background list-disc list-outside pl-5 marker:text-[0.6em]">
                     <li>
                       <span className="rounded bg-main-3 px-1">
                         무단결석 3회 이상 또는 과제 미제출 3회 이상 시 수료가
