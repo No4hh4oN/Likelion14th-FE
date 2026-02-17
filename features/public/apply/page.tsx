@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useMemo, useState } from "react";
+import { ChangeEvent, ReactNode, useMemo, useState } from "react";
 
 type PartKey = "front-end" | "back-end" | "ai-ml" | "pm-design";
 
@@ -42,6 +42,82 @@ const partQuestions: Record<PartKey, string[]> = {
   ],
 };
 
+const aiMlQuestionCode = `class TokenWindowDataset:
+    def __init__(self, token_ids, max_len, stride, start = 0):
+        self.token_ids = token_ids
+        self.max_len = max_len
+        self.stride = stride
+        self.start = start
+
+    def __getitem__(self, idx):
+        base = self.start + idx * self.stride
+        x = self.token_ids[base: base + self.max_len]
+        y = self.token_ids[base + 1: 1 + base + self.max_len]
+        return (x, y)
+
+    def __len__(self):
+        i = 0
+        while(True):
+            if(self.start + i * self.stride + self.max_len + 1 > len(self.token_ids)):
+                break
+            else:
+                i += 1
+        return i
+
+
+t = TokenWindowDataset(token_ids = [0,1,2,3,4,5,6], max_len=3, stride=2)
+
+for i in range(len(t)):
+    print(t[i], end=" ")`;
+
+const pythonKeywords = new Set([
+  "class",
+  "def",
+  "return",
+  "for",
+  "in",
+  "while",
+  "if",
+  "else",
+  "break",
+]);
+
+const pythonBuiltins = new Set(["len", "print"]);
+
+const pythonHighlightPattern =
+  /(\bclass\b|\bdef\b|\breturn\b|\bfor\b|\bin\b|\bwhile\b|\bif\b|\belse\b|\bbreak\b|\bTrue\b|\blen\b|\bprint\b|'[^']*'|"[^"]*"|\d+)/g;
+
+const getPythonTokenClass = (token: string) => {
+  if (pythonKeywords.has(token)) return "text-[#C792EA]";
+  if (pythonBuiltins.has(token)) return "text-[#82AAFF]";
+  if (token === "True") return "text-[#FFCB6B]";
+  if (/^['"]/.test(token)) return "text-[#C3E88D]";
+  if (/^\d+$/.test(token)) return "text-[#F78C6C]";
+  return "text-[#DCE6FF]";
+};
+
+const renderPythonLine = (line: string): ReactNode =>
+  line.split(pythonHighlightPattern).map((part, index) => {
+    if (!part) return null;
+
+    const isHighlightedToken =
+      pythonKeywords.has(part) ||
+      pythonBuiltins.has(part) ||
+      part === "True" ||
+      /^['"]/.test(part) ||
+      /^\d+$/.test(part);
+
+    if (!isHighlightedToken) {
+      return <span key={`${part}-${index}`}>{part}</span>;
+    }
+
+    return (
+      <span key={`${part}-${index}`} className={getPythonTokenClass(part)}>
+        {part}
+      </span>
+    );
+  });
+
 const createEmptyAnswers = (count: number) =>
   Array.from({ length: count }, () => "");
 
@@ -66,7 +142,6 @@ export default function ApplyPage() {
     () => buildInitialPartAnswers(),
   );
   const [portfolioUrl, setPortfolioUrl] = useState("");
-  const [portfolioNote, setPortfolioNote] = useState("");
   const [portfolioFileName, setPortfolioFileName] = useState("");
 
   const selectedPartQuestions = useMemo(
@@ -188,6 +263,44 @@ export default function ApplyPage() {
                   <p className="text-[16px] font-medium lg:text-[22px]">
                     Q. {question}
                   </p>
+                  {selectedPart === "ai-ml" && index === 2 && (
+                    <div className="overflow-hidden rounded-[12px] border border-[#2E3E66] bg-[#0E1424] shadow-[0_10px_30px_rgba(8,12,24,0.4)]">
+                      <div className="flex items-center justify-between border-b border-[#2E3E66] bg-[#151E32] px-3 py-2 lg:px-4">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#FF5F56]" />
+                          <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#FFBD2E]" />
+                          <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#27C93F]" />
+                          <span className="ml-1 text-[11px] font-medium text-[#AEB9D6] lg:text-[12px]">
+                            TokenWindowDataset.py
+                          </span>
+                        </div>
+                        <span className="rounded-full border border-[#325CA8] bg-[#11274A] px-2.5 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-[#8BC1FF] lg:text-[11px]">
+                          PYTHON
+                        </span>
+                      </div>
+                      <div className="overflow-x-auto p-3 lg:p-4">
+                        <pre className="min-w-[640px] text-[11px] leading-[1.65] text-[#DCE6FF] lg:text-[13px] lg:leading-[1.75]">
+                          {aiMlQuestionCode
+                            .split("\n")
+                            .map((line, lineIndex) => (
+                              <div
+                                key={`ai-ml-code-${lineIndex}`}
+                                className="grid grid-cols-[26px_1fr] gap-3"
+                              >
+                                <span className="select-none text-right text-[#62709A]">
+                                  {lineIndex + 1}
+                                </span>
+                                <code>
+                                  {line.length > 0
+                                    ? renderPythonLine(line)
+                                    : " "}
+                                </code>
+                              </div>
+                            ))}
+                        </pre>
+                      </div>
+                    </div>
+                  )}
                   <div>
                     <textarea
                       value={partAnswers[selectedPart][index]}
