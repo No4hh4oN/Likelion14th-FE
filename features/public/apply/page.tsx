@@ -98,7 +98,30 @@ export default function ApplyPage() {
   return (
     <section className="bg-background px-4 py-9 text-white lg:px-6 lg:py-16">
       <div className="mx-auto w-full max-w-290">
-        <div className={sectionCardClass}>
+        <div className="relative overflow-hidden rounded-[10px] px-5 lg:px-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-10">
+            <div className="order-1 text-center lg:order-2">
+              <h2 className="text-[22px] font-bold leading-[1.22] text-white-1 lg:text-[52px]">
+                멋쟁이사자처럼 삼육대학교
+                <br />
+                14기 아기사자 <span className="text-main-3">모집 지원서</span>
+              </h2>
+              <p className="mt-3 text-[12px] font-medium text-gray-4 lg:mt-7 lg:text-[24px]">
+                모든 문항에 빠짐없이 답변해 주시기 바랍니다.
+              </p>
+            </div>
+
+            <div className="order-2 mx-auto w-[170px] sm:w-[210px] lg:order-1 lg:mx-0 lg:w-[260px] lg:shrink-0">
+              <img
+                src="/images/lion-stand-half-gradient-black.png"
+                alt="lion-standing"
+                className="h-auto w-full object-contain"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className={`lg:mt-[65px] ${sectionCardClass}`}>
           <h2 className="text-center text-[18px] font-bold lg:text-[32px]">
             공통 질문
           </h2>
@@ -224,20 +247,6 @@ export default function ApplyPage() {
             </div>
 
             <div className="space-y-2.5">
-              {/* <p className="text-[11px] font-medium text-[#F7F9FF] lg:text-[14px]">
-                포트폴리오 설명
-              </p>
-              <textarea
-                value={portfolioNote}
-                onChange={(event) => setPortfolioNote(event.target.value)}
-                maxLength={500}
-                rows={4}
-                placeholder="포트폴리오의 주요 포인트를 작성해 주세요. (최대 500자)"
-                className="w-full resize-none rounded-[8px] border border-[#62697A] bg-[#4C5262] px-3.5 py-3 text-[12px] text-white placeholder:text-[#B8BECA] focus:border-[#0B7DE2] focus:outline-none lg:rounded-[10px] lg:px-4 lg:py-3.5 lg:text-[14px]"
-              />
-              <p className="text-right text-[10px] text-[#AEB5C2] lg:text-[12px]">
-                {portfolioNote.length}/500
-              </p> */}
               <p className="text-left pl-[14px] text-[12px] lg:text-[14px] leading-[1.46] font-regular font-sans">
                 *포트폴리오 제출은 필수가 아니며, 자유롭게 제출해 주셔도 됩니다.
                 (최대 3개) <br />
@@ -250,6 +259,22 @@ export default function ApplyPage() {
               </p>
             </div>
           </div>
+        </div>
+
+        <div className="mt-[72px] lg:mt-[156px] flex flex-col items-center justify-center gap-[26px] lg:gap-[32px]">
+          <button className="px-[36px] py-[14px] lg:px-[73px] lg:py-[19px] text-[16px] lg:text-[24px] font-semibold cursor-pointer rounded-full bg-gray-5">
+            지원서 작성하기
+          </button>
+          <button className="px-[78px] py-[15px] lg:px-[112px] lg:py-[15px] text-[20px] lg:text-[36px] font-bold cursor-pointer rounded-full bg-main-1">
+            제출하기
+          </button>
+          <p className="mt-[10px] leading-[1.27] text-center text-[12px] lg:text-[20px] font-regular text-gray-5">
+            *제출 전, 수정 사항이 없는지 다시 한 번 확인해 주시기 바랍니다.
+            <br />
+            *지원 기간 내에는 지원 페이지를 통해 내용 수정이 가능합니다.
+            <br />
+            *지원서 제출 완료 후, 확인 메일이 전송될 예정입니다
+          </p>
         </div>
       </div>
     </section>
