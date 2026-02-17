@@ -67,7 +67,10 @@ function ReviewCards({ summary }: ReviewSummary) {
   return (
     <div className="flex w-full flex-col lg:flex-row gap-6 lg:gap-20">
       {summary.map((item) => (
-        <div className="relative flex flex-1 basis-0 min-w-0 flex-col gap-1.75 lg:gap-4 border-gray-2 border-2 rounded-[10px] lg:rounded-[30px] py-5.75 lg:py-10.75 px-3.75 lg:px-8.75">
+        <div
+          key={item.title}
+          className="relative flex flex-1 basis-0 min-w-0 flex-col gap-1.75 lg:gap-4 border-gray-2 border-2 rounded-[10px] lg:rounded-[30px] py-5.75 lg:py-10.75 px-3.75 lg:px-8.75"
+        >
           <div className="flex flex-col lg:flex-row gap-1.75 lg:gap-2.75 w-full items-center">
             <img
               className="w-10.5 h-9.75 lg:w-7.25 lg:h-6.75"
