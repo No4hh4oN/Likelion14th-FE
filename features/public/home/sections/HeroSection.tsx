@@ -6,32 +6,32 @@ import Image from "next/image";
 const SPARKLES = [
   {
     id: "sparkle-1",
-    className: "left-[8%] top-[16%] w-3 lg:left-[12%] lg:top-[22%] lg:w-5",
+    className: "left-[8%] top-[22%] w-7 lg:left-[12%] lg:top-[22%] lg:w-5",
     delay: "0s",
   },
   {
     id: "sparkle-2",
-    className: "left-[20%] top-[38%] w-7 lg:left-[27%] lg:top-[45%] lg:w-14",
+    className: "left-[2%] top-[42%] w-14 lg:left-[27%] lg:top-[45%] lg:w-14",
     delay: "0.9s",
   },
   {
     id: "sparkle-3",
-    className: "right-[11%] top-[23%] w-8 lg:right-[18%] lg:top-[27%] lg:w-10",
+    className: "right-[12%] top-[28%] w-13 lg:right-[18%] lg:top-[27%] lg:w-10",
     delay: "1.2s",
   },
   {
     id: "sparkle-4",
-    className: "right-[22%] top-[55%] w-3 lg:right-[35%] lg:top-[55%] lg:w-18",
+    className: "right-[18%] top-[40%] w-9 lg:right-[35%] lg:top-[55%] lg:w-18",
     delay: "0.5s",
   },
   {
     id: "sparkle-5",
-    className: "left-[14%] top-[70%] w-6 lg:left-[22%] lg:top-[73%] lg:w-10",
+    className: "left-[10%] top-[62%] w-18 lg:left-[22%] lg:top-[73%] lg:w-10",
     delay: "1.6s",
   },
   {
     id: "sparkle-6",
-    className: "left-[18%] top-[75%] w-3 lg:left-[6%] lg:top-[38%] lg:w-16",
+    className: "left-[70%] top-[65%] w-8 lg:left-[6%] lg:top-[38%] lg:w-16",
     delay: "6.8s",
   },
 ];
