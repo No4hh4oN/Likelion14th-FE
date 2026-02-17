@@ -1,7 +1,9 @@
 "use client";
 
 import { ChangeEvent, ReactNode, useMemo, useState } from "react";
+import Image from "next/image";
 
+/** 지원 파트 식별자 타입 */
 type PartKey = "front-end" | "back-end" | "ai-ml" | "pm-design";
 
 /** 공통 질문 리스트 */
@@ -11,6 +13,7 @@ const commonQuestions = [
   "팀플 또는 협업에서 가장 중요하다고 생각하는 역량에 대해 작성해 주세요.",
 ];
 
+/** 파트 선택 버튼 라벨 매핑 */
 const partLabels: Record<PartKey, string> = {
   "front-end": "FRONT-END",
   "back-end": "BACK-END",
@@ -42,6 +45,9 @@ const partQuestions: Record<PartKey, string[]> = {
   ],
 };
 
+/**
+ * AI/ML 3번 문항에 표시할 파이썬 코드 원문
+ */
 const aiMlQuestionCode = `class TokenWindowDataset:
     def __init__(self, token_ids, max_len, stride, start = 0):
         self.token_ids = token_ids
@@ -70,6 +76,9 @@ t = TokenWindowDataset(token_ids = [0,1,2,3,4,5,6], max_len=3, stride=2)
 for i in range(len(t)):
     print(t[i], end=" ")`;
 
+/**
+ * 파이썬 키워드 토큰 집합
+ */
 const pythonKeywords = new Set([
   "class",
   "def",
@@ -82,11 +91,22 @@ const pythonKeywords = new Set([
   "break",
 ]);
 
+/**
+ * 파이썬 내장 함수 토큰 집합
+ */
 const pythonBuiltins = new Set(["len", "print"]);
 
+/**
+ * 파이썬 코드 하이라이트 대상 토큰 정규식
+ */
 const pythonHighlightPattern =
   /(\bclass\b|\bdef\b|\breturn\b|\bfor\b|\bin\b|\bwhile\b|\bif\b|\belse\b|\bbreak\b|\bTrue\b|\blen\b|\bprint\b|'[^']*'|"[^"]*"|\d+)/g;
 
+/**
+ * 토큰 종류에 따라 코드 색상 클래스를 반환함.
+ * @param token 하이라이트할 코드 토큰
+ * @returns 토큰에 대응하는 Tailwind 색상 클래스
+ */
 const getPythonTokenClass = (token: string) => {
   if (pythonKeywords.has(token)) return "text-[#C792EA]";
   if (pythonBuiltins.has(token)) return "text-[#82AAFF]";
@@ -96,6 +116,11 @@ const getPythonTokenClass = (token: string) => {
   return "text-[#DCE6FF]";
 };
 
+/**
+ * 파이썬 코드 한 줄을 토큰 단위로 분해해 하이라이트 노드로 변환함.
+ * @param line 렌더링할 코드 한 줄
+ * @returns 하이라이트가 적용된 React 노드 배열
+ */
 const renderPythonLine = (line: string): ReactNode =>
   line.split(pythonHighlightPattern).map((part, index) => {
     if (!part) return null;
@@ -118,9 +143,18 @@ const renderPythonLine = (line: string): ReactNode =>
     );
   });
 
+/**
+ * 질문 개수에 맞는 빈 답변 배열을 생성함.
+ * @param count 생성할 답변 칸 개수
+ * @returns 빈 문자열 배열
+ */
 const createEmptyAnswers = (count: number) =>
   Array.from({ length: count }, () => "");
 
+/**
+ * 파트별 답변 상태의 초기값 객체를 생성함.
+ * @returns 파트 키별 빈 답변 배열 객체
+ */
 const buildInitialPartAnswers = () =>
   (Object.keys(partQuestions) as PartKey[]).reduce(
     (acc, key) => {
@@ -130,25 +164,55 @@ const buildInitialPartAnswers = () =>
     {} as Record<PartKey, string[]>,
   );
 
+/**
+ * 질문 카드 섹션 공통 스타일 클래스
+ */
 const sectionCardClass =
   "rounded-[10px] bg-gray-7 px-3 py-6 shadow-[0_8px_24px_rgba(0,0,0,0.16)] lg:px-7 lg:py-12";
 
+/**
+ * 지원서 작성 페이지 컴포넌트
+ * @returns 지원서 작성 UI
+ */
 export default function ApplyPage() {
+  /**
+   * 공통 질문 답변 상태
+   */
   const [commonAnswers, setCommonAnswers] = useState<string[]>(() =>
     createEmptyAnswers(commonQuestions.length),
   );
+  /**
+   * 현재 선택된 지원 파트 상태
+   */
   const [selectedPart, setSelectedPart] = useState<PartKey>("front-end");
+  /**
+   * 파트별 질문 답변 상태
+   */
   const [partAnswers, setPartAnswers] = useState<Record<PartKey, string[]>>(
     () => buildInitialPartAnswers(),
   );
+  /**
+   * 포트폴리오 URL 입력 상태
+   */
   const [portfolioUrl, setPortfolioUrl] = useState("");
+  /**
+   * 선택된 포트폴리오 파일명 상태
+   */
   const [portfolioFileName, setPortfolioFileName] = useState("");
 
+  /**
+   * 선택된 파트에 해당하는 질문 목록
+   */
   const selectedPartQuestions = useMemo(
     () => partQuestions[selectedPart],
     [selectedPart],
   );
 
+  /**
+   * 공통 질문 답변 값을 갱신함.
+   * @param index 질문 인덱스
+   * @param value 변경된 입력값
+   */
   const onChangeCommonAnswer = (index: number, value: string) => {
     setCommonAnswers((prev) => {
       const next = [...prev];
@@ -157,6 +221,11 @@ export default function ApplyPage() {
     });
   };
 
+  /**
+   * 현재 선택된 파트 질문 답변 값을 갱신함.
+   * @param index 질문 인덱스
+   * @param value 변경된 입력값
+   */
   const onChangePartAnswer = (index: number, value: string) => {
     setPartAnswers((prev) => ({
       ...prev,
@@ -166,6 +235,10 @@ export default function ApplyPage() {
     }));
   };
 
+  /**
+   * 업로드 파일 선택 시 파일명을 상태에 반영함.
+   * @param event 파일 입력 change 이벤트
+   */
   const onSelectPortfolioFile = (event: ChangeEvent<HTMLInputElement>) => {
     setPortfolioFileName(event.target.files?.[0]?.name ?? "");
   };
@@ -187,9 +260,12 @@ export default function ApplyPage() {
             </div>
 
             <div className="order-2 mx-auto w-[170px] sm:w-[210px] lg:order-1 lg:mx-0 lg:w-[260px] lg:shrink-0">
-              <img
+              <Image
                 src="/images/lion-stand-half-gradient-black.png"
                 alt="lion-standing"
+                width={260}
+                height={260}
+                priority
                 className="h-auto w-full object-contain"
               />
             </div>
