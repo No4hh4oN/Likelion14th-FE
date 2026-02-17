@@ -12,7 +12,7 @@ export default function AboutSection() {
         <div className="mt-27.5 lg:mt-80 py-8 px-7 lg:p-7 z-10 relative rounded-[40px] bg-linear-to-b from-[#5B6171] to-[#31353E] max-w-251.75 mx-auto flex flex-col items-center gap-8 lg:flex-row lg:items-stretch lg:gap-19.25">
           <div className="w-24.25 h-24.25 lg:w-71 lg:h-71 relative rounded-full bg-white grid place-items-center text-sm shrink-0">
             <img
-              src="/images/home/AboutSection/logo.png"
+              src="/images/logo.png"
               alt="logo"
               className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full object-cover"
             />
