@@ -107,7 +107,6 @@ const NoticeSection = () => {
                 alt="라이언 아이콘"
                 width={357}
                 height={268}
-                quality={100}
                 sizes="(max-width: 1023px) 76vw, 400px"
                 className="w-[76vw] max-w-[320px] h-auto lg:max-w-[400px] lg:w-[400px] object-contain"
               />
