@@ -1,26 +1,97 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@font-face {
+  font-family: "Pretendard";
+  src: url("/fonts/PretendardVariable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
 }
 
+/* 사용법 -> color: var(--gray-1) */
+:root {
+  --background: #262529;
+  --foreground: #fafafa;
+  --white-1: #fafafa;
+  --gray-1: #f6f8fb;
+  --gray-2: #e1e4ee;
+  --gray-3: #cccfd8;
+  --gray-4: #a8adbe;
+  --gray-5: #828797;
+  --gray-6: #484d5a;
+  --gray-7: #303136;
+  --main-1: #0b7de2;
+  --main-2: #334ebe;
+  --main-3: #ff9b43;
+  --red-1: #fb1d1d;
+  --green-1: #19c524;
+}
+
+/* 사용법 -> ClassName: text-gray-1 */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-white-1: var(--white-1);
+  --color-gray-1: var(--gray-1);
+  --color-gray-2: var(--gray-2);
+  --color-gray-3: var(--gray-3);
+  --color-gray-4: var(--gray-4);
+  --color-gray-5: var(--gray-5);
+  --color-gray-6: var(--gray-6);
+  --color-gray-7: var(--gray-7);
+  --color-main-1: var(--main-1);
+  --color-main-2: var(--main-2);
+  --color-main-3: var(--main-3);
+  --color-red-1: var(--red-1);
+  --color-green-1: var(--green-1);
+  --font-sans: "Pretendard", "Noto Sans KR", Arial, sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* 사용자 OS가 다크 모드일 때 */
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* 스크롤바 숨김 */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+/* 유리 이펙트 스타일 */
+.glass-effect {
+  overflow: hidden;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(10px) saturate(140%) contrast(112%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%) contrast(112%);
+  box-shadow: 0 6px 26px rgba(0, 0, 0, 0.2);
+}
+
+/* float animation */
+@keyframes float-gentle {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -7px, 0);
+  }
+}
+
+.float-gentle {
+  animation-name: float-gentle;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
 }
