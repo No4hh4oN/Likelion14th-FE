@@ -9,7 +9,7 @@ export default function CTASection() {
           </h2>
           <div className="flex mt-0 lg:mt-16.5 ml-7">
             <img
-              src="/images/home/CTASection/Frame 174.png"
+              src="/images/home/CTASection/lion.png"
               alt=""
               className="w-74.75 h-84.25 lg:w-full lg:h-full object-contain"
             />
