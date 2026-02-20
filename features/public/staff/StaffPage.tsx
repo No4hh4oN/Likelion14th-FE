@@ -27,7 +27,7 @@ function PartBadge({
 }) {
   return (
     <span
-      className={`inline-flex items-center text-white-1 rounded-full border-1 lg:border-2 px-2 py-0.75 text-[12px] font-normal leading-none lg:px-4.5 lg:py-2.25 lg:text-[14px] ${
+      className={`inline-flex items-center whitespace-nowrap text-white-1 rounded-full border-1 lg:border-2 px-2 py-0.75 text-[12px] font-normal leading-none lg:px-4.5 lg:py-2.25 lg:text-[14px] ${
         active ? "border-main-1 bg-main-1" : "border-white-1 bg-transparent"
       }`}
     >
@@ -67,12 +67,15 @@ function StaffPreviewCard({
         </div>
 
         <div className="flex flex-col lg:pt-3.25">
-          <div className="flex gap-3">
-            {/* FIXME: 뱃지 여러개 가능한지, 데이터에 따라 보이는거 다르게 가능한지 */}
+          <div className="flex flex-wrap items-center gap-1.75 lg:gap-3">
             {member.mainPart && <PartBadge label={member.mainPart} active />}
-            {member.subParts.map((part) => (
-              <PartBadge key={part} label={part} />
-            ))}
+            {member.subParts.length > 0 && (
+              <div className="flex flex-nowrap gap-1.75 lg:gap-3">
+                {member.subParts.map((part) => (
+                  <PartBadge key={part} label={part} />
+                ))}
+              </div>
+            )}
           </div>
 
           <p className="mt-2 text-[16px] font-bold text-white-1 lg:mt-4.75 lg:text-[22px]">
@@ -274,9 +277,9 @@ export default function StaffPage() {
           const isLeaderPart = part === "LEADER";
 
           return (
-            <div key={part} className="mb-[131px]">
+            <div key={part} className="mb-[32px] lg:mb-[131px]">
               <div className="mx-auto w-full lg:w-[min(1564px,calc(100vw-48px))]">
-                <h2 className="mb-8 text-[32px] font-bold text-white-1 lg:ml-[36px] lg:mb-[21px] lg:text-[32px]">
+                <h2 className="mb-2.5 text-[16px] font-bold text-white-1 lg:ml-[36px] lg:mb-[21px] lg:text-[32px]">
                   {part}
                 </h2>
                 <div
