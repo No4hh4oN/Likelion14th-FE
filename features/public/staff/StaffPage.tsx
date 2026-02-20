@@ -251,7 +251,7 @@ function StaffDetailModal({
             />
             <span className="text-center text-[14px] font-medium text-white-1 lg:text-[24px]">
               <span className="hidden lg:inline break-normal whitespace-normal">
-                {member.quote}
+                {member.quoteMobile ?? member.quote}
               </span>
               <span
                 className="lg:hidden whitespace-pre-line break-words whitespace-normal"
@@ -285,13 +285,29 @@ export default function StaffPage() {
   );
 
   return (
-    <section className="bg-background py-8 lg:py-20">
+    <section className="bg-background py-8 lg:py-30.75">
       <div className="mx-auto w-full px-6">
+        <div className="flex flex-col text-center gap-4.75 mb-8.75 lg:mb-21.5 lg:gap-10.25 text-white-1 leading-[1.27]">
+          <h2 className="font-bold text-[22px] lg:text-[40px]">
+            Management Team
+          </h2>
+          <p className="font-medium text-[16px] lg:text-[24px]">
+            <span className="hidden lg:inline">
+              멋쟁이 사자처럼 삼육대학교의{" "}
+              <span className="text-main-3">14기 운영진</span>을 소개합니다.
+            </span>
+            <span className="lg:hidden">
+              멋쟁이 사자처럼 삼육대학교의
+              <br />
+              <span className="text-main-3">14기 운영진</span>을 소개합니다.
+            </span>
+          </p>
+        </div>
         {StaffParts.map((part) => {
           const isLeaderPart = part === "LEADER";
 
           return (
-            <div key={part} className="mb-[32px] lg:mb-[131px]">
+            <div key={part} className="mb-8 lg:mb-32.75">
               <div className="mx-auto w-full lg:w-[min(1564px,calc(100vw-48px))]">
                 <h2 className="mb-2.5 ml-2.5 text-[16px] font-bold text-white-1 lg:ml-[36px] lg:mb-[21px] lg:text-[32px]">
                   {part}
