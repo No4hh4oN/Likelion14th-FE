@@ -270,30 +270,42 @@ export default function StaffPage() {
   return (
     <section className="bg-background py-8 lg:py-20">
       <div className="mx-auto w-full px-6">
-        {StaffParts.map((part) => (
-          <div key={part} className="mb-[131px]">
-            <div className="mx-auto w-full lg:w-[min(1564px,calc(100vw-48px))]">
-              <h2 className="mb-8 text-[32px] font-bold text-white-1 lg:ml-[36px] lg:mb-[21px] lg:text-[32px]">
-                {part}
-              </h2>
-              <div className="flex flex-col gap-[20px] lg:flex-row lg:flex-nowrap lg:justify-center">
-                {STAFF_MEMBERS.filter(
-                  (member) => member.teamLabel === part,
-                ).map((member) => (
-                  <div
-                    key={member.contact}
-                    className="w-full lg:w-[min(508px,calc((100vw-88px)/3))]"
-                  >
-                    <StaffPreviewCard
-                      member={member}
-                      onClick={() => setSelectedMember(member)}
-                    />
-                  </div>
-                ))}
+        {StaffParts.map((part) => {
+          const isLeaderPart = part === "LEADER";
+
+          return (
+            <div key={part} className="mb-[131px]">
+              <div className="mx-auto w-full lg:w-[min(1564px,calc(100vw-48px))]">
+                <h2 className="mb-8 text-[32px] font-bold text-white-1 lg:ml-[36px] lg:mb-[21px] lg:text-[32px]">
+                  {part}
+                </h2>
+                <div
+                  className={`flex flex-col gap-[20px] lg:flex-row lg:flex-nowrap ${
+                    isLeaderPart ? "lg:justify-start" : "lg:justify-center"
+                  }`}
+                >
+                  {STAFF_MEMBERS.filter(
+                    (member) => member.teamLabel === part,
+                  ).map((member) => (
+                    <div
+                      key={member.contact}
+                      className={`w-full ${
+                        isLeaderPart
+                          ? "lg:w-[min(580px,calc(100vw-48px))]"
+                          : "lg:w-[min(508px,calc((100vw-88px)/3))]"
+                      }`}
+                    >
+                      <StaffPreviewCard
+                        member={member}
+                        onClick={() => setSelectedMember(member)}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {selectedMember && (
