@@ -11,6 +11,7 @@ export type StaffMember = {
   career: string[];
   projects?: string[];
   quote: string;
+  quoteMobile?: string;
   imageSrc: string;
 };
 
@@ -94,6 +95,7 @@ export const STAFF_MEMBERS: StaffMember[] = [
       "멋쟁이사자처럼 at SYU 14th 홈페이지 제작",
     ],
     quote: "Design과 Death의 앞글자가 같은 건 우연일까요?",
+    quoteMobile: "Design과 Death의\n앞글자가 같은 건 우연일까요?",
     imageSrc: "/images/staff/윤혜원.png",
   },
   {

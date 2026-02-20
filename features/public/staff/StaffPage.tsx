@@ -141,7 +141,7 @@ function StaffDetailModal({
       role="presentation"
     >
       <div
-        className="relative mx-auto h-full w-full max-w-[876px] overflow-y-auto rounded-[10px] bg-gray-7 p-4 text-white-1 lg:h-auto lg:max-h-[90vh] lg:p-10"
+        className="relative mx-auto h-auto w-full max-w-[876px] overflow-y-auto rounded-[10px] bg-gray-7 p-4 text-white-1 lg:h-auto lg:max-h-[90vh] lg:p-10"
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -149,12 +149,12 @@ function StaffDetailModal({
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 flex-wrap items-center gap-2 lg:gap-3">
-            <p className="text-[36px] mr-2 font-semibold leading-none">
+            <p className="text-[18px] lg:text-[36px] mr-2 font-semibold leading-none">
               {member.desktopTitle}
             </p>
 
             {member.mainPart && <PartBadge label={member.mainPart} active />}
-            <div className="hidden items-center gap-2 lg:flex">
+            <div className="flex items-center gap-2">
               {member.subParts.map((part) => (
                 <PartBadge key={part} label={part} />
               ))}
@@ -177,46 +177,48 @@ function StaffDetailModal({
         </button>
 
         <div className="mt-5 grid gap-5 lg:mt-8 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-12">
-          <div className="flex flex-col items-center">
-            <div className="relative h-[126px] w-[106px] overflow-hidden rounded-[5px] lg:h-[243px] lg:w-[204px]">
+          <div className="flex lg:flex-col items-center">
+            <div className="relative h-[127px] w-[90px] overflow-hidden rounded-[5px] lg:h-[243px] lg:w-[204px]">
               <Image
                 src={member.imageSrc}
                 alt={`${member.name} 사진`}
                 fill
-                sizes="(min-width: 1024px) 170px, 106px"
+                sizes="(min-width: 1024px) 204px, 90px"
                 quality={100}
                 className="object-cover"
               />
             </div>
 
-            <div className="lg:mt-[11px] lg:text-center">
-              <p className="text-[32px] font-bold leading-none lg:text-[32px]">
+            <div className="ml-[15px] mt-0 lg:ml-0 leading-[1.27] lg:mt-[11px] lg:text-center">
+              <p className="text-[16px] font-bold lg:text-[32px]">
                 {member.name}
               </p>
-              <p className="text-[14px] font-light lg:mt-[6px] lg:text-[20px]">
+              <p className="mt-[8px] text-[14px] font-light lg:mt-[6px] lg:text-[20px]">
                 {member.studentInfo}
               </p>
-              <div className="mt-3 hidden text-[16px] text-light text-gray-3 leading-[1.27] lg:mt-[22px] lg:block lg:text-[18px]">
+              <div className="mt-3 text-[12px] text-light text-gray-3 lg:mt-[22px] lg:text-[18px]">
                 {member.majors &&
                   member.majors.map((major) => <p key={major}>{major}</p>)}
               </div>
             </div>
           </div>
 
-          <div className="leading-[1.27] space-y-6.5">
+          <div className="leading-[1.27] space-y-3 lg:space-y-6.5">
             <section>
-              <h3 className="text-[32px] font-bold lg:text-[24px]">Connect</h3>
+              <h3 className="mt-1.5 text-[16px] font-bold lg:mt-0 lg:text-[24px]">
+                Connect
+              </h3>
               <a
                 href={`mailto:${member.contact}`}
-                className="mt-2 inline-block text-[16px] text-gray-3 underline decoration-gray-3 underline-offset-2 lg:mt-1.75 lg:text-[20px]"
+                className="mt-1.25 ml-2.5 inline-block text-[14px] text-gray-3 underline decoration-gray-3 underline-offset-1 lg:underline-offset-2 lg:mt-1.75 lg:ml-0 lg:text-[20px]"
               >
                 {member.contact}
               </a>
             </section>
 
             <section>
-              <h3 className="text-[32px] font-bold lg:text-[24px]">Career</h3>
-              <ul className="mt-2 leading-normal text-[14px] text-light text-gray-2 lg:mt-2 lg:text-[20px]">
+              <h3 className="text-[16px] font-bold lg:text-[24px]">Career</h3>
+              <ul className="mt-1.25 ml-2.5 leading-normal text-[14px] text-light text-gray-2 lg:mt-2 lg:ml-0 lg:text-[20px]">
                 {member.career.map((item) => (
                   <li key={item}>{item}</li>
                 ))}
@@ -224,10 +226,14 @@ function StaffDetailModal({
             </section>
 
             <section>
-              <h3 className="text-[32px] font-bold lg:text-[24px]">Project</h3>
-              <ul className="leading-normal text-[14px] text-gray-3 text-light lg:mt-2 lg:text-[20px]">
+              <h3 className="text-[16px] font-bold lg:text-[24px]">Project</h3>
+              <ul className="mt-1.25 ml-2.5 leading-normal text-[14px] text-gray-3 text-light lg:mt-2 lg:ml-0 lg:text-[20px]">
                 {member.projects &&
-                  member.projects.map((item) => <li key={item}>{item}</li>)}
+                  member.projects.map((item) => (
+                    <li key={item} className="break-keep">
+                      {item}
+                    </li>
+                  ))}
               </ul>
             </section>
           </div>
@@ -240,18 +246,26 @@ function StaffDetailModal({
               alt='"'
               width={33}
               height={25}
-              className="h-6.25 w-8.25 self-start"
+              className="h-3 lg:h-6.25 w-4 lg:w-8.25 self-start"
               aria-hidden="true"
             />
-            <span className="text-center text-[16px] font-medium text-white-1 lg:text-[24px]">
-              {member.quote}
+            <span className="text-center text-[14px] font-medium text-white-1 lg:text-[24px]">
+              <span className="hidden lg:inline break-normal whitespace-normal">
+                {member.quote}
+              </span>
+              <span
+                className="lg:hidden whitespace-pre-line break-words whitespace-normal"
+                aria-hidden="true"
+              >
+                {member.quoteMobile ?? member.quote}
+              </span>
             </span>
             <Image
               src="/icons/double-quotes.svg"
               alt='"'
               width={33}
               height={25}
-              className="h-6.25 w-8.25 rotate-180 self-end"
+              className="h-3 lg:h-6.25 w-4 lg:w-8.25 rotate-180 self-end"
               aria-hidden="true"
             />
           </div>
@@ -279,7 +293,7 @@ export default function StaffPage() {
           return (
             <div key={part} className="mb-[32px] lg:mb-[131px]">
               <div className="mx-auto w-full lg:w-[min(1564px,calc(100vw-48px))]">
-                <h2 className="mb-2.5 text-[16px] font-bold text-white-1 lg:ml-[36px] lg:mb-[21px] lg:text-[32px]">
+                <h2 className="mb-2.5 ml-2.5 text-[16px] font-bold text-white-1 lg:ml-[36px] lg:mb-[21px] lg:text-[32px]">
                   {part}
                 </h2>
                 <div
