@@ -29,7 +29,7 @@ export default function ActionButton({
       onClick={onClick}
       disabled={disabled}
       className={clsx(
-        "rounded-[5px] bg-gray-6 text-[16px] px-6 py-1.75 font-medium text-white-1 transition-colors hover:bg-gray-5",
+        "rounded-[5px] bg-gray-6 text-[16px] px-7 py-1.75 font-normal text-white-1 transition-colors hover:bg-gray-5",
         className,
       )}
     >
