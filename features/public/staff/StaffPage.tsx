@@ -133,12 +133,12 @@ function StaffDetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-[80] bg-black/60 p-3 lg:p-8"
+      className="fixed inset-0 z-[80] bg-black/30 p-3 lg:p-8"
       onClick={onClose}
       role="presentation"
     >
       <div
-        className="mx-auto h-full w-full max-w-[1120px] overflow-y-auto rounded-[18px] bg-[#323741] p-4 text-white lg:h-auto lg:max-h-[90vh] lg:rounded-[20px] lg:px-8 lg:py-7"
+        className="relative mx-auto h-full w-full max-w-[876px] overflow-y-auto rounded-[10px] bg-gray-7 p-4 text-white-1 lg:h-auto lg:max-h-[90vh] lg:p-10"
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -146,11 +146,8 @@ function StaffDetailModal({
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 flex-wrap items-center gap-2 lg:gap-3">
-            <p className="hidden text-[50px] font-extrabold leading-none lg:block">
+            <p className="text-[36px] mr-2 font-semibold leading-none">
               {member.desktopTitle}
-            </p>
-            <p className="text-[34px] font-bold leading-none lg:hidden">
-              {member.teamLabel}
             </p>
 
             {member.mainPart && <PartBadge label={member.mainPart} active />}
@@ -160,22 +157,25 @@ function StaffDetailModal({
               ))}
             </div>
           </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="h-9 w-9 rounded-full text-white/65 transition-colors hover:text-white"
-            aria-label="모달 닫기"
-          >
-            <span className="text-[28px] leading-none" aria-hidden="true">
-              ×
-            </span>
-          </button>
         </div>
 
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-2 top-0 h-9 w-9 text-gray-6 transition-colors hover:text-gray-5 lg:right-3 lg:top-1"
+          aria-label="모달 닫기"
+        >
+          <span
+            className="text-[50px] font-extralight leading-none"
+            aria-hidden="true"
+          >
+            ×
+          </span>
+        </button>
+
         <div className="mt-5 grid gap-5 lg:mt-8 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-12">
-          <div className="flex gap-3 lg:block">
-            <div className="relative h-[126px] w-[106px] overflow-hidden rounded-[8px] lg:h-[280px] lg:w-[170px] lg:rounded-[10px]">
+          <div className="flex flex-col items-center">
+            <div className="relative h-[126px] w-[106px] overflow-hidden rounded-[5px] lg:h-[243px] lg:w-[204px]">
               <Image
                 src={member.imageSrc}
                 alt={`${member.name} 사진`}
@@ -186,38 +186,34 @@ function StaffDetailModal({
               />
             </div>
 
-            <div className="pt-1 lg:pt-4 lg:text-center">
-              <p className="text-[32px] font-bold leading-none lg:text-[52px]">
+            <div className="lg:mt-[11px] lg:text-center">
+              <p className="text-[32px] font-bold leading-none lg:text-[32px]">
                 {member.name}
               </p>
-              <p className="mt-1 text-[14px] font-semibold text-white/90 lg:text-[34px]">
+              <p className="text-[14px] font-light lg:mt-[6px] lg:text-[20px]">
                 {member.studentInfo}
               </p>
-              <div className="mt-3 hidden space-y-1 text-[16px] text-gray-3 lg:block">
+              <div className="mt-3 hidden text-[16px] text-light text-gray-3 leading-[1.27] lg:mt-[22px] lg:block lg:text-[18px]">
                 {member.majors &&
                   member.majors.map((major) => <p key={major}>{major}</p>)}
               </div>
             </div>
           </div>
 
-          <div className="space-y-5 lg:space-y-7">
+          <div className="leading-[1.27] space-y-6.5">
             <section>
-              <h3 className="text-[32px] font-bold leading-none lg:text-[48px]">
-                Connect
-              </h3>
+              <h3 className="text-[32px] font-bold lg:text-[24px]">Connect</h3>
               <a
                 href={`mailto:${member.contact}`}
-                className="mt-2 block text-[16px] text-gray-2 underline decoration-gray-2/60 underline-offset-4 lg:mt-3 lg:text-[34px]"
+                className="mt-2 inline-block text-[16px] text-gray-3 underline decoration-gray-3 underline-offset-2 lg:mt-1.75 lg:text-[20px]"
               >
                 {member.contact}
               </a>
             </section>
 
             <section>
-              <h3 className="text-[32px] font-bold leading-none lg:text-[48px]">
-                Career
-              </h3>
-              <ul className="mt-2 space-y-1 text-[14px] text-gray-2 lg:mt-3 lg:text-[38px]">
+              <h3 className="text-[32px] font-bold lg:text-[24px]">Career</h3>
+              <ul className="mt-2 leading-normal text-[14px] text-light text-gray-2 lg:mt-2 lg:text-[20px]">
                 {member.career.map((item) => (
                   <li key={item}>{item}</li>
                 ))}
@@ -225,37 +221,34 @@ function StaffDetailModal({
             </section>
 
             <section>
-              <h3 className="text-[32px] font-bold leading-none lg:text-[48px]">
-                Project
-              </h3>
-              <ul className="mt-2 space-y-1 text-[14px] text-gray-2 lg:mt-3 lg:text-[38px]">
-                {member.projects.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
+              <h3 className="text-[32px] font-bold lg:text-[24px]">Project</h3>
+              <ul className="leading-normal text-[14px] text-gray-3 text-light lg:mt-2 lg:text-[20px]">
+                {member.projects &&
+                  member.projects.map((item) => <li key={item}>{item}</li>)}
               </ul>
             </section>
           </div>
         </div>
 
-        <div className="mt-6 rounded-[8px] bg-[#60687B] px-3 py-2.5 text-center lg:mt-8 lg:rounded-[12px] lg:px-6 lg:py-3.5">
-          <div className="flex items-stretch justify-between text-white/45">
+        <div className="mt-6 rounded-[10px] bg-gray-6 px-3 py-2.5 text-center lg:mt-13 lg:px-4.25 lg:py-3.5">
+          <div className="flex items-stretch justify-between text-white-1">
             <Image
               src="/icons/double-quotes.svg"
-              alt=""
+              alt='"'
               width={33}
               height={25}
-              className="h-[25px] w-[33px] self-start opacity-70"
+              className="h-6.25 w-8.25 self-start"
               aria-hidden="true"
             />
-            <span className="flex-1 text-center text-[16px] font-semibold text-white lg:text-[44px]">
+            <span className="text-center text-[16px] font-medium text-white-1 lg:text-[24px]">
               {member.quote}
             </span>
             <Image
               src="/icons/double-quotes.svg"
-              alt=""
+              alt='"'
               width={33}
               height={25}
-              className="h-[25px] w-[33px] rotate-180 self-end opacity-70"
+              className="h-6.25 w-8.25 rotate-180 self-end"
               aria-hidden="true"
             />
           </div>
