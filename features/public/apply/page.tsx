@@ -1,17 +1,16 @@
 "use client";
 
-import { ChangeEvent, ReactNode, useMemo, useState } from "react";
+import { ChangeEvent, ReactNode, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { getActiveRecruitment, getDocumentQuestions } from "./api";
+import type {
+  ActiveRecruitmentResponse,
+  ApplyPageStatus,
+  DocumentQuestionCategory,
+} from "./types";
 
 /** 지원 파트 식별자 타입 */
 type PartKey = "front-end" | "back-end" | "ai-ml" | "pm-design";
-
-/** 공통 질문 리스트 */
-const commonQuestions = [
-  "멋쟁이사자처럼에 지원하게 된 동기를 작성해 주세요.",
-  "멋쟁이사자처럼 활동을 통해 이루고 싶은 목표를 작성해 주세요.",
-  "팀플 또는 협업에서 가장 중요하다고 생각하는 역량에 대해 작성해 주세요.",
-];
 
 /** 파트 선택 버튼 라벨 매핑 */
 const partLabels: Record<PartKey, string> = {
@@ -21,28 +20,21 @@ const partLabels: Record<PartKey, string> = {
   "pm-design": "PM / DESIGN",
 };
 
-/** 파트별 질문 리스트 */
-const partQuestions: Record<PartKey, string[]> = {
-  "front-end": [
-    "프론트엔드 트랙에 지원하게 된 동기를 작성해주세요.",
-    "본인의 개발 경험에 대해 소개해 주세요. (사용 가능한 언어 / 관심있는 기술스택 / 프로젝트 경험 등)",
-    "평소 사용하는 웹에서 ‘주문하기’ 버튼을 눌렀는데, 버튼이 잠깐 로딩되다가 “실패했습니다”라고 떴습니다. 그런데 새로고침해보니 실제로는 처리가 완료되어 주문이 들어가 있었습니다. 이런 현상이 프론트엔드 관점에서 왜 발생할 수 있는지 원인을 자유롭게 추측해 보고, 본인이 프론트엔드라면 UI/UX를 어떻게 설계할지 논리를 설명해 주세요.",
-  ],
-  "back-end": [
-    "백엔드 트랙에 지원하게 된 동기를 작성해주세요.",
-    "본인의 개발 경험에 대해 소개해 주세요. (사용 가능한 언어 / 관심있는 기술스택 / 프로젝트 경험 등) ",
-    "평소 사용하는 앱에서 버튼을 눌렀는데, 내 화면에는 ‘오류가 발생했다’고 떴지만 실제로는 ‘정상 처리’가 되어버리는 상황이 생겼습니다. (예: 결제 실패라고 떴는데 돈이 빠져나감) 이런 문제가 구체적으로 왜 발생했는지 그 원인을 자유롭게 추측해 보고, 이처럼 두 정보가 서로 다를 때 시스템은 결국 ‘화면’과 ‘기록’ 중 무엇을 기준으로 판단해야 할지 본인의 논리를 설명해 주세요.",
-  ],
-  "ai-ml": [
-    "AI/ML 트랙에 지원하게 된 동기를 작성해주세요.",
-    "본인의 개발 경험에 대해 소개해 주세요. (사용 가능한 언어 / 관심있는 기술스택 / 프로젝트 경험 등) ",
-    "아래 코드의 개선 방안을 자유롭게 이야기 해주세요. ",
-  ],
-  "pm-design": [
-    "디자인 트랙에 지원하게 된 동기를 작성해주세요.",
-    "기획/디자인 파트에서의 활동이 본인에게 어떤 도움이 되기를 기대하는지, 앞으로 얻고 싶은 가치와 함께 구체적으로 작성해 주세요.",
-    "본인이 잘 디자인되었다고 생각하는 서비스를 소개하고, 그렇게 생각하는 이유를 작성해 주세요.",
-  ],
+const categoryToPartKey: Record<
+  Exclude<DocumentQuestionCategory, "COMMON">,
+  PartKey
+> = {
+  FRONTEND: "front-end",
+  BACKEND: "back-end",
+  AI_ML: "ai-ml",
+  PM_DESIGN: "pm-design",
+};
+
+const emptyPartQuestions: Record<PartKey, string[]> = {
+  "front-end": [],
+  "back-end": [],
+  "ai-ml": [],
+  "pm-design": [],
 };
 
 /**
@@ -152,19 +144,6 @@ const createEmptyAnswers = (count: number) =>
   Array.from({ length: count }, () => "");
 
 /**
- * 파트별 답변 상태의 초기값 객체를 생성함.
- * @returns 파트 키별 빈 답변 배열 객체
- */
-const buildInitialPartAnswers = () =>
-  (Object.keys(partQuestions) as PartKey[]).reduce(
-    (acc, key) => {
-      acc[key] = createEmptyAnswers(partQuestions[key].length);
-      return acc;
-    },
-    {} as Record<PartKey, string[]>,
-  );
-
-/**
  * 질문 카드 섹션 공통 스타일 클래스
  */
 const sectionCardClass =
@@ -178,9 +157,7 @@ export default function ApplyPage() {
   /**
    * 공통 질문 답변 상태
    */
-  const [commonAnswers, setCommonAnswers] = useState<string[]>(() =>
-    createEmptyAnswers(commonQuestions.length),
-  );
+  const [commonAnswers, setCommonAnswers] = useState<string[]>([]);
   /**
    * 현재 선택된 지원 파트 상태
    */
@@ -188,9 +165,8 @@ export default function ApplyPage() {
   /**
    * 파트별 질문 답변 상태
    */
-  const [partAnswers, setPartAnswers] = useState<Record<PartKey, string[]>>(
-    () => buildInitialPartAnswers(),
-  );
+  const [partAnswers, setPartAnswers] =
+    useState<Record<PartKey, string[]>>(emptyPartQuestions);
   /**
    * 포트폴리오 URL 입력 상태
    */
@@ -199,14 +175,130 @@ export default function ApplyPage() {
    * 선택된 포트폴리오 파일명 상태
    */
   const [portfolioFileName, setPortfolioFileName] = useState("");
-
-  /**
-   * 선택된 파트에 해당하는 질문 목록
-   */
+  const [activeRecruitment, setActiveRecruitment] =
+    useState<ActiveRecruitmentResponse | null>(null);
+  const [pageStatus, setPageStatus] = useState<ApplyPageStatus>("loading");
+  const [loadErrorMessage, setLoadErrorMessage] = useState("");
+  const [apiCommonQuestions, setApiCommonQuestions] = useState<string[]>([]);
+  const [apiPartQuestionMap, setApiPartQuestionMap] =
+    useState<Record<PartKey, string[]>>(emptyPartQuestions);
+  const resolvedCommonQuestions = apiCommonQuestions;
   const selectedPartQuestions = useMemo(
-    () => partQuestions[selectedPart],
-    [selectedPart],
+    () => apiPartQuestionMap[selectedPart] ?? [],
+    [apiPartQuestionMap, selectedPart],
   );
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadActiveRecruitment = async () => {
+      setPageStatus("loading");
+      setLoadErrorMessage("");
+
+      try {
+        const recruitment = await getActiveRecruitment();
+        if (!isMounted) {
+          return;
+        }
+
+        if (!recruitment) {
+          setActiveRecruitment(null);
+          setPageStatus("empty");
+          return;
+        }
+
+        setActiveRecruitment(recruitment);
+
+        const start = Date.parse(recruitment.startAt);
+        const end = Date.parse(recruitment.endAt);
+        const now = Date.now();
+
+        if (Number.isFinite(start) && Number.isFinite(end)) {
+          if (now < start || now > end) {
+            setPageStatus("closed");
+            return;
+          }
+        }
+
+        const questionResponse = await getDocumentQuestions(
+          recruitment.recruitmentId,
+        );
+        if (!isMounted) {
+          return;
+        }
+
+        const sortedQuestions = [...questionResponse.questions].sort(
+          (a, b) => a.order - b.order,
+        );
+
+        const commonQuestionContents = sortedQuestions
+          .filter((question) => question.category === "COMMON")
+          .map((question) => question.content);
+
+        const groupedPartQuestions: Record<PartKey, string[]> = {
+          "front-end": [],
+          "back-end": [],
+          "ai-ml": [],
+          "pm-design": [],
+        };
+
+        sortedQuestions
+          .filter((question) => question.category !== "COMMON")
+          .forEach((question) => {
+            const uiPart =
+              categoryToPartKey[
+                question.category as Exclude<DocumentQuestionCategory, "COMMON">
+              ];
+
+            if (!uiPart) {
+              return;
+            }
+
+            groupedPartQuestions[uiPart].push(question.content);
+          });
+
+        const firstPartWithQuestions =
+          (Object.keys(groupedPartQuestions) as PartKey[]).find(
+            (part) => groupedPartQuestions[part].length > 0,
+          ) ?? "front-end";
+
+        const normalizedCommonQuestions = commonQuestionContents;
+
+        setSelectedPart(firstPartWithQuestions);
+        setApiCommonQuestions(normalizedCommonQuestions);
+        setApiPartQuestionMap(groupedPartQuestions);
+        setCommonAnswers(createEmptyAnswers(normalizedCommonQuestions.length));
+        setPartAnswers({
+          "front-end": createEmptyAnswers(
+            groupedPartQuestions["front-end"].length,
+          ),
+          "back-end": createEmptyAnswers(
+            groupedPartQuestions["back-end"].length,
+          ),
+          "ai-ml": createEmptyAnswers(groupedPartQuestions["ai-ml"].length),
+          "pm-design": createEmptyAnswers(
+            groupedPartQuestions["pm-design"].length,
+          ),
+        });
+
+        setPageStatus("ready");
+      } catch {
+        if (!isMounted) {
+          return;
+        }
+        setPageStatus("error");
+        setLoadErrorMessage(
+          "모집 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.",
+        );
+      }
+    };
+
+    void loadActiveRecruitment();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   /**
    * 공통 질문 답변 값을 갱신함.
@@ -243,6 +335,60 @@ export default function ApplyPage() {
     setPortfolioFileName(event.target.files?.[0]?.name ?? "");
   };
 
+  const formatDateTime = (value: string) => {
+    const parsed = Date.parse(value);
+    if (!Number.isFinite(parsed)) {
+      return value;
+    }
+    return new Date(parsed).toLocaleString("ko-KR", { hour12: false });
+  };
+
+  if (pageStatus === "loading") {
+    return (
+      <section className="bg-background px-4 py-20 text-white lg:px-6">
+        <div className="mx-auto max-w-290 rounded-[10px] bg-gray-7 px-6 py-12 text-center">
+          모집 정보를 불러오는 중입니다.
+        </div>
+      </section>
+    );
+  }
+
+  if (pageStatus === "empty") {
+    return (
+      <section className="bg-background px-4 py-20 text-white lg:px-6">
+        <div className="mx-auto max-w-290 rounded-[10px] bg-gray-7 px-6 py-12 text-center">
+          현재 진행중인 모집이 없습니다.
+        </div>
+      </section>
+    );
+  }
+
+  if (pageStatus === "error") {
+    return (
+      <section className="bg-background px-4 py-20 text-white lg:px-6">
+        <div className="mx-auto max-w-290 rounded-[10px] bg-gray-7 px-6 py-12 text-center">
+          {loadErrorMessage}
+        </div>
+      </section>
+    );
+  }
+
+  if (pageStatus === "closed") {
+    return (
+      <section className="bg-background px-4 py-20 text-white lg:px-6">
+        <div className="mx-auto max-w-290 rounded-[10px] bg-gray-7 px-6 py-12 text-center">
+          <p>현재는 지원 기간이 아닙니다.</p>
+          {activeRecruitment && (
+            <p className="mt-3 text-sm text-gray-4">
+              모집 기간: {formatDateTime(activeRecruitment.startAt)} ~{" "}
+              {formatDateTime(activeRecruitment.endAt)}
+            </p>
+          )}
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="bg-background px-4 py-9 text-white lg:px-6 lg:py-16">
       <div className="mx-auto w-full max-w-290">
@@ -277,7 +423,7 @@ export default function ApplyPage() {
             공통 질문
           </h2>
           <div className="mt-[37px] space-y-[16px] lg:mt-[65px] lg:space-y-[12px]">
-            {commonQuestions.map((question, index) => (
+            {resolvedCommonQuestions.map((question, index) => (
               <div key={question} className="space-y-[10px] lg:space-y-[22px]">
                 <p className="text-[16px] font-medium lg:text-[22px]">
                   Q. {question}
@@ -313,11 +459,11 @@ export default function ApplyPage() {
                     key={part}
                     type="button"
                     onClick={() => setSelectedPart(part)}
-                    className={`rounded-full cursor-pointer px-[17px] py-[8px] lg:px-[57px] lg:py-[14px] text-[14px] font-bold lg:min-w-[130px] lg:text-[28px] ${
+                    className={`rounded-full px-[17px] py-[8px] lg:px-[57px] lg:py-[14px] text-[14px] font-bold lg:min-w-[130px] lg:text-[28px] ${
                       selected
                         ? "bg-main-1 text-white-1"
                         : "bg-white-1 text-gray-4 hover:bg-gray-2"
-                    }`}
+                    } cursor-pointer`}
                   >
                     {partLabels[part]}
                   </button>
