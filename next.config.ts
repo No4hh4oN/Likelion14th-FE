@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
         destination: `${backendBaseUrl}/api/:path*`,
       },
     ];
+  },
   images: {
     qualities: [75, 90, 100],
   },
