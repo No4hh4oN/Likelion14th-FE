@@ -1,4 +1,5 @@
-import Image from "next/image";
+﻿import Image from "next/image";
+import Link from "next/link";
 
 /**
  * 배경에 배치할 스파클 좌표/크기/펄스 지연값.
@@ -200,12 +201,9 @@ export default function HeroSection() {
               </p>
             </div>
 
-            <button
-              type="button"
-              className="rounded-full bg-main-3 z-30 px-7 py-3.5 text-[24px] font-bold text-white transition-transform duration-300 cursor-pointer hover:translate-y-[-3px] lg:px-[72px] lg:py-4 lg:text-[36px]"
-            >
+            <Link href="/14/apply" className="rounded-full bg-main-3 z-30 px-7 py-3.5 text-[24px] font-bold text-white transition-transform duration-300 cursor-pointer hover:translate-y-[-3px] lg:px-[72px] lg:py-4 lg:text-[36px]">
               14기 지원하기
-            </button>
+            </Link>
             <p className="mt-[-9px] text-[16px] text-gray-3 font-normal lg:hidden">
               지원 마감까지{" "}
               <span className="text-main-3 font-bold">FIXME:날짜</span>
@@ -230,3 +228,6 @@ export default function HeroSection() {
     </section>
   );
 }
+
+
+

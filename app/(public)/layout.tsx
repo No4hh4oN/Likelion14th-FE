@@ -1,20 +1,25 @@
 // app/(public)/layout.tsx
 import type { Metadata } from 'next'
+import localFont from 'next/font/local'
 import '@/styles/globals.css'
+import Header from "@/components/layout/Header"
 
 export const metadata: Metadata = {
   title: '삼육멋사14기',
   description: '멋쟁이사자처럼 14기 사이트',
 }
 
-export default function PublicLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+const pretendard = localFont({
+  src: '../../public/fonts/PretendardVariable.woff2',
+  variable: '--font-pretendard',
+  display: 'swap',
+})
+
+export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko">
+    <html lang="ko" className={pretendard.variable}>
       <body>
+        <Header />
         <main>{children}</main>
       </body>
     </html>
