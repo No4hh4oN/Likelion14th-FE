@@ -62,7 +62,7 @@ export default function Header() {
 
     return (
         <>
-            <header className="w-full bg-[#262529]">
+            <header className="fixed top-0 w-full bg-[#262529] z-30">
                 <div className="mx-auto flex h-16 w-full max-w-[1168px] items-center justify-between px-4">
                     <Link href="/" className="flex items-center">
                         <Image

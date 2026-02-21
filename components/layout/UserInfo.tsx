@@ -11,6 +11,23 @@ type UserInfoProps = {
     onLoggedOut?: () => void
 }
 
+function getRoleLabel(role?: string): string {
+    if (!role) {
+        return "게스트"
+    }
+
+    switch (role) {
+        case "STAFF":
+            return "운영진"
+        case "BABY_LION":
+            return "아기사자"
+        case "OUTSIDER":
+            return "게스트"
+        default:
+            return role
+    }
+}
+
 export default function UserInfo({
     name,
     generation,
@@ -20,9 +37,10 @@ export default function UserInfo({
 }: UserInfoProps) {
     const [isLoggingOut, setIsLoggingOut] = useState(false)
 
+    const roleLabel = getRoleLabel(role)
     const generationRoleText =
-        generation !== undefined && role ? `${generation}기 ${role}` : role ?? "무소속"
-    const trackText = track ?? "무소속"
+        generation !== undefined ? `${generation}기 ${roleLabel}` : roleLabel
+    const trackText = track ?? ""
 
     const handleLogout = async () => {
         if (isLoggingOut) {
