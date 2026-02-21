@@ -1,6 +1,6 @@
 export default function AboutSection() {
   return (
-    <div className="bg-background">
+    <section id="about" className="bg-background scroll-mt-24">
       <div className="px-4.75 relative flex flex-col">
         <h2 className="font-bold text-[22px] lg:text-5xl mx-auto">ABOUT</h2>
         <img
@@ -46,6 +46,6 @@ export default function AboutSection() {
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

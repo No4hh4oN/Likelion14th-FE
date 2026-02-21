@@ -4,6 +4,7 @@ import Image from "next/image"
 import type { MouseEvent, ReactNode } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useEffect, useState } from "react"
 
 type SidebarProps = {
     isOpen: boolean
@@ -13,16 +14,64 @@ type SidebarProps = {
 
 export default function Sidebar({ isOpen, onClose, authSection }: SidebarProps) {
     const pathname = usePathname()
+    const [currentHash, setCurrentHash] = useState("")
+    const [isAboutActiveByScroll, setIsAboutActiveByScroll] = useState(false)
     const menus = [
         { label: "Main", href: "/" },
-        { label: "About", href: "/about" },
+        { label: "About", href: "/#about" },
         { label: "FAQ", href: "/faq" },
-        { label: "Archive", href: "/archive" },
     ] as const
 
-    const activeIndex = menus.findIndex((menu) =>
-        menu.href === "/" ? pathname === "/" : pathname.startsWith(menu.href),
-    )
+    useEffect(() => {
+        const syncHash = () => {
+            setCurrentHash(window.location.hash)
+        }
+
+        syncHash()
+        window.addEventListener("hashchange", syncHash)
+        window.addEventListener("popstate", syncHash)
+
+        return () => {
+            window.removeEventListener("hashchange", syncHash)
+            window.removeEventListener("popstate", syncHash)
+        }
+    }, [pathname, isOpen])
+
+    useEffect(() => {
+        if (pathname !== "/") {
+            return
+        }
+
+        const onScroll = () => {
+            const aboutSection = document.getElementById("about")
+            if (!aboutSection) {
+                return
+            }
+
+            const aboutTop = aboutSection.getBoundingClientRect().top + window.scrollY
+            const threshold = 120
+            setIsAboutActiveByScroll(window.scrollY >= aboutTop - threshold)
+        }
+
+        onScroll()
+        window.addEventListener("scroll", onScroll, { passive: true })
+
+        return () => {
+            window.removeEventListener("scroll", onScroll)
+        }
+    }, [pathname])
+
+    const activeIndex = menus.findIndex((menu) => {
+        if (menu.href === "/") {
+            return pathname === "/" && currentHash !== "#about" && !isAboutActiveByScroll
+        }
+
+        if (menu.href === "/#about") {
+            return pathname === "/" && (currentHash === "#about" || isAboutActiveByScroll)
+        }
+
+        return pathname.startsWith(menu.href)
+    })
 
     const handleActionClickCapture = (event: MouseEvent<HTMLElement>) => {
         const target = event.target
@@ -33,6 +82,45 @@ export default function Sidebar({ isOpen, onClose, authSection }: SidebarProps) 
         if (target.closest("a, button")) {
             onClose()
         }
+    }
+
+    const handleMenuClick = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
+        if (href !== "/#about") {
+            return
+        }
+
+        if (pathname !== "/") {
+            return
+        }
+
+        const aboutSection = document.getElementById("about")
+        if (!aboutSection) {
+            return
+        }
+
+        event.preventDefault()
+        const start = window.scrollY
+        const target = aboutSection.getBoundingClientRect().top + window.scrollY
+        const duration = 520
+        let startTime: number | null = null
+        const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3)
+
+        const step = (now: number) => {
+            if (startTime === null) {
+                startTime = now
+            }
+            const elapsed = now - startTime
+            const progress = Math.min(elapsed / duration, 1)
+            const eased = easeOutCubic(progress)
+            window.scrollTo(0, start + (target - start) * eased)
+            if (progress < 1) {
+                window.requestAnimationFrame(step)
+            }
+        }
+
+        window.requestAnimationFrame(step)
+        window.history.replaceState(null, "", "/#about")
+        setCurrentHash("#about")
     }
 
     return (
@@ -79,6 +167,7 @@ export default function Sidebar({ isOpen, onClose, authSection }: SidebarProps) 
                                 <li key={menu.href} className={marginTop}>
                                     <Link
                                         href={menu.href}
+                                        onClick={(event) => handleMenuClick(event, menu.href)}
                                         className={`leading-none ${isActive ? "text-[32px] font-bold text-foreground" : "text-[24px] font-medium text-gray-3"}`}
                                     >
                                         {menu.label}
