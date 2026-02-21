@@ -1,17 +1,11 @@
 @import "tailwindcss";
 
-@font-face {
-  font-family: "Pretendard";
-  src: url("/fonts/PretendardVariable.woff2") format("woff2");
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
-}
-
 /* 사용법 -> color: var(--gray-1) */
 :root {
   --background: #262529;
   --foreground: #fafafa;
+  --surface: #303136;
+  --overlay: rgba(0, 0, 0, 0.2);
   --white-1: #fafafa;
   --gray-1: #f6f8fb;
   --gray-2: #e1e4ee;
@@ -31,21 +25,19 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-white-1: var(--white-1);
+  --color-surface: var(--surface);
+  --color-overlay: var(--overlay);
   --color-gray-1: var(--gray-1);
   --color-gray-2: var(--gray-2);
   --color-gray-3: var(--gray-3);
   --color-gray-4: var(--gray-4);
   --color-gray-5: var(--gray-5);
   --color-gray-6: var(--gray-6);
-  --color-gray-7: var(--gray-7);
   --color-main-1: var(--main-1);
   --color-main-2: var(--main-2);
   --color-main-3: var(--main-3);
-  --color-red-1: var(--red-1);
-  --color-green-1: var(--green-1);
-  --font-sans: "Pretendard", "Noto Sans KR", Arial, sans-serif;
-  --font-mono: var(--font-geist-mono);
+  
+  --font-sans: var(--font-pretendard);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -55,43 +47,5 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans);
-}
-
-/* 스크롤바 숨김 */
-.scrollbar-hide {
-  -ms-overflow-style: none; /* IE/Edge */
-  scrollbar-width: none; /* Firefox */
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none; /* Chrome/Safari */
-}
-
-/* 유리 이펙트 스타일 */
-.glass-effect {
-  overflow: hidden;
-  border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(10px) saturate(140%) contrast(112%);
-  -webkit-backdrop-filter: blur(10px) saturate(140%) contrast(112%);
-  box-shadow: 0 6px 26px rgba(0, 0, 0, 0.2);
-}
-
-/* float animation */
-@keyframes float-gentle {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0);
-  }
-  50% {
-    transform: translate3d(0, -7px, 0);
-  }
-}
-
-.float-gentle {
-  animation-name: float-gentle;
-  animation-timing-function: ease-in-out;
-  animation-iteration-count: infinite;
+  font-family: var(--font-pretendard), system-ui, sans-serif;
 }
