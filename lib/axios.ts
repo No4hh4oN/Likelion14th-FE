@@ -4,6 +4,8 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? ""
 const ACCESS_TOKEN_KEY = "accessToken"
 export const AUTH_CHANGED_EVENT = "auth-changed"
 
+let canRetryRefresh = true
+
 function emitAuthChanged(): void {
     if (typeof window === "undefined") {
         return
@@ -26,6 +28,7 @@ export function setAccessToken(token: string): void {
     }
 
     window.localStorage.setItem(ACCESS_TOKEN_KEY, token)
+    canRetryRefresh = true
     emitAuthChanged()
 }
 
@@ -34,8 +37,12 @@ export function clearAccessToken(): void {
         return
     }
 
+    const hadToken = window.localStorage.getItem(ACCESS_TOKEN_KEY) !== null
     window.localStorage.removeItem(ACCESS_TOKEN_KEY)
-    emitAuthChanged()
+
+    if (hadToken) {
+        emitAuthChanged()
+    }
 }
 
 export const apiClient = axios.create({
@@ -60,6 +67,7 @@ async function refreshAccessToken(): Promise<string> {
     const response = await refreshClient.post<{ accessToken: string }>("/auth/token/refresh")
     const nextToken = response.data.accessToken
     setAccessToken(nextToken)
+    canRetryRefresh = true
     return nextToken
 }
 
@@ -86,8 +94,19 @@ apiClient.interceptors.response.use(
 
         const requestUrl = originalRequest.url ?? ""
         const isRefreshRequest = requestUrl.includes("/auth/token/refresh")
+        const isLoginRequest = requestUrl.includes("/auth/login")
+        const isLogoutRequest = requestUrl.includes("/auth/logout")
+
+        if (isLoginRequest || isLogoutRequest) {
+            return Promise.reject(error)
+        }
+
+        if (!canRetryRefresh) {
+            return Promise.reject(new Error("UNAUTHORIZED"))
+        }
 
         if (isRefreshRequest || originalRequest._retry) {
+            canRetryRefresh = false
             clearAccessToken()
             return Promise.reject(new Error("UNAUTHORIZED"))
         }
@@ -105,6 +124,7 @@ apiClient.interceptors.response.use(
             originalRequest.headers.Authorization = `Bearer ${nextToken}`
             return apiClient(originalRequest)
         } catch {
+            canRetryRefresh = false
             clearAccessToken()
             return Promise.reject(new Error("UNAUTHORIZED"))
         }
