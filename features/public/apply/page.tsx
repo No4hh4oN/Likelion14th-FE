@@ -2,6 +2,8 @@
 
 import { ChangeEvent, ReactNode, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { getAccessToken } from "@/lib/axios";
 import { getActiveRecruitment, getDocumentQuestions } from "./api";
 import type {
   ActiveRecruitmentResponse,
@@ -35,6 +37,13 @@ const emptyPartQuestions: Record<PartKey, string[]> = {
   "back-end": [],
   "ai-ml": [],
   "pm-design": [],
+};
+
+const kstDateTimePattern = /(Z|[+-]\d{2}:\d{2})$/;
+
+const parseKstDateTime = (value: string) => {
+  const normalized = kstDateTimePattern.test(value) ? value : `${value}+09:00`;
+  return Date.parse(normalized);
 };
 
 /**
@@ -154,6 +163,7 @@ const sectionCardClass =
  * @returns 지원서 작성 UI
  */
 export default function ApplyPage() {
+  const router = useRouter();
   /**
    * 공통 질문 답변 상태
    */
@@ -192,6 +202,12 @@ export default function ApplyPage() {
     let isMounted = true;
 
     const loadActiveRecruitment = async () => {
+      const accessToken = getAccessToken();
+      if (!accessToken) {
+        router.replace("/auth");
+        return;
+      }
+
       setPageStatus("loading");
       setLoadErrorMessage("");
 
@@ -209,8 +225,13 @@ export default function ApplyPage() {
 
         setActiveRecruitment(recruitment);
 
-        const start = Date.parse(recruitment.startAt);
-        const end = Date.parse(recruitment.endAt);
+        if (recruitment.phaseType !== "DOC_OPEN") {
+          setPageStatus("closed");
+          return;
+        }
+
+        const start = parseKstDateTime(recruitment.startAt);
+        const end = parseKstDateTime(recruitment.endAt);
         const now = Date.now();
 
         if (Number.isFinite(start) && Number.isFinite(end)) {
@@ -298,7 +319,7 @@ export default function ApplyPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [router]);
 
   /**
    * 공통 질문 답변 값을 갱신함.
@@ -336,11 +357,14 @@ export default function ApplyPage() {
   };
 
   const formatDateTime = (value: string) => {
-    const parsed = Date.parse(value);
+    const parsed = parseKstDateTime(value);
     if (!Number.isFinite(parsed)) {
       return value;
     }
-    return new Date(parsed).toLocaleString("ko-KR", { hour12: false });
+    return new Date(parsed).toLocaleString("ko-KR", {
+      timeZone: "Asia/Seoul",
+      hour12: false,
+    });
   };
 
   if (pageStatus === "loading") {

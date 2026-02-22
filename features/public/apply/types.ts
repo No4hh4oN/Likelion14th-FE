@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 지원서 화면에서 사용하는 파트 키.
  */
 export type ApplyPartKey = "FRONTEND" | "BACKEND" | "AI_ML" | "PM_DESIGN";
@@ -7,6 +7,7 @@ export type ApplyPartKey = "FRONTEND" | "BACKEND" | "AI_ML" | "PM_DESIGN";
  * 백엔드 questions 응답 파트 enum.
  */
 export type DocumentQuestionCategory =
+  | "COMMON"
   | "FRONTEND"
   | "BACKEND"
   | "AI_ML"
@@ -14,9 +15,13 @@ export type DocumentQuestionCategory =
 
 /**
  * 모집 단계 타입.
- * TODO: 백엔드 enum 값(예: DOCUMENT/INTERVIEW)을 받은 뒤 좁힐 것.
  */
-export type RecruitmentPhaseType = string;
+export type RecruitmentPhaseType =
+  | "DOC_OPEN"
+  | "DOC_CLOSED"
+  | "INTERVIEW_SELECT"
+  | "FINAL_RESULT"
+  | "CLOSED";
 
 /**
  * 진행중 모집 조회 응답 타입.
