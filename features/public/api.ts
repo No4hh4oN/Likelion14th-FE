@@ -13,6 +13,7 @@ import type {
     ResetPasswordVerifyRequest,
     RefreshTokenResponse,
     SendEmailCodeRequest,
+    UploadProfileImageResponse,
     VerifyEmailCodeRequest,
 } from "@/features/public/type"
 import { isAxiosError } from "axios"
@@ -103,41 +104,8 @@ export async function register(payload: RegisterPayload): Promise<RegisterRespon
         enrollment: payload.enrollment,
         birthDate: payload.birthDate,
         phone: payload.phone,
+        profileImageId: payload.profileImageId,
     }
-
-    if (payload.profileImage) {
-        const multipartBody = {
-            ...requestBody,
-            profileImage: payload.profileImage,
-        }
-
-        console.log("[register] request mode: multipart/form-data (auto)")
-        console.log("[register] request payload:", {
-            ...requestBody,
-            password: `***masked*** (${requestBody.password.length} chars)`,
-            profileImage: {
-                name: payload.profileImage.name,
-                type: payload.profileImage.type,
-                size: payload.profileImage.size,
-            },
-        })
-
-        try {
-            const response = await apiClient.postForm<RegisterResponse>("/auth/register", multipartBody)
-            return response.data
-        } catch (error) {
-            if (isAxiosError(error)) {
-                console.error("[register] failed response:", {
-                    status: error.response?.status,
-                    data: error.response?.data,
-                })
-            } else {
-                console.error("[register] unexpected error:", error)
-            }
-            throw error
-        }
-    }
-
     console.log("[register] request mode: application/json")
     console.log("[register] request payload:", {
         ...requestBody,
@@ -155,6 +123,33 @@ export async function register(payload: RegisterPayload): Promise<RegisterRespon
             })
         } else {
             console.error("[register] unexpected error:", error)
+        }
+        throw error
+    }
+}
+
+export async function uploadProfileImage(profileImage: File): Promise<UploadProfileImageResponse> {
+    try {
+        const response = await apiClient.postForm<UploadProfileImageResponse>(
+            "/auth/profile-image",
+            {
+                profileImage,
+            },
+            {
+                timeout: 60000,
+            },
+        )
+        return response.data
+    } catch (error) {
+        if (isAxiosError(error)) {
+            console.error("[uploadProfileImage] failed response:", {
+                status: error.response?.status,
+                data: error.response?.data,
+                code: error.code,
+                message: error.message,
+            })
+        } else {
+            console.error("[uploadProfileImage] unexpected error:", error)
         }
         throw error
     }
