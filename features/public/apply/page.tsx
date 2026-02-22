@@ -4,15 +4,31 @@ import { ChangeEvent, ReactNode, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { getAccessToken } from "@/lib/axios";
-import { getActiveRecruitment, getDocumentQuestions } from "./api";
+import {
+  createApplicationDraft,
+  getActiveRecruitment,
+  getApplicationDetail,
+  getApplications,
+  getDocumentQuestions,
+  submitApplication,
+  updateApplicationDraft,
+  uploadApplicationFile,
+} from "./api";
 import type {
   ActiveRecruitmentResponse,
+  ApplicationStatus,
+  ApplyAnswerPayload,
+  ApplyPartKey,
   ApplyPageStatus,
+  DocumentQuestion,
   DocumentQuestionCategory,
 } from "./types";
 
 /** 지원 파트 식별자 타입 */
 type PartKey = "front-end" | "back-end" | "ai-ml" | "pm-design";
+type QuestionItem = Pick<DocumentQuestion, "questionId" | "content">;
+type PartQuestionMap = Record<PartKey, QuestionItem[]>;
+type PartAnswerMap = Record<PartKey, string[]>;
 
 /** 파트 선택 버튼 라벨 매핑 */
 const partLabels: Record<PartKey, string> = {
@@ -32,7 +48,28 @@ const categoryToPartKey: Record<
   PM_DESIGN: "pm-design",
 };
 
-const emptyPartQuestions: Record<PartKey, string[]> = {
+const partKeyToApplyPart: Record<PartKey, ApplyPartKey> = {
+  "front-end": "FRONTEND",
+  "back-end": "BACKEND",
+  "ai-ml": "AI_ML",
+  "pm-design": "PM_DESIGN",
+};
+
+const applyPartToPartKey: Record<ApplyPartKey, PartKey> = {
+  FRONTEND: "front-end",
+  BACKEND: "back-end",
+  AI_ML: "ai-ml",
+  PM_DESIGN: "pm-design",
+};
+
+const emptyPartQuestionMap: PartQuestionMap = {
+  "front-end": [],
+  "back-end": [],
+  "ai-ml": [],
+  "pm-design": [],
+};
+
+const emptyPartAnswerMap: PartAnswerMap = {
   "front-end": [],
   "back-end": [],
   "ai-ml": [],
@@ -46,36 +83,70 @@ const parseKstDateTime = (value: string) => {
   return Date.parse(normalized);
 };
 
+const normalizeStatus = (
+  status: ApplicationStatus | string,
+): ApplicationStatus | null => {
+  if (status === "DRAFT" || status === "SUBMITTED") {
+    return status;
+  }
+  return null;
+};
+
+const toPartKey = (part: ApplyPartKey | string): PartKey | null => {
+  if (part in applyPartToPartKey) {
+    return applyPartToPartKey[part as ApplyPartKey];
+  }
+  return null;
+};
+
 /**
- * AI/ML 3번 문항에 표시할 파이썬 코드 원문
+ * 질문 본문(content)에서 텍스트/코드 영역을 분리함.
+ * 백엔드에서 "질문 텍스트\n\n코드" 형태로 내려주는 포맷을 처리함.
  */
-const aiMlQuestionCode = `class TokenWindowDataset:
-    def __init__(self, token_ids, max_len, stride, start = 0):
-        self.token_ids = token_ids
-        self.max_len = max_len
-        self.stride = stride
-        self.start = start
+const stripCodeFence = (snippet: string) => {
+  const trimmed = snippet.trim();
+  const fenced = trimmed.match(/^```(?:[\w+-]+)?\n([\s\S]*?)\n?```$/);
 
-    def __getitem__(self, idx):
-        base = self.start + idx * self.stride
-        x = self.token_ids[base: base + self.max_len]
-        y = self.token_ids[base + 1: 1 + base + self.max_len]
-        return (x, y)
+  if (fenced) {
+    return fenced[1].trimEnd();
+  }
 
-    def __len__(self):
-        i = 0
-        while(True):
-            if(self.start + i * self.stride + self.max_len + 1 > len(self.token_ids)):
-                break
-            else:
-                i += 1
-        return i
+  // 백엔드가 "질문\n\n`코드`" 형태로 보내는 단일 백틱 래핑 처리
+  if (trimmed.startsWith("`") && trimmed.endsWith("`") && trimmed.length >= 2) {
+    return trimmed.slice(1, -1).trim();
+  }
 
+  return trimmed;
+};
 
-t = TokenWindowDataset(token_ids = [0,1,2,3,4,5,6], max_len=3, stride=2)
+const splitQuestionContent = (content: string) => {
+  const normalized = content
+    .replace(/\\n/g, "\n")
+    .replace(/\r\n/g, "\n")
+    .trim();
+  const separatorIndex = normalized.indexOf("\n\n");
 
-for i in range(len(t)):
-    print(t[i], end=" ")`;
+  if (separatorIndex === -1) {
+    return {
+      questionText: normalized,
+      codeSnippet: null as string | null,
+    };
+  }
+
+  const questionText = normalized.slice(0, separatorIndex).trim();
+  const rawCodeSnippet = normalized.slice(separatorIndex + 2).trim();
+  const codeSnippet = stripCodeFence(rawCodeSnippet);
+
+  return {
+    questionText: questionText || normalized,
+    codeSnippet: codeSnippet || null,
+  };
+};
+
+const isLikelyPythonCode = (codeSnippet: string) =>
+  /\b(class|def|return|for|while|if|else|break|print|len|True)\b/.test(
+    codeSnippet,
+  );
 
 /**
  * 파이썬 키워드 토큰 집합
@@ -144,6 +215,49 @@ const renderPythonLine = (line: string): ReactNode =>
     );
   });
 
+const renderQuestionCodeBlock = (codeSnippet: string, keyPrefix: string) => {
+  const isPython = isLikelyPythonCode(codeSnippet);
+
+  return (
+    <div className="overflow-hidden rounded-[12px] border border-[#2E3E66] bg-[#0E1424] shadow-[0_10px_30px_rgba(8,12,24,0.4)]">
+      <div className="flex items-center justify-between border-b border-[#2E3E66] bg-[#151E32] px-3 py-2 lg:px-4">
+        <div className="flex items-center gap-2">
+          <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#FF5F56]" />
+          <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#FFBD2E]" />
+          <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#27C93F]" />
+          <span className="ml-1 text-[11px] font-medium text-[#AEB9D6] lg:text-[12px]">
+            QuestionCode
+          </span>
+        </div>
+        <span className="rounded-full border border-[#325CA8] bg-[#11274A] px-2.5 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-[#8BC1FF] lg:text-[11px]">
+          {isPython ? "PYTHON" : "CODE"}
+        </span>
+      </div>
+      <div className="overflow-x-auto p-3 lg:p-4">
+        <pre className="min-w-[640px] text-[11px] leading-[1.65] text-[#DCE6FF] lg:text-[13px] lg:leading-[1.75]">
+          {codeSnippet.split("\n").map((line, lineIndex) => (
+            <div
+              key={`${keyPrefix}-code-${lineIndex}`}
+              className="grid grid-cols-[26px_1fr] gap-3"
+            >
+              <span className="select-none text-right text-[#62709A]">
+                {lineIndex + 1}
+              </span>
+              <code>
+                {line.length > 0
+                  ? isPython
+                    ? renderPythonLine(line)
+                    : line
+                  : " "}
+              </code>
+            </div>
+          ))}
+        </pre>
+      </div>
+    </div>
+  );
+};
+
 /**
  * 질문 개수에 맞는 빈 답변 배열을 생성함.
  * @param count 생성할 답변 칸 개수
@@ -176,7 +290,7 @@ export default function ApplyPage() {
    * 파트별 질문 답변 상태
    */
   const [partAnswers, setPartAnswers] =
-    useState<Record<PartKey, string[]>>(emptyPartQuestions);
+    useState<PartAnswerMap>(emptyPartAnswerMap);
   /**
    * 포트폴리오 URL 입력 상태
    */
@@ -185,18 +299,33 @@ export default function ApplyPage() {
    * 선택된 포트폴리오 파일명 상태
    */
   const [portfolioFileName, setPortfolioFileName] = useState("");
+  const [uploadedFileIds, setUploadedFileIds] = useState<number[]>([]);
+  const [applicationId, setApplicationId] = useState<number | null>(null);
+  const [applicationStatus, setApplicationStatus] =
+    useState<ApplicationStatus | null>(null);
+  const [canEditApplication, setCanEditApplication] = useState(true);
+  const [canSubmitApplication, setCanSubmitApplication] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
+  const [actionMessage, setActionMessage] = useState("");
+  const [actionErrorMessage, setActionErrorMessage] = useState("");
   const [activeRecruitment, setActiveRecruitment] =
     useState<ActiveRecruitmentResponse | null>(null);
   const [pageStatus, setPageStatus] = useState<ApplyPageStatus>("loading");
   const [loadErrorMessage, setLoadErrorMessage] = useState("");
-  const [apiCommonQuestions, setApiCommonQuestions] = useState<string[]>([]);
+  const [apiCommonQuestions, setApiCommonQuestions] = useState<QuestionItem[]>(
+    [],
+  );
   const [apiPartQuestionMap, setApiPartQuestionMap] =
-    useState<Record<PartKey, string[]>>(emptyPartQuestions);
+    useState<PartQuestionMap>(emptyPartQuestionMap);
   const resolvedCommonQuestions = apiCommonQuestions;
   const selectedPartQuestions = useMemo(
     () => apiPartQuestionMap[selectedPart] ?? [],
     [apiPartQuestionMap, selectedPart],
   );
+  const isBusy = isSaving || isSubmitting || isUploadingFile;
+  const isSubmitted = applicationStatus === "SUBMITTED";
 
   useEffect(() => {
     let isMounted = true;
@@ -252,11 +381,14 @@ export default function ApplyPage() {
           (a, b) => a.order - b.order,
         );
 
-        const commonQuestionContents = sortedQuestions
+        const commonQuestionItems: QuestionItem[] = sortedQuestions
           .filter((question) => question.category === "COMMON")
-          .map((question) => question.content);
+          .map((question) => ({
+            questionId: question.questionId,
+            content: question.content,
+          }));
 
-        const groupedPartQuestions: Record<PartKey, string[]> = {
+        const groupedPartQuestions: PartQuestionMap = {
           "front-end": [],
           "back-end": [],
           "ai-ml": [],
@@ -275,7 +407,10 @@ export default function ApplyPage() {
               return;
             }
 
-            groupedPartQuestions[uiPart].push(question.content);
+            groupedPartQuestions[uiPart].push({
+              questionId: question.questionId,
+              content: question.content,
+            });
           });
 
         const firstPartWithQuestions =
@@ -283,13 +418,16 @@ export default function ApplyPage() {
             (part) => groupedPartQuestions[part].length > 0,
           ) ?? "front-end";
 
-        const normalizedCommonQuestions = commonQuestionContents;
-
-        setSelectedPart(firstPartWithQuestions);
-        setApiCommonQuestions(normalizedCommonQuestions);
-        setApiPartQuestionMap(groupedPartQuestions);
-        setCommonAnswers(createEmptyAnswers(normalizedCommonQuestions.length));
-        setPartAnswers({
+        let nextSelectedPart = firstPartWithQuestions;
+        let nextApplicationId: number | null = null;
+        let nextApplicationStatus: ApplicationStatus | null = null;
+        let nextCanEditApplication = true;
+        let nextCanSubmitApplication = true;
+        let nextPortfolioUrl = "";
+        let nextPortfolioFileName = "";
+        let nextUploadedFileIds: number[] = [];
+        let nextCommonAnswers = createEmptyAnswers(commonQuestionItems.length);
+        let nextPartAnswers: PartAnswerMap = {
           "front-end": createEmptyAnswers(
             groupedPartQuestions["front-end"].length,
           ),
@@ -300,7 +438,85 @@ export default function ApplyPage() {
           "pm-design": createEmptyAnswers(
             groupedPartQuestions["pm-design"].length,
           ),
-        });
+        };
+
+        try {
+          const applicationList = await getApplications();
+          const existingApplication = applicationList.items.find(
+            (item) => item.recruitmentId === recruitment.recruitmentId,
+          );
+
+          if (existingApplication) {
+            nextApplicationId = existingApplication.applicationId;
+            nextApplicationStatus = normalizeStatus(existingApplication.status);
+            nextCanEditApplication =
+              typeof existingApplication.canEdit === "boolean"
+                ? existingApplication.canEdit
+                : true;
+            nextCanSubmitApplication =
+              typeof existingApplication.canSubmit === "boolean"
+                ? existingApplication.canSubmit
+                : true;
+
+            const detail = await getApplicationDetail(
+              existingApplication.applicationId,
+            );
+            const detailPart = toPartKey(detail.applyPart);
+            if (detailPart) {
+              nextSelectedPart = detailPart;
+            }
+
+            nextPortfolioUrl = detail.portfolioUrl ?? "";
+            nextUploadedFileIds = detail.files.map((file) => file.fileId);
+            nextPortfolioFileName =
+              detail.files[detail.files.length - 1]?.originalName ?? "";
+
+            const answerByQuestionId = new Map(
+              detail.answers.map((item) => [item.questionId, item.answer]),
+            );
+
+            nextCommonAnswers = commonQuestionItems.map(
+              (item) => answerByQuestionId.get(item.questionId) ?? "",
+            );
+
+            nextPartAnswers = {
+              "front-end": groupedPartQuestions["front-end"].map(
+                (item) => answerByQuestionId.get(item.questionId) ?? "",
+              ),
+              "back-end": groupedPartQuestions["back-end"].map(
+                (item) => answerByQuestionId.get(item.questionId) ?? "",
+              ),
+              "ai-ml": groupedPartQuestions["ai-ml"].map(
+                (item) => answerByQuestionId.get(item.questionId) ?? "",
+              ),
+              "pm-design": groupedPartQuestions["pm-design"].map(
+                (item) => answerByQuestionId.get(item.questionId) ?? "",
+              ),
+            };
+
+            const detailStatus = normalizeStatus(detail.status);
+            if (detailStatus) {
+              nextApplicationStatus = detailStatus;
+            }
+          }
+        } catch {
+          // If existing application lookup fails, keep empty form state.
+        }
+
+        setSelectedPart(nextSelectedPart);
+        setApiCommonQuestions(commonQuestionItems);
+        setApiPartQuestionMap(groupedPartQuestions);
+        setCommonAnswers(nextCommonAnswers);
+        setPartAnswers(nextPartAnswers);
+        setPortfolioUrl(nextPortfolioUrl);
+        setPortfolioFileName(nextPortfolioFileName);
+        setUploadedFileIds(nextUploadedFileIds);
+        setApplicationId(nextApplicationId);
+        setApplicationStatus(nextApplicationStatus);
+        setCanEditApplication(nextCanEditApplication);
+        setCanSubmitApplication(nextCanSubmitApplication);
+        setActionMessage("");
+        setActionErrorMessage("");
 
         setPageStatus("ready");
       } catch {
@@ -348,12 +564,166 @@ export default function ApplyPage() {
     }));
   };
 
+  const buildDraftAnswers = (): ApplyAnswerPayload[] => {
+    const commonAnswerPayload = resolvedCommonQuestions.map(
+      (question, index) => ({
+        questionId: question.questionId,
+        answer: commonAnswers[index] ?? "",
+      }),
+    );
+
+    const partAnswerPayload = selectedPartQuestions.map((question, index) => ({
+      questionId: question.questionId,
+      answer: partAnswers[selectedPart]?.[index] ?? "",
+    }));
+
+    return [...commonAnswerPayload, ...partAnswerPayload];
+  };
+
+  const buildDraftPayload = () => ({
+    applyPart: partKeyToApplyPart[selectedPart],
+    portfolioUrl: portfolioUrl.trim(),
+    answers: buildDraftAnswers(),
+    fileIds: uploadedFileIds,
+  });
+
+  const handleSaveDraft = async () => {
+    if (isBusy || !canEditApplication || !activeRecruitment) {
+      return;
+    }
+
+    setIsSaving(true);
+    setActionMessage("");
+    setActionErrorMessage("");
+
+    try {
+      const payload = buildDraftPayload();
+
+      if (applicationId) {
+        const updated = await updateApplicationDraft(applicationId, payload);
+        const nextStatus = normalizeStatus(updated.status);
+        setApplicationStatus(nextStatus ?? "DRAFT");
+      } else {
+        const created = await createApplicationDraft(
+          activeRecruitment.recruitmentId,
+          payload,
+        );
+        setApplicationId(created.applicationId);
+        setApplicationStatus("DRAFT");
+      }
+
+      setActionMessage("임시 저장이 완료되었습니다.");
+    } catch {
+      setActionErrorMessage(
+        "임시 저장에 실패했습니다. 잠시 후 다시 시도해주세요.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (isBusy || !canSubmitApplication || !activeRecruitment) {
+      return;
+    }
+
+    const hasEmptyCommonAnswer = commonAnswers.some(
+      (answer) => answer.trim().length === 0,
+    );
+    const hasEmptyPartAnswer = (partAnswers[selectedPart] ?? []).some(
+      (answer) => answer.trim().length === 0,
+    );
+
+    if (hasEmptyCommonAnswer || hasEmptyPartAnswer) {
+      setActionMessage("");
+      setActionErrorMessage("필수 질문 답변을 모두 작성한 뒤 제출해주세요.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setActionMessage("");
+    setActionErrorMessage("");
+
+    try {
+      const payload = buildDraftPayload();
+      let targetApplicationId = applicationId;
+
+      if (targetApplicationId) {
+        await updateApplicationDraft(targetApplicationId, payload);
+      } else {
+        const created = await createApplicationDraft(
+          activeRecruitment.recruitmentId,
+          payload,
+        );
+        targetApplicationId = created.applicationId;
+        setApplicationId(created.applicationId);
+      }
+
+      if (!targetApplicationId) {
+        throw new Error("MISSING_APPLICATION_ID");
+      }
+
+      const submitted = await submitApplication(targetApplicationId);
+      const nextStatus = normalizeStatus(submitted.status);
+      setApplicationStatus(nextStatus ?? "SUBMITTED");
+      router.replace(`/14/apply/complete?applicationId=${targetApplicationId}`);
+      return;
+    } catch {
+      setActionErrorMessage(
+        "지원서 제출에 실패했습니다. 잠시 후 다시 시도해주세요.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   /**
    * 업로드 파일 선택 시 파일명을 상태에 반영함.
    * @param event 파일 입력 change 이벤트
    */
-  const onSelectPortfolioFile = (event: ChangeEvent<HTMLInputElement>) => {
-    setPortfolioFileName(event.target.files?.[0]?.name ?? "");
+  const onSelectPortfolioFile = async (
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
+    const selectedFile = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!selectedFile || !canEditApplication || isBusy || !activeRecruitment) {
+      return;
+    }
+
+    setIsUploadingFile(true);
+    setActionMessage("");
+    setActionErrorMessage("");
+
+    try {
+      let targetApplicationId = applicationId;
+
+      if (!targetApplicationId) {
+        const created = await createApplicationDraft(
+          activeRecruitment.recruitmentId,
+          buildDraftPayload(),
+        );
+        targetApplicationId = created.applicationId;
+        setApplicationId(created.applicationId);
+        setApplicationStatus("DRAFT");
+      }
+
+      const uploaded = await uploadApplicationFile(
+        targetApplicationId,
+        selectedFile,
+      );
+      setUploadedFileIds((prev) =>
+        prev.includes(uploaded.fileId) ? prev : [...prev, uploaded.fileId],
+      );
+      setPortfolioFileName(uploaded.originalName ?? selectedFile.name);
+      setActionMessage("파일 업로드가 완료되었습니다.");
+    } catch {
+      setActionErrorMessage(
+        "파일 업로드에 실패했습니다. 잠시 후 다시 시도해주세요.",
+      );
+    } finally {
+      setIsUploadingFile(false);
+    }
   };
 
   const formatDateTime = (value: string) => {
@@ -447,28 +817,41 @@ export default function ApplyPage() {
             공통 질문
           </h2>
           <div className="mt-[37px] space-y-[16px] lg:mt-[65px] lg:space-y-[12px]">
-            {resolvedCommonQuestions.map((question, index) => (
-              <div key={question} className="space-y-[10px] lg:space-y-[22px]">
-                <p className="text-[16px] font-medium lg:text-[22px]">
-                  Q. {question}
-                </p>
-                <div>
-                  <textarea
-                    value={commonAnswers[index]}
-                    onChange={(event) =>
-                      onChangeCommonAnswer(index, event.target.value)
-                    }
-                    maxLength={500}
-                    rows={5}
-                    placeholder="답변을 자유롭게 작성해 주세요. (최대 500자)"
-                    className="w-full resize-none rounded-[10px] bg-gray-6 border border-gray-6 font-medium px-2.75 py-2.5 lg:px-6 lg:py-5 text-[14px] lg:text-[18px] placeholder:text-gray-5 focus:border-main-1 focus:outline-none"
-                  />
-                  <p className="text-right text-[10px] text-gray-4 lg:text-[12px]">
-                    {commonAnswers[index].length}/500
+            {resolvedCommonQuestions.map((question, index) => {
+              const parsedQuestion = splitQuestionContent(question.content);
+
+              return (
+                <div
+                  key={`common-${question.questionId}`}
+                  className="space-y-[10px] lg:space-y-[22px]"
+                >
+                  <p className="whitespace-pre-line text-[16px] font-medium lg:text-[22px]">
+                    Q. {parsedQuestion.questionText}
                   </p>
+                  {parsedQuestion.codeSnippet &&
+                    renderQuestionCodeBlock(
+                      parsedQuestion.codeSnippet,
+                      `common-${question.questionId}`,
+                    )}
+                  <div>
+                    <textarea
+                      value={commonAnswers[index] ?? ""}
+                      onChange={(event) =>
+                        onChangeCommonAnswer(index, event.target.value)
+                      }
+                      disabled={!canEditApplication}
+                      maxLength={500}
+                      rows={5}
+                      placeholder="답변을 자유롭게 작성해 주세요. (최대 500자)"
+                      className="w-full resize-none rounded-[10px] bg-gray-6 border border-gray-6 font-medium px-2.75 py-2.5 lg:px-6 lg:py-5 text-[14px] lg:text-[18px] placeholder:text-gray-5 focus:border-main-1 focus:outline-none"
+                    />
+                    <p className="text-right text-[10px] text-gray-4 lg:text-[12px]">
+                      {(commonAnswers[index] ?? "").length}/500
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -483,11 +866,12 @@ export default function ApplyPage() {
                     key={part}
                     type="button"
                     onClick={() => setSelectedPart(part)}
+                    disabled={!canEditApplication}
                     className={`rounded-full px-[17px] py-[8px] lg:px-[57px] lg:py-[14px] text-[14px] font-bold lg:min-w-[130px] lg:text-[28px] ${
                       selected
                         ? "bg-main-1 text-white-1"
                         : "bg-white-1 text-gray-4 hover:bg-gray-2"
-                    } cursor-pointer`}
+                    } cursor-pointer disabled:cursor-not-allowed disabled:opacity-60`}
                   >
                     {partLabels[part]}
                   </button>
@@ -501,73 +885,44 @@ export default function ApplyPage() {
               파트별 질문
             </h3>
             <div className="mt-[37px] space-y-3 lg:mt-[65px] lg:space-y-5">
-              {selectedPartQuestions.map((question, index) => (
-                <div
-                  key={`${selectedPart}-${index}`}
-                  className="space-y-[10px] lg:space-y-[22px]"
-                >
-                  <p className="text-[16px] font-medium lg:text-[22px]">
-                    Q. {question}
-                  </p>
-                  {selectedPart === "ai-ml" && index === 2 && (
-                    <div className="overflow-hidden rounded-[12px] border border-[#2E3E66] bg-[#0E1424] shadow-[0_10px_30px_rgba(8,12,24,0.4)]">
-                      <div className="flex items-center justify-between border-b border-[#2E3E66] bg-[#151E32] px-3 py-2 lg:px-4">
-                        <div className="flex items-center gap-2">
-                          <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#FF5F56]" />
-                          <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#FFBD2E]" />
-                          <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#27C93F]" />
-                          <span className="ml-1 text-[11px] font-medium text-[#AEB9D6] lg:text-[12px]">
-                            TokenWindowDataset.py
-                          </span>
-                        </div>
-                        <span className="rounded-full border border-[#325CA8] bg-[#11274A] px-2.5 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-[#8BC1FF] lg:text-[11px]">
-                          PYTHON
-                        </span>
-                      </div>
-                      <div className="overflow-x-auto p-3 lg:p-4">
-                        <pre className="min-w-[640px] text-[11px] leading-[1.65] text-[#DCE6FF] lg:text-[13px] lg:leading-[1.75]">
-                          {aiMlQuestionCode
-                            .split("\n")
-                            .map((line, lineIndex) => (
-                              <div
-                                key={`ai-ml-code-${lineIndex}`}
-                                className="grid grid-cols-[26px_1fr] gap-3"
-                              >
-                                <span className="select-none text-right text-[#62709A]">
-                                  {lineIndex + 1}
-                                </span>
-                                <code>
-                                  {line.length > 0
-                                    ? renderPythonLine(line)
-                                    : " "}
-                                </code>
-                              </div>
-                            ))}
-                        </pre>
-                      </div>
-                    </div>
-                  )}
-                  <div>
-                    <textarea
-                      value={partAnswers[selectedPart][index]}
-                      onChange={(event) =>
-                        onChangePartAnswer(index, event.target.value)
-                      }
-                      maxLength={500}
-                      rows={5}
-                      placeholder="답변을 자유롭게 작성해 주세요. (최대 500자)"
-                      className="w-full resize-none rounded-[10px] border border-gray-6 bg-gray-6 px-3 py-2.5 lg:px-[25px] lg:py-[21px] text-[14px] lg:text-[18px] text-white placeholder:text-gray-5 focus:border-main-1 focus:outline-none"
-                    />
-                    <p className="text-right text-[10px] text-gray-4 lg:text-[12px]">
-                      {partAnswers[selectedPart][index].length}/500
+              {selectedPartQuestions.map((question, index) => {
+                const parsedQuestion = splitQuestionContent(question.content);
+
+                return (
+                  <div
+                    key={`${selectedPart}-${question.questionId}`}
+                    className="space-y-[10px] lg:space-y-[22px]"
+                  >
+                    <p className="whitespace-pre-line text-[16px] font-medium lg:text-[22px]">
+                      Q. {parsedQuestion.questionText}
                     </p>
+                    {parsedQuestion.codeSnippet &&
+                      renderQuestionCodeBlock(
+                        parsedQuestion.codeSnippet,
+                        `${selectedPart}-${question.questionId}`,
+                      )}
+                    <div>
+                      <textarea
+                        value={partAnswers[selectedPart]?.[index] ?? ""}
+                        onChange={(event) =>
+                          onChangePartAnswer(index, event.target.value)
+                        }
+                        disabled={!canEditApplication}
+                        maxLength={500}
+                        rows={5}
+                        placeholder="답변을 자유롭게 작성해 주세요. (최대 500자)"
+                        className="w-full resize-none rounded-[10px] border border-gray-6 bg-gray-6 px-3 py-2.5 lg:px-[25px] lg:py-[21px] text-[14px] lg:text-[18px] text-white placeholder:text-gray-5 focus:border-main-1 focus:outline-none"
+                      />
+                      <p className="text-right text-[10px] text-gray-4 lg:text-[12px]">
+                        {(partAnswers[selectedPart]?.[index] ?? "").length}/500
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
-
         <div className={`mt-[92px] lg:mt-[139px] ${sectionCardClass}`}>
           <h2 className="text-center text-[18px] font-bold lg:text-[32px]">
             포트폴리오 제출
@@ -581,6 +936,7 @@ export default function ApplyPage() {
                 type="url"
                 value={portfolioUrl}
                 onChange={(event) => setPortfolioUrl(event.target.value)}
+                disabled={!canEditApplication}
                 placeholder="https:// 형태의 URL을 입력해 주세요."
                 className="w-full rounded-[10px] border border-[#62697A] bg-[#4C5262] px-3.5 py-3 text-[12px] text-white placeholder:text-[#B8BECA] focus:border-[#0B7DE2] focus:outline-none lg:px-4 lg:py-3.5 lg:text-[14px]"
               />
@@ -601,6 +957,7 @@ export default function ApplyPage() {
                   type="file"
                   className="hidden"
                   onChange={onSelectPortfolioFile}
+                  disabled={!canEditApplication || isBusy}
                 />
               </label>
             </div>
@@ -621,12 +978,37 @@ export default function ApplyPage() {
         </div>
 
         <div className="mt-[72px] lg:mt-[156px] flex flex-col items-center justify-center gap-[26px] lg:gap-[32px]">
-          <button className="px-[36px] py-[14px] lg:px-[73px] lg:py-[19px] text-[16px] lg:text-[24px] font-semibold cursor-pointer rounded-full bg-gray-5">
-            지원서 작성하기
+          <button
+            type="button"
+            onClick={handleSaveDraft}
+            disabled={isBusy || !canEditApplication}
+            className="px-[36px] py-[14px] lg:px-[73px] lg:py-[19px] text-[16px] lg:text-[24px] font-semibold cursor-pointer rounded-full bg-gray-5 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSaving ? "저장 중..." : "지원서 저장하기"}
           </button>
-          <button className="px-[78px] py-[15px] lg:px-[112px] lg:py-[15px] text-[20px] lg:text-[36px] font-bold cursor-pointer rounded-full bg-main-1">
-            제출하기
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isBusy || !canSubmitApplication}
+            className="px-[78px] py-[15px] lg:px-[112px] lg:py-[15px] text-[20px] lg:text-[36px] font-bold cursor-pointer rounded-full bg-main-1 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSubmitting ? "제출 중..." : "제출하기"}
           </button>
+          {isSubmitted && (
+            <p className="text-[12px] text-main-3 lg:text-[16px]">
+              이미 제출된 지원서입니다.
+            </p>
+          )}
+          {actionMessage && (
+            <p className="text-[12px] text-main-3 lg:text-[16px]">
+              {actionMessage}
+            </p>
+          )}
+          {actionErrorMessage && (
+            <p className="text-[12px] text-[#ff9ea8] lg:text-[16px]">
+              {actionErrorMessage}
+            </p>
+          )}
           <p className="mt-[10px] leading-[1.27] text-center text-[12px] lg:text-[20px] font-regular text-gray-5">
             *제출 전, 수정 사항이 없는지 다시 한 번 확인해 주시기 바랍니다.
             <br />
