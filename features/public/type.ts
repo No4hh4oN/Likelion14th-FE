@@ -77,6 +77,22 @@ export type EmailActionResponse = {
     message: string
 }
 
+export type FindIdVerifyRequest = {
+    email: string
+    code: string
+}
+
+export type FindIdVerifyResponse = {
+    loginId: string
+}
+
+export type ResetPasswordVerifyRequest = {
+    loginId: string
+    email: string
+    code: string
+    newPassword: string
+}
+
 export type RegisterRequest = {
     loginId: string
     email: string
