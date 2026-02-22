@@ -1,21 +1,25 @@
 // app/(public)/layout.tsx
-import type { Metadata } from 'next'
-import localFont from 'next/font/local'
-import '@/styles/globals.css'
-import Header from "@/components/layout/Header"
+import type { Metadata } from "next";
+import localFont from "next/font/local";
+import "@/styles/globals.css";
+import Header from "@/components/layout/Header";
 
 export const metadata: Metadata = {
-  title: '삼육멋사14기',
-  description: '멋쟁이사자처럼 14기 사이트',
-}
+  title: "LIKELION SYU",
+  description: "멋쟁이사자처럼 14기 사이트",
+};
 
 const pretendard = localFont({
-  src: '../../public/fonts/PretendardVariable.woff2',
-  variable: '--font-pretendard',
-  display: 'swap',
-})
+  src: "../../public/fonts/PretendardVariable.woff2",
+  variable: "--font-pretendard",
+  display: "swap",
+});
 
-export default function PublicLayout({ children }: { children: React.ReactNode }) {
+export default function PublicLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="ko" className={pretendard.variable}>
       <body>
@@ -23,5 +27,5 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         <main>{children}</main>
       </body>
     </html>
-  )
+  );
 }
