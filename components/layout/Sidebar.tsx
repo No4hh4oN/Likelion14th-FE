@@ -38,6 +38,19 @@ export default function Sidebar({ isOpen, onClose, authSection }: SidebarProps) 
     }, [pathname, isOpen])
 
     useEffect(() => {
+        if (!isOpen) {
+            return
+        }
+
+        const previousOverflow = document.body.style.overflow
+        document.body.style.overflow = "hidden"
+
+        return () => {
+            document.body.style.overflow = previousOverflow
+        }
+    }, [isOpen])
+
+    useEffect(() => {
         if (pathname !== "/") {
             return
         }
@@ -129,11 +142,11 @@ export default function Sidebar({ isOpen, onClose, authSection }: SidebarProps) 
                 type="button"
                 aria-label="Close menu"
                 onClick={onClose}
-                className={`fixed inset-0 z-40 cursor-default bg-black/20 transition-opacity duration-500 ${isOpen ? "opacity-100" : "pointer-events-none opacity-0"
+                className={`fixed left-0 top-0 z-40 h-dvh w-screen cursor-default bg-black/20 transition-opacity duration-500 ${isOpen ? "opacity-100" : "pointer-events-none opacity-0"
                     }`}
             />
             <aside
-                className={`fixed right-0 top-0 z-50 h-full w-[412px] bg-[#303136] shadow-xl transition-transform duration-500 ease-out ${isOpen ? "translate-x-0" : "translate-x-full"
+                className={`fixed right-0 top-0 z-50 h-dvh w-[min(412px,100vw)] bg-[#303136] shadow-xl transition-transform duration-500 ease-out ${isOpen ? "translate-x-0" : "translate-x-full"
                     }`}
                 role="dialog"
                 aria-modal="true"
