@@ -1,15 +1,20 @@
 import { apiClient } from "@/lib/axios";
 import type {
   ActiveRecruitmentResponse,
+  ApplicationDetailResponse,
+  ApplicationListResponse,
+  CreateApplicationDraftResponse,
+  DeleteApplicationResponse,
   DocumentQuestionsResponse,
-  SaveApplyDraftRequest,
-  SubmitApplyRequest,
+  SaveApplicationDraftRequest,
+  SubmitApplicationResponse,
+  UpdateApplicationDraftResponse,
+  UploadApplicationFileResponse,
 } from "./types";
 
 /**
- * 진행중 모집을 조회합니다.
- * 200: 모집 1건 반환
- * 204: 진행중 모집 없음(null 반환)
+ * 현재 진행 중인 모집 정보를 조회합니다.
+ * @returns 진행 중 모집 정보, 없으면 null
  */
 export async function getActiveRecruitment(): Promise<ActiveRecruitmentResponse | null> {
   const response = await apiClient.get<ActiveRecruitmentResponse>(
@@ -27,8 +32,9 @@ export async function getActiveRecruitment(): Promise<ActiveRecruitmentResponse 
 }
 
 /**
- * 지원서 폼(질문 목록)을 조회합니다.
- * GET /recruitments/{recruitmentId}/document/questions
+ * 특정 모집의 서류 질문 목록을 조회합니다.
+ * @param recruitmentId 모집 ID
+ * @returns 질문 목록 응답
  */
 export async function getDocumentQuestions(
   recruitmentId: number,
@@ -40,29 +46,130 @@ export async function getDocumentQuestions(
 }
 
 /**
- * 지원서 임시저장.
- * TODO: 실제 endpoint/body schema 확정 필요.
+ * 로그인 사용자의 지원서 목록을 조회합니다.
+ * @returns 지원서 목록 응답
  */
-export async function saveApplyDraft(
-  payload: SaveApplyDraftRequest,
-): Promise<unknown> {
-  const response = await apiClient.post<unknown>(
-    "/applications/{applicationId}/applications",
+export async function getApplications(): Promise<ApplicationListResponse> {
+  const response =
+    await apiClient.get<ApplicationListResponse>("/applications");
+  return response.data;
+}
+
+/**
+ * 지원서 상세 정보를 조회합니다.
+ * @param applicationId 지원서 ID
+ * @returns 지원서 상세 응답
+ */
+export async function getApplicationDetail(
+  applicationId: number,
+): Promise<ApplicationDetailResponse> {
+  const response = await apiClient.get<ApplicationDetailResponse>(
+    `/applications/${applicationId}`,
+  );
+  return response.data;
+}
+
+/**
+ * 지원서를 최초 생성(임시저장)합니다.
+ * @param recruitmentId 모집 ID
+ * @param payload 저장 요청 바디
+ * @returns 생성된 지원서 ID
+ */
+export async function createApplicationDraft(
+  recruitmentId: number,
+  payload: SaveApplicationDraftRequest,
+): Promise<CreateApplicationDraftResponse> {
+  const response = await apiClient.post<CreateApplicationDraftResponse>(
+    `/recruitments/${recruitmentId}/applications`,
     payload,
   );
   return response.data;
 }
 
 /**
- * 지원서 최종 제출.
- * TODO: 실제 endpoint/body schema 확정 필요.
+ * DRAFT 상태 지원서를 수정합니다.
+ * @param applicationId 지원서 ID
+ * @param payload 수정 요청 바디
+ * @returns 수정 결과 응답
  */
-export async function submitApply(
-  payload: SubmitApplyRequest,
-): Promise<unknown> {
-  const response = await apiClient.post<unknown>(
-    "/applications/{applicationId}/submit",
+export async function updateApplicationDraft(
+  applicationId: number,
+  payload: SaveApplicationDraftRequest,
+): Promise<UpdateApplicationDraftResponse> {
+  const response = await apiClient.put<UpdateApplicationDraftResponse>(
+    `/applications/${applicationId}`,
     payload,
+  );
+  return response.data;
+}
+
+/**
+ * SUBMITTED 상태 지원서를 수정합니다.
+ * @param applicationId 지원서 ID
+ * @param payload 수정 요청 바디
+ * @returns 수정 결과 응답
+ */
+export async function updateSubmittedApplication(
+  applicationId: number,
+  payload: SaveApplicationDraftRequest,
+): Promise<UpdateApplicationDraftResponse> {
+  const response = await apiClient.put<UpdateApplicationDraftResponse>(
+    `/applications/${applicationId}/submitted`,
+    payload,
+  );
+  return response.data;
+}
+
+/**
+ * 지원서를 최종 제출합니다.
+ * @param applicationId 지원서 ID
+ * @returns 제출 결과 응답
+ */
+export async function submitApplication(
+  applicationId: number,
+): Promise<SubmitApplicationResponse> {
+  const response = await apiClient.post<SubmitApplicationResponse>(
+    `/applications/${applicationId}/submit`,
+  );
+  return response.data;
+}
+
+/**
+ * 지원서 파일을 업로드합니다.
+ * @param applicationId 지원서 ID
+ * @param file 업로드할 파일
+ * @returns 업로드된 파일 메타 정보
+ */
+export async function uploadApplicationFile(
+  applicationId: number,
+  file: File,
+): Promise<UploadApplicationFileResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await apiClient.post<UploadApplicationFileResponse>(
+    `/applications/${applicationId}/files`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    },
+  );
+
+  return response.data;
+}
+
+/**
+ * 지원서를 삭제(지원 취소)합니다.
+ * @param applicationId 지원서 ID
+ * @returns 삭제 결과 응답
+ */
+export async function deleteApplication(
+  applicationId: number,
+): Promise<DeleteApplicationResponse> {
+  const response = await apiClient.delete<DeleteApplicationResponse>(
+    `/applications/${applicationId}`,
   );
   return response.data;
 }
