@@ -51,6 +51,7 @@ export default function Header() {
     const authSection = me ? (
         <UserInfo
             name={me.homepage.name}
+            profileImageUrl={me.homepage.profileImage?.url ?? me.homepage.profileImageUrl ?? undefined}
             generation={me.roles[0]?.generation}
             role={me.roles[0]?.level}
             track={me.roles[0]?.track}

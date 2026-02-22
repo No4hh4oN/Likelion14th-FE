@@ -16,6 +16,14 @@ export type HomepageProfile = {
     enrollment: "ENROLLED" | string
     birthDate: string
     phone: string
+    profileImage?: {
+        url: string
+        originalFilename: string
+        contentType: string
+        fileSize: number
+        uploadedAt: string
+    } | null
+    profileImageUrl?: string | null
     status: "ACTIVE" | string
     createdAt: string
     updatedAt: string
@@ -104,12 +112,16 @@ export type RegisterRequest = {
     enrollment: string
     birthDate: string
     phone: string
+    profileImageId?: number
 }
 
-export type RegisterPayload = RegisterRequest & {
-    profileImage?: File | null
-}
+export type RegisterPayload = RegisterRequest
 
 export type RegisterResponse = {
     userUuid: string
+}
+
+export type UploadProfileImageResponse = {
+    ok: boolean
+    profileImageId: number
 }

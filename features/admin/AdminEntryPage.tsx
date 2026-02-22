@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import type { CSSProperties, TouchEvent } from "react"
+import type { CSSProperties, MouseEvent, TouchEvent } from "react"
 import { useMemo, useRef, useState } from "react"
 
 type EntryItem = {
@@ -14,17 +14,17 @@ type EntryItem = {
 const ENTRY_ITEMS: EntryItem[] = [
     {
         title: "멋사 SYU 14TH\n지원자 관리",
-        description: "멋사 SYU 14TH 아기사자 지원내용을 확인하고\n합격/불합격 처리를 해요.",
+        description: "멋사 SYU 14TH 아기사자 지원 내역을 확인하고\n합격/불합격 처리를 해요.",
         href: "/admin/applicants",
     },
     {
         title: "멋사 SYU 14TH\n아기사자 관리",
-        description: "아기사자의 출결과 과제를 관리할 수 있어요.\n커뮤니티에 공지사항을 관리하고 질의응답을 하는 공간이에요.",
+        description: "아기사자의 출결과 과제를 관리할 수 있어요.\n커뮤니티와 공지사항도 함께 관리해요.",
         href: "/admin/baby-lions",
     },
     {
         title: "멋사 SYU 14TH\n운영진 주요업무",
-        description: "운영진의 주요업무를 수행합니다.\n아기사자와 홈페이지를 관리하는 공간이예요.",
+        description: "운영진의 주요 업무를 수행해요.\n아기사자용/스태프용 페이지를 관리해요.",
         href: "/admin/staff-tasks",
     },
 ]
@@ -36,6 +36,15 @@ export default function AdminEntryPage() {
 
     const goPrev = () => setActiveIndex((prev) => Math.max(0, prev - 1))
     const goNext = () => setActiveIndex((prev) => Math.min(lastIndex, prev + 1))
+
+    const handleCardClick = (event: MouseEvent<HTMLAnchorElement>, index: number) => {
+        if (index === activeIndex) {
+            return
+        }
+
+        event.preventDefault()
+        setActiveIndex(index)
+    }
 
     const handleTouchStart = (event: TouchEvent<HTMLElement>) => {
         touchStartXRef.current = event.touches[0]?.clientX ?? null
@@ -80,27 +89,23 @@ export default function AdminEntryPage() {
                                 className="flex transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"
                                 style={mobileTrackStyle}
                             >
-                                {ENTRY_ITEMS.map((item) => (
-                                    <Link
-                                        key={item.title}
-                                        href={item.href}
-                                        className="w-full shrink-0 px-2 text-white"
-                                    >
+                                {ENTRY_ITEMS.map((item, index) => (
+                                    <div key={item.title} className="w-full shrink-0 px-2 text-white">
                                         <article className="h-[360px] w-full rounded-3xl border border-white/10 bg-[linear-gradient(145deg,#2a2f3b_0%,#20242f_100%)] px-7 py-8 shadow-[0_18px_40px_rgba(0,0,0,0.35)]">
-                                            <p className="text-xs font-semibold tracking-[0.14em] text-[#8a95b2]">
-                                                ADMIN ENTRY
-                                            </p>
-                                            <h2 className="mt-5 whitespace-normal break-words text-[33px] font-extrabold leading-[1.12] tracking-[-0.02em]">
-                                                {item.title}
-                                            </h2>
-                                            <p className="mt-5 whitespace-pre-line break-words text-[15px] leading-[1.5] text-[#9aa2b4]">
-                                                {item.description}
-                                            </p>
+                                            <p className="text-xs font-semibold tracking-[0.14em] text-[#8a95b2]">ADMIN ENTRY</p>
+                                            <Link href={item.href} onClick={(event) => handleCardClick(event, index)} className="mt-5 block">
+                                                <h2 className="whitespace-normal break-words text-[33px] font-extrabold leading-[1.12] tracking-[-0.02em]">
+                                                    {item.title}
+                                                </h2>
+                                                <p className="mt-5 whitespace-pre-line break-words text-[15px] leading-[1.5] text-[#9aa2b4]">
+                                                    {item.description}
+                                                </p>
+                                            </Link>
                                             <div className="mt-8 inline-flex h-10 items-center justify-center rounded-full bg-[#4a5162] px-4 text-sm font-semibold text-white">
                                                 바로가기
                                             </div>
                                         </article>
-                                    </Link>
+                                    </div>
                                 ))}
                             </div>
                         </div>
@@ -120,32 +125,37 @@ export default function AdminEntryPage() {
                             }
 
                             return (
-                                <Link
+                                <div
                                     key={item.title}
-                                    href={item.href}
                                     style={desktopCardStyle}
-                                    className={`absolute left-1/2 top-0 block text-white transition-[transform,opacity] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${isActive
-                                            ? "z-30 min-h-[520px] w-[44vw] min-w-[520px] max-w-[760px] opacity-100 overflow-visible"
-                                            : isNear
-                                                ? "z-20 min-h-[520px] w-[44vw] min-w-[520px] max-w-[760px] opacity-45 overflow-visible"
-                                                : "pointer-events-none z-10 min-h-[520px] w-[44vw] min-w-[520px] max-w-[760px] opacity-0 overflow-visible"
+                                    className={`pointer-events-none absolute left-1/2 top-0 block text-white transition-[transform,opacity] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${isActive
+                                        ? "z-30 min-h-[520px] w-[44vw] min-w-[520px] max-w-[760px] opacity-100 overflow-visible"
+                                        : isNear
+                                            ? "z-20 min-h-[520px] w-[44vw] min-w-[520px] max-w-[760px] opacity-45 overflow-visible"
+                                            : "z-10 min-h-[520px] w-[44vw] min-w-[520px] max-w-[760px] opacity-0 overflow-visible"
                                         }`}
                                 >
                                     <div className="-rotate-[7deg] origin-center px-8 py-6">
-                                        <h2
-                                            className={`ml-auto w-fit whitespace-pre text-right font-extrabold leading-[1.08] tracking-[-0.02em] ${isActive ? "text-[46px]" : "text-[30px]"
-                                                }`}
+                                        <Link
+                                            href={item.href}
+                                            onClick={(event) => handleCardClick(event, index)}
+                                            className="pointer-events-auto ml-auto block w-fit text-right"
                                         >
-                                            {item.title}
-                                        </h2>
-                                        <p
-                                            className={`mt-3 whitespace-pre text-right text-[#9aa2b4] ${isActive ? "text-sm" : "text-xs"
-                                                }`}
-                                        >
-                                            {item.description}
-                                        </p>
+                                            <h2
+                                                className={`whitespace-pre font-extrabold leading-[1.08] tracking-[-0.02em] ${isActive ? "text-[46px]" : "text-[30px]"
+                                                    }`}
+                                            >
+                                                {item.title}
+                                            </h2>
+                                            <p
+                                                className={`mt-3 whitespace-pre text-[#9aa2b4] ${isActive ? "text-sm" : "text-xs"
+                                                    }`}
+                                            >
+                                                {item.description}
+                                            </p>
+                                        </Link>
                                     </div>
-                                </Link>
+                                </div>
                             )
                         })}
                     </div>
