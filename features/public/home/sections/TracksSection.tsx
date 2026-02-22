@@ -178,7 +178,7 @@ const TRACK_BADGES: Record<number, TrackBadge[]> = {
 
 export default function TracksSection() {
   return (
-    <section className="pt-[119px] pb-[68px] lg:pt-65.75 lg:pb-101 bg-background text-[#141621]">
+    <section className="pt-[119px] pb-[68px] lg:pt-65.75 lg:pb-101 overflow-hidden bg-background text-[#141621]">
       <div className="w-[min(1120px,92%)] mx-auto">
         <h2 className="mb-14 lg:mb-38.25 text-white-1 text-[22px] lg:text-[48px] font-bold leading-[1.27] text-center">
           멋쟁이사자처럼 삼육대학교만의 <br />
