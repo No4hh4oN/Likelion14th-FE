@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useState } from "react"
 import { logout } from "@/features/public/api"
 
@@ -38,9 +39,11 @@ export default function UserInfo({
     const [isLoggingOut, setIsLoggingOut] = useState(false)
 
     const roleLabel = getRoleLabel(role)
-    const generationRoleText =
-        generation !== undefined ? `${generation}기 ${roleLabel}` : roleLabel
+    const generationRoleText = generation !== undefined ? `${generation}기 ${roleLabel}` : roleLabel
     const trackText = track ?? ""
+    const isStaff = role === "STAFF"
+    const rolePageLabel = isStaff ? "운영진 페이지" : "아기사자 페이지"
+    const rolePageHref = isStaff ? "/admin" : "/14/home"
 
     const handleLogout = async () => {
         if (isLoggingOut) {
@@ -69,13 +72,22 @@ export default function UserInfo({
                         </p>
                         <p className="text-xs text-gray-4">{generationRoleText}</p>
                     </div>
-                    <span className="ml-7 rounded-4xl border bg-transparent px-2 py-1 text-sm text-gray-1">
-                        {trackText}
-                    </span>
+                    {trackText ? (
+                        <span className="ml-7 rounded-4xl border bg-transparent px-2 py-1 text-sm text-gray-1">
+                            {trackText}
+                        </span>
+                    ) : null}
                 </div>
                 <div className="mt-4 flex w-full justify-center gap-4">
-                    <button className="h-12 w-full rounded-md bg-gray-5">마이페이지</button>
-                    <button className="h-12 w-full rounded-md bg-gray-5">아기사자 페이지</button>
+                    <button type="button" className="h-12 w-full rounded-md bg-gray-5">
+                        마이페이지
+                    </button>
+                    <Link
+                        href={rolePageHref}
+                        className="inline-flex h-12 w-full items-center justify-center rounded-md bg-gray-5"
+                    >
+                        {rolePageLabel}
+                    </Link>
                 </div>
             </div>
             <button
