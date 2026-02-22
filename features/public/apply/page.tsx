@@ -2,7 +2,7 @@
 
 import { ChangeEvent, ReactNode, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getAccessToken } from "@/lib/axios";
 import {
   createApplicationDraft,
@@ -12,6 +12,7 @@ import {
   getDocumentQuestions,
   submitApplication,
   updateApplicationDraft,
+  updateSubmittedApplication,
   uploadApplicationFile,
 } from "./api";
 import type {
@@ -38,6 +39,9 @@ const partLabels: Record<PartKey, string> = {
   "pm-design": "PM / DESIGN",
 };
 
+/**
+ * 백엔드 질문 카테고리를 프론트 파트 키로 변환합니다.
+ */
 const categoryToPartKey: Record<
   Exclude<DocumentQuestionCategory, "COMMON">,
   PartKey
@@ -48,6 +52,9 @@ const categoryToPartKey: Record<
   PM_DESIGN: "pm-design",
 };
 
+/**
+ * 프론트 파트 키를 API 파트 값으로 변환합니다.
+ */
 const partKeyToApplyPart: Record<PartKey, ApplyPartKey> = {
   "front-end": "FRONTEND",
   "back-end": "BACKEND",
@@ -55,6 +62,9 @@ const partKeyToApplyPart: Record<PartKey, ApplyPartKey> = {
   "pm-design": "PM_DESIGN",
 };
 
+/**
+ * API 파트 값을 프론트 파트 키로 변환합니다.
+ */
 const applyPartToPartKey: Record<ApplyPartKey, PartKey> = {
   FRONTEND: "front-end",
   BACKEND: "back-end",
@@ -62,6 +72,9 @@ const applyPartToPartKey: Record<ApplyPartKey, PartKey> = {
   PM_DESIGN: "pm-design",
 };
 
+/**
+ * 파트별 질문 배열의 초기값입니다.
+ */
 const emptyPartQuestionMap: PartQuestionMap = {
   "front-end": [],
   "back-end": [],
@@ -69,6 +82,9 @@ const emptyPartQuestionMap: PartQuestionMap = {
   "pm-design": [],
 };
 
+/**
+ * 파트별 답변 배열의 초기값입니다.
+ */
 const emptyPartAnswerMap: PartAnswerMap = {
   "front-end": [],
   "back-end": [],
@@ -76,13 +92,26 @@ const emptyPartAnswerMap: PartAnswerMap = {
   "pm-design": [],
 };
 
+/**
+ * 타임존 오프셋/UTC 접미사가 있는 날짜 문자열 패턴입니다.
+ */
 const kstDateTimePattern = /(Z|[+-]\d{2}:\d{2})$/;
 
+/**
+ * KST 기준으로 날짜 문자열을 파싱합니다.
+ * @param value 서버에서 받은 날짜 문자열
+ * @returns 파싱된 타임스탬프(ms)
+ */
 const parseKstDateTime = (value: string) => {
   const normalized = kstDateTimePattern.test(value) ? value : `${value}+09:00`;
   return Date.parse(normalized);
 };
 
+/**
+ * 서버 상태 문자열을 지원서 화면에서 사용하는 상태로 정규화합니다.
+ * @param status 서버가 내려준 상태 문자열
+ * @returns 화면에서 사용하는 상태(DRAFT/SUBMITTED) 또는 null
+ */
 const normalizeStatus = (
   status: ApplicationStatus | string,
 ): ApplicationStatus | null => {
@@ -92,6 +121,11 @@ const normalizeStatus = (
   return null;
 };
 
+/**
+ * 서버의 파트 문자열을 화면 파트 키로 변환합니다.
+ * @param part 서버 파트 문자열
+ * @returns 화면 파트 키 또는 null
+ */
 const toPartKey = (part: ApplyPartKey | string): PartKey | null => {
   if (part in applyPartToPartKey) {
     return applyPartToPartKey[part as ApplyPartKey];
@@ -119,6 +153,11 @@ const stripCodeFence = (snippet: string) => {
   return trimmed;
 };
 
+/**
+ * 질문 본문에서 질문 텍스트와 코드 블록을 분리합니다.
+ * @param content 질문 원문
+ * @returns 질문 텍스트와 코드 스니펫
+ */
 const splitQuestionContent = (content: string) => {
   const normalized = content
     .replace(/\\n/g, "\n")
@@ -143,6 +182,11 @@ const splitQuestionContent = (content: string) => {
   };
 };
 
+/**
+ * 코드 스니펫이 파이썬 코드인지 단순 판별합니다.
+ * @param codeSnippet 코드 문자열
+ * @returns 파이썬 코드 여부
+ */
 const isLikelyPythonCode = (codeSnippet: string) =>
   /\b(class|def|return|for|while|if|else|break|print|len|True)\b/.test(
     codeSnippet,
@@ -215,6 +259,12 @@ const renderPythonLine = (line: string): ReactNode =>
     );
   });
 
+/**
+ * 질문의 코드 영역 UI를 렌더링합니다.
+ * @param codeSnippet 코드 문자열
+ * @param keyPrefix React key prefix
+ * @returns 코드 블록 노드
+ */
 const renderQuestionCodeBlock = (codeSnippet: string, keyPrefix: string) => {
   const isPython = isLikelyPythonCode(codeSnippet);
 
@@ -278,6 +328,7 @@ const sectionCardClass =
  */
 export default function ApplyPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   /**
    * 공통 질문 답변 상태
    */
@@ -299,11 +350,26 @@ export default function ApplyPage() {
    * 선택된 포트폴리오 파일명 상태
    */
   const [portfolioFileName, setPortfolioFileName] = useState("");
+  /**
+   * 업로드된 포트폴리오 파일 ID 목록입니다.
+   */
   const [uploadedFileIds, setUploadedFileIds] = useState<number[]>([]);
+  /**
+   * 현재 편집 중인 지원서 ID입니다.
+   */
   const [applicationId, setApplicationId] = useState<number | null>(null);
+  /**
+   * 현재 지원서 상태입니다.
+   */
   const [applicationStatus, setApplicationStatus] =
     useState<ApplicationStatus | null>(null);
+  /**
+   * 현재 사용자의 지원서 수정 가능 여부입니다.
+   */
   const [canEditApplication, setCanEditApplication] = useState(true);
+  /**
+   * 현재 사용자의 지원서 제출 가능 여부입니다.
+   */
   const [canSubmitApplication, setCanSubmitApplication] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -324,12 +390,21 @@ export default function ApplyPage() {
     () => apiPartQuestionMap[selectedPart] ?? [],
     [apiPartQuestionMap, selectedPart],
   );
+  /**
+   * 저장/제출/파일 업로드 중 하나라도 진행 중인지 여부입니다.
+   */
   const isBusy = isSaving || isSubmitting || isUploadingFile;
+  /**
+   * 현재 지원서가 제출 완료 상태인지 여부입니다.
+   */
   const isSubmitted = applicationStatus === "SUBMITTED";
 
   useEffect(() => {
     let isMounted = true;
 
+    /**
+     * 모집 정보, 질문, 기존 지원서 데이터를 한 번에 로드합니다.
+     */
     const loadActiveRecruitment = async () => {
       const accessToken = getAccessToken();
       if (!accessToken) {
@@ -518,6 +593,22 @@ export default function ApplyPage() {
         setActionMessage("");
         setActionErrorMessage("");
 
+        const requestedApplicationIdRaw = searchParams.get("applicationId");
+        const requestedApplicationId = Number(requestedApplicationIdRaw);
+        const isEditRequestForSubmitted =
+          !!requestedApplicationIdRaw &&
+          Number.isFinite(requestedApplicationId) &&
+          requestedApplicationId === nextApplicationId;
+
+        if (
+          nextApplicationStatus === "SUBMITTED" &&
+          nextApplicationId &&
+          !isEditRequestForSubmitted
+        ) {
+          router.replace(`/14/apply/complete?applicationId=${nextApplicationId}`);
+          return;
+        }
+
         setPageStatus("ready");
       } catch {
         if (!isMounted) {
@@ -535,7 +626,7 @@ export default function ApplyPage() {
     return () => {
       isMounted = false;
     };
-  }, [router]);
+  }, [router, searchParams]);
 
   /**
    * 공통 질문 답변 값을 갱신함.
@@ -564,6 +655,10 @@ export default function ApplyPage() {
     }));
   };
 
+  /**
+   * 현재 화면의 공통/파트 답변을 API 전송용 배열로 생성합니다.
+   * @returns questionId 기반 답변 배열
+   */
   const buildDraftAnswers = (): ApplyAnswerPayload[] => {
     const commonAnswerPayload = resolvedCommonQuestions.map(
       (question, index) => ({
@@ -580,6 +675,10 @@ export default function ApplyPage() {
     return [...commonAnswerPayload, ...partAnswerPayload];
   };
 
+  /**
+   * 임시저장/수정 API 요청 바디를 생성합니다.
+   * @returns 저장 요청 바디
+   */
   const buildDraftPayload = () => ({
     applyPart: partKeyToApplyPart[selectedPart],
     portfolioUrl: portfolioUrl.trim(),
@@ -587,6 +686,9 @@ export default function ApplyPage() {
     fileIds: uploadedFileIds,
   });
 
+  /**
+   * DRAFT 상태 지원서를 저장합니다.
+   */
   const handleSaveDraft = async () => {
     if (isBusy || !canEditApplication || !activeRecruitment) {
       return;
@@ -622,6 +724,42 @@ export default function ApplyPage() {
     }
   };
 
+  /**
+   * SUBMITTED 상태 지원서를 수정합니다.
+   */
+  const handleUpdateSubmitted = async () => {
+    if (
+      isBusy ||
+      !canEditApplication ||
+      !applicationId ||
+      !activeRecruitment ||
+      !isSubmitted
+    ) {
+      return;
+    }
+
+    setIsSaving(true);
+    setActionMessage("");
+    setActionErrorMessage("");
+
+    try {
+      const payload = buildDraftPayload();
+      const updated = await updateSubmittedApplication(applicationId, payload);
+      const nextStatus = normalizeStatus(updated.status);
+      setApplicationStatus(nextStatus ?? "SUBMITTED");
+      setActionMessage("지원서 수정이 완료되었습니다.");
+    } catch {
+      setActionErrorMessage(
+        "지원서 수정에 실패했습니다. 잠시 후 다시 시도해주세요.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  /**
+   * 지원서를 최종 제출합니다.
+   */
   const handleSubmit = async () => {
     if (isBusy || !canSubmitApplication || !activeRecruitment) {
       return;
@@ -726,6 +864,11 @@ export default function ApplyPage() {
     }
   };
 
+  /**
+   * 화면 표시용 날짜 문자열을 KST 기준으로 포맷합니다.
+   * @param value 서버 날짜 문자열
+   * @returns 사용자 표시용 날짜 문자열
+   */
   const formatDateTime = (value: string) => {
     const parsed = parseKstDateTime(value);
     if (!Number.isFinite(parsed)) {
@@ -978,26 +1121,34 @@ export default function ApplyPage() {
         </div>
 
         <div className="mt-[72px] lg:mt-[156px] flex flex-col items-center justify-center gap-[26px] lg:gap-[32px]">
-          <button
-            type="button"
-            onClick={handleSaveDraft}
-            disabled={isBusy || !canEditApplication}
-            className="px-[36px] py-[14px] lg:px-[73px] lg:py-[19px] text-[16px] lg:text-[24px] font-semibold cursor-pointer rounded-full bg-gray-5 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSaving ? "저장 중..." : "지원서 저장하기"}
-          </button>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={isBusy || !canSubmitApplication}
-            className="px-[78px] py-[15px] lg:px-[112px] lg:py-[15px] text-[20px] lg:text-[36px] font-bold cursor-pointer rounded-full bg-main-1 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSubmitting ? "제출 중..." : "제출하기"}
-          </button>
-          {isSubmitted && (
-            <p className="text-[12px] text-main-3 lg:text-[16px]">
-              이미 제출된 지원서입니다.
-            </p>
+          {isSubmitted ? (
+            <button
+              type="button"
+              onClick={handleUpdateSubmitted}
+              disabled={isBusy || !canEditApplication || !applicationId}
+              className="px-[78px] py-[15px] lg:px-[112px] lg:py-[15px] text-[20px] lg:text-[36px] font-bold cursor-pointer rounded-full bg-main-3 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isSaving ? "수정 중..." : "수정하기"}
+            </button>
+          ) : (
+            <div className="flex flex-col items-center justify-center gap-[26px] lg:gap-[32px]">
+              <button
+                type="button"
+                onClick={handleSaveDraft}
+                disabled={isBusy || !canEditApplication}
+                className="px-[36px] py-[14px] lg:px-[73px] lg:py-[19px] text-[16px] lg:text-[24px] font-semibold cursor-pointer rounded-full bg-gray-5 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSaving ? "저장 중..." : "지원서 저장하기"}
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isBusy || !canSubmitApplication}
+                className="px-[78px] py-[15px] lg:px-[112px] lg:py-[15px] text-[20px] lg:text-[36px] font-bold cursor-pointer rounded-full bg-main-1 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSubmitting ? "제출 중..." : "제출하기"}
+              </button>
+            </div>
           )}
           {actionMessage && (
             <p className="text-[12px] text-main-3 lg:text-[16px]">
