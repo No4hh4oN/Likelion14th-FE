@@ -605,7 +605,9 @@ export default function ApplyPage() {
           nextApplicationId &&
           !isEditRequestForSubmitted
         ) {
-          router.replace(`/14/apply/complete?applicationId=${nextApplicationId}`);
+          router.replace(
+            `/14/apply/complete?applicationId=${nextApplicationId}`,
+          );
           return;
         }
 
@@ -927,7 +929,7 @@ export default function ApplyPage() {
   }
 
   return (
-    <section className="bg-background px-4 py-9 text-white lg:px-6 lg:py-16">
+    <section className="bg-background px-4 py-29 text-white lg:px-6 lg:py-36">
       <div className="mx-auto w-full max-w-290">
         <div className="relative overflow-hidden rounded-[10px] px-5 lg:px-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-10">
@@ -944,7 +946,7 @@ export default function ApplyPage() {
 
             <div className="order-2 mx-auto w-[170px] sm:w-[210px] lg:order-1 lg:mx-0 lg:w-[260px] lg:shrink-0">
               <Image
-                src="/images/lion-stand-half-gradient-black.png"
+                src="/images/lions/lion-stand-half-gradient-black.webp"
                 alt="lion-standing"
                 width={260}
                 height={260}
