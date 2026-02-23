@@ -9,6 +9,7 @@ import {
     checkStudentNoAvailability,
     register,
     sendEmailCode,
+    uploadProfileImage,
     verifyEmailCode,
 } from "@/features/public/api"
 
@@ -223,6 +224,16 @@ export default function SignupPageFeature() {
 
         setIsSubmitting(true)
         try {
+            let profileImageId: number | undefined
+            if (profileImage) {
+                const uploadResult = await uploadProfileImage(profileImage)
+                if (!uploadResult.ok) {
+                    setErrorMessage("프로필 이미지 업로드에 실패했습니다.")
+                    return
+                }
+                profileImageId = uploadResult.profileImageId
+            }
+
             const result = await register({
                 loginId: form.loginId,
                 email: form.email,
@@ -234,7 +245,7 @@ export default function SignupPageFeature() {
                 enrollment: form.enrollment,
                 birthDate,
                 phone: form.phone,
-                profileImage,
+                profileImageId,
             })
             setMessage(`회원가입이 완료되었습니다. (${result.userUuid}) 로그인 페이지로 이동해주세요.`)
         } catch {

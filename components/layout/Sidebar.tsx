@@ -38,6 +38,19 @@ export default function Sidebar({ isOpen, onClose, authSection }: SidebarProps) 
     }, [pathname, isOpen])
 
     useEffect(() => {
+        if (!isOpen) {
+            return
+        }
+
+        const previousOverflow = document.body.style.overflow
+        document.body.style.overflow = "hidden"
+
+        return () => {
+            document.body.style.overflow = previousOverflow
+        }
+    }, [isOpen])
+
+    useEffect(() => {
         if (pathname !== "/") {
             return
         }
@@ -129,17 +142,31 @@ export default function Sidebar({ isOpen, onClose, authSection }: SidebarProps) 
                 type="button"
                 aria-label="Close menu"
                 onClick={onClose}
-                className={`fixed inset-0 z-40 cursor-default bg-black/20 transition-opacity duration-500 ${isOpen ? "opacity-100" : "pointer-events-none opacity-0"
+                className={`fixed left-0 top-0 z-40 h-dvh w-screen cursor-default bg-black/35 backdrop-blur-[3px] transition-opacity duration-500 md:bg-black/20 md:backdrop-blur-0 ${isOpen ? "opacity-100" : "pointer-events-none opacity-0"
                     }`}
             />
             <aside
-                className={`fixed right-0 top-0 z-50 h-full w-[412px] bg-[#303136] shadow-xl transition-transform duration-500 ease-out ${isOpen ? "translate-x-0" : "translate-x-full"
+                className={`fixed right-0 top-0 z-50 h-dvh w-[min(320px,78vw)] bg-[#30333c] shadow-xl transition-transform duration-500 ease-out md:w-[min(412px,100vw)] md:bg-[#303136] ${isOpen ? "translate-x-0" : "translate-x-full"
                     }`}
                 role="dialog"
                 aria-modal="true"
                 aria-hidden={!isOpen}
             >
-                <div className="flex h-16 items-center justify-end px-4">
+                <button
+                    type="button"
+                    aria-label="Close menu"
+                    onClick={onClose}
+                    className="absolute right-3 top-3 z-20 inline-flex h-11 w-11 items-center justify-center rounded-md border border-none cursor-pointer md:hidden"
+                >
+                    <Image
+                        src="/images/closeButton.webp"
+                        alt=""
+                        width={36}
+                        height={36}
+                        priority
+                    />
+                </button>
+                <div className="hidden h-16 items-center justify-end px-4 md:flex">
                     <button
                         type="button"
                         aria-label="Close menu"
@@ -155,20 +182,20 @@ export default function Sidebar({ isOpen, onClose, authSection }: SidebarProps) 
                         />
                     </button>
                 </div>
-                <div className="p-4" onClickCapture={handleActionClickCapture}>
+                <div className="px-4 pb-6 pt-18 md:p-4" onClickCapture={handleActionClickCapture}>
                     <div>{authSection}</div>
-                    <ul className="mt-8">
+                    <ul className="mt-7 md:mt-8">
                         {menus.map((menu, index) => {
                             const isActive = index === activeIndex
                             const marginTop =
-                                index === 0 ? "mt-0" : index - 1 === activeIndex || isActive ? "mt-[38px]" : "mt-[28px]"
+                                index === 0 ? "mt-0" : index - 1 === activeIndex || isActive ? "mt-7 md:mt-[38px]" : "mt-5 md:mt-[28px]"
 
                             return (
                                 <li key={menu.href} className={marginTop}>
                                     <Link
                                         href={menu.href}
                                         onClick={(event) => handleMenuClick(event, menu.href)}
-                                        className={`leading-none ${isActive ? "text-[32px] font-bold text-foreground" : "text-[24px] font-medium text-gray-3"}`}
+                                        className={`leading-none ${isActive ? "text-[38px] font-bold text-foreground md:text-[32px]" : "text-[30px] font-medium text-gray-3 md:text-[24px]"}`}
                                     >
                                         {menu.label}
                                     </Link>

@@ -1,20 +1,29 @@
+import Image from "next/image";
 export default function AboutSection() {
   return (
     <section id="about" className="bg-background scroll-mt-24">
       <div className="px-4.75 relative flex flex-col">
-        <h2 className="font-bold text-[22px] lg:text-5xl mx-auto">ABOUT</h2>
-        <img
-          src="/images/home/AboutSection/lion.png"
-          alt="lion"
-          className="absolute left-1/2 -translate-x-1/2 mt-8 ml-1.5 lg:mt-4 lg:ml-4 w-59 h-44.25 lg:w-188 lg:h-141 z-0"
+        <h2 className="font-bold text-[22px] leading-[1.27] lg:text-5xl mx-auto">
+          ABOUT
+        </h2>
+        <Image
+          src="/images/lions/peek.webp"
+          alt="라이언 빼꼼"
+          width={476}
+          height={408}
+          className="relative mt-7 left-1/2 -translate-x-1/2 w-[112px] lg:w-[340px] z-0"
+          priority
         />
         {/** 카드 영역 */}
-        <div className="mt-27.5 lg:mt-80 py-8 px-7 lg:p-7 z-10 relative rounded-[40px] bg-linear-to-b from-[#5B6171] to-[#31353E] max-w-251.75 mx-auto flex flex-col items-center gap-8 lg:flex-row lg:items-stretch lg:gap-19.25">
+        <div className="py-8 px-7 lg:p-7 z-10 relative rounded-[40px] bg-linear-to-b from-[#5B6171] to-[#31353E] max-w-251.75 mx-auto flex flex-col items-center gap-8 lg:flex-row lg:items-stretch lg:gap-19.25">
           <div className="w-24.25 h-24.25 lg:w-71 lg:h-71 relative rounded-full bg-white grid place-items-center text-sm shrink-0">
-            <img
-              src="/images/logo.png"
-              alt="logo"
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full object-cover"
+            <Image
+              src="/images/syuLikeLion.webp"
+              alt="LIKELION logo"
+              width={284}
+              height={284}
+              className="h-auto w-full object-cover"
+              priority={false}
             />
           </div>
           <div className="max-w-131 text-center lg:text-left">

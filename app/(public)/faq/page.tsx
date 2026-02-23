@@ -1,5 +1,5 @@
-import NoticePage from "@/features/public/notice/NoticePage"
+import FaqFeature from "@/features/public/faq/FaqPage";
 
 export default function FaqPage() {
-    return <NoticePage />
+  return <FaqFeature />;
 }
