@@ -64,7 +64,7 @@ export default function EditSection({ user, onBack }: EditSectionProps) {
   };
 
   return (
-    <section className="min-h-screen bg-[linear-gradient(180deg,#24252E_0%,#1E1F27_100%)] px-4 py-10 text-white-1 lg:px-6 lg:py-14">
+    <section className="min-h-screen bg-background px-4 text-white-1 lg:px-6">
       <div className="mx-auto w-full max-w-[420px] rounded-[8px] border border-white/10 bg-[#2E313A]/95 px-5 py-6 shadow-[0_16px_40px_rgba(0,0,0,0.28)] lg:max-w-[470px] lg:px-9 lg:py-8">
         <div className="relative">
           <button

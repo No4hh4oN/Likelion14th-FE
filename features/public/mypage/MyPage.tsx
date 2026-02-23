@@ -23,34 +23,40 @@ export default function MyPage() {
     return null;
   }
 
-  if (currentSection === "edit") {
-    return (
-      <EditSection
-        user={MOCK_USER}
-        onBack={() => setCurrentSection("profile")}
-      />
-    );
-  }
+  const renderCurrentSection = () => {
+    if (currentSection === "edit") {
+      return (
+        <EditSection
+          user={MOCK_USER}
+          onBack={() => setCurrentSection("profile")}
+        />
+      );
+    }
 
-  if (currentSection === "history") {
-    return (
-      <HistorySection
-        user={MOCK_USER}
-        onBack={() => setCurrentSection("profile")}
-      />
-    );
-  }
+    if (currentSection === "history") {
+      return (
+        <HistorySection
+          user={MOCK_USER}
+          onBack={() => setCurrentSection("profile")}
+        />
+      );
+    }
 
-  return (
-    <div className="flex flex-col gap-[61px] mt-[30px] leading-[1.27] text-white-1 lg:mt-[57px]">
-      <h1 className="text-center text-[22px] font-bold lg:text-[40px]">
-        My Page
-      </h1>
+    return (
       <ProfileSection
         user={MOCK_USER}
         onNavigate={setCurrentSection}
         onLogout={() => router.replace("/14/login")}
       />
+    );
+  };
+
+  return (
+    <div className="flex flex-col gap-[61px] mt-[110px] leading-[1.27] text-white-1 lg:mt-[137px]">
+      <h1 className="text-center text-[22px] font-bold lg:text-[40px]">
+        My Page
+      </h1>
+      {renderCurrentSection()}
     </div>
   );
 }

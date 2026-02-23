@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import type { MyPageSection, MyPageTab, MyPageUser, UserRole } from "../types";
@@ -54,13 +54,13 @@ function getTabMessage(role: UserRole, tab: MyPageTab) {
   if (role === "게스트") {
     return {
       title: "아기사자 권한이 없습니다.",
-      description: "선발이 완료되면 지원/활동 메뉴가 활성화됩니다.",
+      description: "아기사자만 열람 가능합니다.",
     };
   }
 
   return {
-    title: "지원 내역이 아직 없습니다.",
-    description: "지원 후 결과가 나오면 이 영역에서 확인할 수 있습니다.",
+    title: "과제 내역이 아직 없습니다.",
+    description: "과제를 제출하면 이 영역에서 확인할 수 있습니다.",
   };
 }
 
@@ -69,7 +69,7 @@ export default function ProfileSection({
   onNavigate,
   onLogout,
 }: ProfileSectionProps) {
-  const [activeTab, setActiveTab] = useState<MyPageTab>("지원");
+  const [activeTab, setActiveTab] = useState<MyPageTab>("과제");
   const message = getTabMessage(user.role, activeTab);
 
   return (
@@ -79,20 +79,24 @@ export default function ProfileSection({
           text="로그아웃"
           onClick={onLogout}
           className="absolute top-[-46px] right-[18px] text-[11px] lg:min-w-[86px]"
+          hoverClassName="hover:bg-gray-5"
         />
-        <div className="rounded-[8px] border border-white/10 bg-[#2E313A]/95 p-4 shadow-[0_16px_40px_rgba(0,0,0,0.28)] lg:p-6">
+        <div className="rounded-[10px] bg-gray-7 p-4 shadow-[0_16px_40px_rgba(0,0,0,0.28)] lg:p-8.5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 lg:gap-8 leading-[1.27]">
               {/* TODO: 마이페이지 프로필 에셋 연동 */}
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[radial-gradient(circle_at_30%_25%,#D8DEF2_0%,#9AA8D2_54%,#6B74A3_100%)] text-[24px] font-bold text-[#2F3648] lg:h-20 lg:w-20 lg:text-[30px]">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[radial-gradient(circle_at_30%_25%,#D8DEF2_0%,#9AA8D2_54%,#6B74A3_100%)] text-[24px] font-bold text-[#2F3648] lg:h-36.75 lg:w-36.75 lg:text-[30px]">
                 M
               </div>
 
               <div>
-                <p className="text-[24px] font-semibold leading-none lg:text-[30px]">
-                  {user.name} 님
+                <p className="text-[16px] font-medium lg:text-[28px]">
+                  <span className="text-[24px] lg:text-[36px] font-semibold">
+                    {user.name}
+                  </span>{" "}
+                  님
                 </p>
-                <p className="mt-2 text-[12px] text-white/70 lg:text-[14px]">
+                <p className="mt-2 lg:mt-5 text-[12px] font-light text-white-1 lg:text-[20px]">
                   {user.major} {user.generation}
                 </p>
                 <span
@@ -105,34 +109,36 @@ export default function ProfileSection({
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 lg:grid-cols-1 lg:justify-items-end">
+            <div className="grid grid-cols-2 gap-2 lg:gap-3 lg:grid-cols-1 lg:justify-items-end">
               <ActionButton
                 text="정보 수정"
                 onClick={() => onNavigate("edit")}
                 className="text-[11px] lg:min-w-[86px]"
+                hoverClassName="hover:bg-gray-5"
               />
               <ActionButton
                 text="지원 내역"
                 onClick={() => onNavigate("history")}
                 className="text-[11px] lg:min-w-[86px]"
+                hoverClassName="hover:bg-gray-5"
               />
             </div>
           </div>
 
           <div className="mt-5 border-b border-white/15">
             <div className="flex">
-              {(["내 정보", "지원"] as const).map((tab) => (
+              {(["내 정보", "과제"] as const).map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   onClick={() => setActiveTab(tab)}
                   className={`relative min-w-[84px] px-3 pb-2 pt-1 text-[13px] font-medium transition-colors lg:min-w-[90px] lg:text-[14px] ${
-                    activeTab === tab ? "text-main-3" : "text-white/35"
+                    activeTab === tab ? "text-main-1" : "text-white/35"
                   }`}
                 >
                   {tab}
                   {activeTab === tab && (
-                    <span className="absolute inset-x-0 bottom-[-1px] h-[2px] bg-main-3" />
+                    <span className="absolute inset-x-0 bottom-[-1px] h-[2px] bg-main-1" />
                   )}
                 </button>
               ))}
@@ -152,3 +158,5 @@ export default function ProfileSection({
     </section>
   );
 }
+
+

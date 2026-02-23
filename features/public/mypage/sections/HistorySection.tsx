@@ -1,4 +1,4 @@
-import { MOCK_APPLICATION_HISTORY } from "../mock";
+﻿import { MOCK_APPLICATION_HISTORY } from "../mock";
 import type { ApplicationRecord, MyPageUser } from "../types";
 import ActionButton from "../components/ActionButton";
 
@@ -37,7 +37,7 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
 
   if (user.role !== "게스트") {
     return (
-      <section className="min-h-screen bg-[linear-gradient(180deg,#24252E_0%,#1E1F27_100%)] px-4 py-9 text-white-1 lg:px-6 lg:py-14">
+      <section className="min-h-screen bg-background px-4 text-white-1 lg:px-6">
         <div className="mx-auto w-full max-w-[960px] rounded-[8px] border border-white/10 bg-[#2E313A]/95 p-4 shadow-[0_16px_40px_rgba(0,0,0,0.28)] lg:p-6">
           <div className="flex items-center justify-between">
             <h1 className="text-[24px] font-bold lg:text-[30px]">
@@ -47,6 +47,7 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
               text="돌아가기"
               onClick={onBack}
               className="text-[12px]"
+              hoverClassName="hover:bg-gray-5"
             />
           </div>
           <p className="mt-4 text-[14px] text-white/75 lg:text-[16px]">
@@ -58,9 +59,9 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
   }
 
   return (
-    <section className="min-h-screen bg-[linear-gradient(180deg,#24252E_0%,#1E1F27_100%)] px-4 py-9 text-white-1 lg:px-6 lg:py-14">
-      <div className="mx-auto w-full max-w-[960px] rounded-[8px] border border-white/10 bg-[#2E313A]/95 p-4 shadow-[0_16px_40px_rgba(0,0,0,0.28)] lg:p-8">
-        <div className="flex items-start justify-between gap-3">
+    <section className="min-h-screen bg-background px-4 text-white-1 lg:px-6">
+      <div className="mx-auto w-full max-w-[1300px] rounded-[8px] border border-white/10 bg-[#2E313A]/95 p-4 shadow-[0_16px_40px_rgba(0,0,0,0.28)] lg:p-8">
+        <div className="relative flex items-start justify-between gap-3">
           <div className="flex-1 text-center">
             <h1 className="text-[26px] font-bold lg:text-[36px]">
               나의 지원 내역
@@ -69,11 +70,14 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
               14기 이후 내역부터 확인 가능합니다
             </p>
           </div>
-          <ActionButton
-            text="돌아가기"
+          <button
+            type="button"
             onClick={onBack}
-            className="text-[12px]"
-          />
+            className="absolute right-0 top-0 h-8 w-8 text-[36px] leading-none text-gray-6 transition-colors hover:text-white/80"
+            aria-label="닫기"
+          >
+            ×
+          </button>
         </div>
 
         <div className="mt-8 overflow-x-auto">
@@ -135,7 +139,8 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
                       <ActionButton
                         text="수정하기"
                         onClick={() => handleEditClick(record)}
-                        className="h-7 bg-[#F39A3D] px-3 py-0 text-[11px] leading-none hover:bg-[#E58D2B]"
+                        className="bg-main-3 px-5 py-2.25 text-[14px] leading-none"
+                        hoverClassName="hover:bg-amber-600"
                       />
                     ) : (
                       <span className="text-white/50">-</span>
@@ -145,7 +150,8 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
                     <ActionButton
                       text="결과 확인"
                       onClick={() => handleResultClick(record)}
-                      className="h-7 bg-[#2D9CFF] px-3 py-0 text-[11px] leading-none hover:bg-[#2289E6]"
+                      className="bg-main-1 px-5 py-2.25 text-[14px] leading-none"
+                      hoverClassName="hover:bg-[#2289E6]"
                     />
                   </td>
                 </tr>
