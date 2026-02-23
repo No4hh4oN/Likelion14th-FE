@@ -2,14 +2,17 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { FormEvent, useState } from "react"
+import { FormEvent, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { login } from "@/features/public/api"
+
+const REMEMBER_LOGIN_ID_KEY = "rememberLoginId"
 
 export default function LoginPageFeature() {
     const router = useRouter()
     const [loginId, setLoginId] = useState("")
     const [password, setPassword] = useState("")
+    const [rememberLoginInfo, setRememberLoginInfo] = useState(false)
     const [errorMessage, setErrorMessage] = useState("")
     const [isSubmitting, setIsSubmitting] = useState(false)
     const authInputClass =
@@ -25,11 +28,30 @@ export default function LoginPageFeature() {
             router.push("/")
             router.refresh()
         } catch {
-            setErrorMessage("아이디 또는 비밀번호를 확인해주세요.")
+            setErrorMessage("아이디 또는 비밀번호를 확인해 주세요.")
         } finally {
             setIsSubmitting(false)
         }
     }
+
+    useEffect(() => {
+        const savedLoginId = window.localStorage.getItem(REMEMBER_LOGIN_ID_KEY)
+        if (!savedLoginId) {
+            return
+        }
+
+        setLoginId(savedLoginId)
+        setRememberLoginInfo(true)
+    }, [])
+
+    useEffect(() => {
+        if (rememberLoginInfo) {
+            window.localStorage.setItem(REMEMBER_LOGIN_ID_KEY, loginId)
+            return
+        }
+
+        window.localStorage.removeItem(REMEMBER_LOGIN_ID_KEY)
+    }, [loginId, rememberLoginInfo])
 
     return (
         <div className="relative mx-auto mt-27 w-full max-w-4xl pt-28">
@@ -42,9 +64,9 @@ export default function LoginPageFeature() {
                 priority
             />
 
-            <section className="relative z-10 h-[calc(100vh-220px)] w-full rounded-t-[56px] bg-[linear-gradient(180deg,#484D5A_-23.29%,#303136_46.27%)] px-4 pb-9 pt-16 md:rounded-t-[225px]">
+            <section className="relative z-10 min-h-[calc(100dvh-220px)] w-full rounded-t-[56px] bg-[linear-gradient(180deg,#484D5A_-23.29%,#303136_46.27%)] px-4 pb-9 pt-16 md:rounded-t-[225px]">
                 <form onSubmit={handleSubmit} className="flex flex-col items-center justify-center space-y-4">
-                    <div className="flex h-[61px] w-[61px] items-center justify-center justify-self-center rounded-full bg-foreground p-1 md:h-52 md:w-52 md:p-6">
+                    <div className="flex h-[73px] w-[73px] items-center justify-center justify-self-center rounded-full bg-foreground p-[6px] md:h-[243px] md:w-[243px] md:p-[23px]">
                         <Image
                             src="/images/syuLikelion.webp"
                             alt="LIKELION 14TH"
@@ -55,8 +77,19 @@ export default function LoginPageFeature() {
                         />
                     </div>
 
-                    <label className="block">
-                        <span className="mb-2 block text-lg font-bold text-foreground md:text-xl">ID</span>
+                    <label className="block w-80.75 md:w-122">
+                        <div className="mb-2 flex items-center justify-between">
+                            <span className="text-lg font-bold text-foreground md:text-xl">ID</span>
+                            <span className="inline-flex items-center gap-2 text-base font-normal text-gray-2">
+                                <input
+                                    type="checkbox"
+                                    checked={rememberLoginInfo}
+                                    onChange={(event) => setRememberLoginInfo(event.target.checked)}
+                                    className="h-6 w-6 accent-main-1"
+                                />
+                                로그인 정보 기억하기
+                            </span>
+                        </div>
                         <input
                             type="text"
                             value={loginId}
