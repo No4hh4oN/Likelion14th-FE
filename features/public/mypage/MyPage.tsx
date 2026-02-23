@@ -15,7 +15,7 @@ export default function MyPage() {
 
   useEffect(() => {
     if (MOCK_AUTH_STATUS === "unauthenticated") {
-      router.replace("/14/login");
+      router.replace("/auth");
     }
   }, [router]);
 
@@ -46,7 +46,7 @@ export default function MyPage() {
       <ProfileSection
         user={MOCK_USER}
         onNavigate={setCurrentSection}
-        onLogout={() => router.replace("/14/login")}
+        onLogout={() => router.replace("/auth")}
       />
     );
   };
