@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, MouseEvent } from "react";
+import Image from "next/image";
 
 const galleryItems = [
   {
@@ -62,7 +63,7 @@ export default function GallerySection() {
   };
 
   return (
-    <section className="pt-60 bg-[#fafafa] text-[#141621] overflow-hidden">
+    <section className="pt-20 lg:pt-60 bg-[#fafafa] text-[#141621] overflow-hidden">
       <div className="relative px-[clamp(18px,6vw,48px)] lg:px-[clamp(18px,12vw,120px)] max-w-350 mx-auto">
         {/* 헤더 섹션 */}
         <div className="relative flex items-center mb-8 lg:mb-26.75">
@@ -80,14 +81,15 @@ export default function GallerySection() {
           </div>
 
           {/* 마스코트 이미지 자리 */}
-          <div className="absolute -right-10 -top-13 lg:top-auto lg:left-150">
-            <div className="relative top-4 z-10 w-50 h-50 lg:w-[clamp(500px,20vw,635px)] lg:h-[clamp(500px,20vw,635px)]">
-              <img
-                src="/images/home/GallerySection/lion.png"
-                alt="멋삼이"
-                className="w-full h-full object-contain rotate-[8.03deg] lg:rotate-[4.29deg]"
+          <div className="absolute -right-4.5 -top-5 lg:right-[120px] lg:top-[0px]">
+            <div className="relative z-10 h-[170px] w-[170px] lg:h-[292px] lg:w-[340px]">
+              <Image
+                src="/images/lions/hug-gradient-white.webp"
+                alt="안아줘요 라이언"
+                width={420}
+                height={440}
+                className="absolute bottom-[22px] left-1/2 z-20 w-[148px] -translate-x-1/2 lg:bottom-[16px] lg:w-[420px]"
               />
-              <div className="absolute bottom-0 left-0 w-full h-23/50 bg-linear-to-t from-[#fafafa] via-[#fafafa] to-transparent" />
             </div>
           </div>
         </div>

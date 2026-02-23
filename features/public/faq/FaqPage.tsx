@@ -1,15 +1,15 @@
 import ScheduleSection from "./sections/ScheduleSection";
 import NoticeSection from "./sections/NoticeSection";
-import FAQSection from "./sections/FAQSection";
+import FaqSection from "./sections/FaqSection";
 import HeroSection from "./sections/HeroSection";
 
-export default function NoticePage() {
+export default function FaqPage() {
   return (
     <div className="flex flex-col">
       <HeroSection />
       <NoticeSection />
       <ScheduleSection />
-      <FAQSection />
+      <FaqSection />
     </div>
   );
 }

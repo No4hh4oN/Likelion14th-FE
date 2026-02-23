@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 const reviews = [
   {
     title: "기획/디자인",
@@ -72,10 +74,12 @@ function ReviewCards({ summary }: ReviewSummary) {
           className="relative flex flex-1 basis-0 min-w-0 flex-col gap-1.75 lg:gap-4 border-gray-2 border-2 rounded-[10px] lg:rounded-[30px] py-5.75 lg:py-10.75 px-3.75 lg:px-8.75"
         >
           <div className="flex flex-col lg:flex-row gap-1.75 lg:gap-2.75 w-full items-center">
-            <img
-              className="w-10.5 h-9.75 lg:w-7.25 lg:h-6.75"
+            <Image
               src="/images/home/meotsam.png"
               alt="#"
+              width={42}
+              height={39}
+              className="w-10.5 h-9.75 lg:w-7.25 lg:h-6.75"
             />
             <h4 className="text-[16px] lg:text-[clamp(12px,1.4vw,28px)] font-semibold text-main-1">
               {item.title}
@@ -95,7 +99,7 @@ function ReviewCards({ summary }: ReviewSummary) {
 
 export default function ReviewSection() {
   return (
-    <section className="relative bg-[#fafafa] pb-45 lg:pb-128.5 overflow-y-hidden scrollbar-hide">
+    <section className="relative overflow-hidden bg-[#fafafa] pb-45 lg:pb-128.5">
       <div className="px-4.5 lg:px-[clamp(18px,12vw,392px)]">
         <h2 className="text-[22px] lg:text-[48px] font-semibold leading-[1.27] text-center text-background mb-8.5 lg:mb-34.75">
           삼육멋사 <span className="text-main-3">13기</span> <br />

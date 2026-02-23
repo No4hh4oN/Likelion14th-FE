@@ -25,9 +25,9 @@ const NoticeSection = () => {
         </h2>
 
         <div className="mt-[9px] grid items-start gap-0 lg:mt-[41px] lg:grid-cols-[minmax(0,520px)_minmax(0,520px)] lg:items-start lg:justify-center lg:gap-[115px]">
-          <div className="relative mx-auto w-[280px] lg:w-[620px]">
+          <div className="relative mx-auto mt-[40px] w-[200px] lg:mt-[80px] lg:w-[440px]">
             <Image
-              src="/images/notice/NoticeSection/lion.png"
+              src="/images/lions/lion-stand-half-gradient-white.webp"
               alt="라이언 캐릭터"
               width={620}
               height={700}
@@ -36,7 +36,7 @@ const NoticeSection = () => {
             />
           </div>
 
-          <div className="relative z-10 -mt-[56px] w-full max-w-[520px] space-y-5.75 lg:space-y-15 pt-0 lg:mt-0 lg:pt-[74px]">
+          <div className="relative z-10 mt-6.5 w-full max-w-[520px] space-y-5.75 lg:space-y-15 pt-0 lg:mt-0 lg:pt-[74px]">
             <div>
               <h3 className="text-[18px] lg:text-[24px] font-bold text-background">
                 이런 <span className="text-main-3">아기사자</span>를 찾아요!
@@ -95,20 +95,19 @@ const NoticeSection = () => {
         </div>
 
         {/* 수료조건 탭 */}
-        <div className="mt-[118px] lg:mt-[29px]">
+        <div className="mt-[118px] lg:mt-[245px]">
           <h2 className="text-center text-[22px] font-semibold text-background lg:text-[36px]">
             14기 아기사자 <span className="text-main-1">수료 조건</span>
           </h2>
 
-          <div className="relative mt-[132px] lg:mt-[203px]">
-            <div className="pointer-events-none absolute left-1/2 top-0 z-0 -translate-x-1/2 -translate-y-[62%] lg:-translate-y-[62%]">
+          <div className="relative mt-[28px] lg:mt-[71px]">
+            <div className="z-0 mx-auto w-[110px] lg:w-[167px]">
               <Image
-                src="/images/home/AboutSection/lion.png"
-                alt="라이언 아이콘"
-                width={357}
-                height={268}
-                sizes="(max-width: 1023px) 76vw, 400px"
-                className="w-[76vw] max-w-[320px] h-auto lg:max-w-[400px] lg:w-[400px] object-contain"
+                src="/images/lions/peek.webp"
+                alt="라이언 빼꼼"
+                width={476}
+                height={408}
+                className="h-auto w-full object-contain"
               />
             </div>
 
