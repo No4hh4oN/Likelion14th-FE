@@ -48,10 +48,14 @@ export default function Header() {
     }
   }, [isMenuOpen, checkAuth]);
 
-<<<<<<< HEAD
   const authSection = me ? (
     <UserInfo
       name={me.homepage.name}
+      profileImageUrl={
+        me.homepage.profileImage?.url ??
+        me.homepage.profileImageUrl ??
+        undefined
+      }
       generation={me.roles[0]?.generation}
       role={me.roles[0]?.level}
       track={me.roles[0]?.track}
@@ -60,20 +64,6 @@ export default function Header() {
   ) : (
     <Login />
   );
-=======
-    const authSection = me ? (
-        <UserInfo
-            name={me.homepage.name}
-            profileImageUrl={me.homepage.profileImage?.url ?? me.homepage.profileImageUrl ?? undefined}
-            generation={me.roles[0]?.generation}
-            role={me.roles[0]?.level}
-            track={me.roles[0]?.track}
-            onLoggedOut={() => setMe(null)}
-        />
-    ) : (
-        <Login />
-    )
->>>>>>> 9f520a026d8fbcc797a5a28b4bb29584a068f539
 
   return (
     <>
