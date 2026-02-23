@@ -1,6 +1,6 @@
 export type UserRole = "게스트" | "아기사자" | "운영진";
 export type AuthStatus = "authenticated" | "unauthenticated";
-export type MyPageTab = "내 정보" | "지원";
+export type MyPageTab = "내 정보" | "과제";
 export type MyPageSection = "profile" | "edit" | "history";
 
 export type MyPageUser = {
