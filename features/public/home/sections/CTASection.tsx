@@ -3,7 +3,7 @@ import Image from "next/image";
 
 export default function CTASection() {
   return (
-    <section className="pt-18.25 lg:pt-13.5 pb-19.75 lg:pb-91.25 bg-[#262529]">
+    <section className="pt-18.25 lg:pt-13.5 pb-19.75 lg:pb-91.25 bg-background">
       <div className="px-4.5 lg:px-[clamp(18px,12vw,392px)]">
         <div className="flex flex-col items-center">
           <h2 className="text-[24px] lg:text-[48px] font-bold leading-[1.27] text-center text-[#fafafa]">
@@ -21,7 +21,7 @@ export default function CTASection() {
             />
           </div>
           <p className="text-white-1 text-center w-29.5 lg:w-auto font-normal text-[14px] lg:text-[20px]">
-            아기사자 모집기간 : 2월 16일 ~ 3월 12일
+            아기사자 모집기간 : 2월 27일 ~ 3월 12일
           </p>
           <Link
             href="/14/apply"

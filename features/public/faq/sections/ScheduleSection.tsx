@@ -39,7 +39,7 @@ interface ScheduleEvent {
 const WEEK_DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 const SCHEDULE_EVENTS: ScheduleEvent[] = [
-  { id: "document", title: "서류 모집", dateText: "2/23(월) - 3/12(목)" },
+  { id: "document", title: "서류 모집", dateText: "2/27(금) - 3/12(목)" },
   { id: "documentResult", title: "서류 결과 발표", dateText: "3/13(금) 10:00" },
   { id: "interview", title: "면접", dateText: "3/15(일) - 3/17(화)" },
   { id: "finalResult", title: "최종 결과 발표", dateText: "3/18(수) 10:00" },
@@ -48,11 +48,11 @@ const SCHEDULE_EVENTS: ScheduleEvent[] = [
 /** 달력 날짜 데이터 하드코딩 */
 const CALENDAR_DAYS: CalendarDay[] = [
   { label: 22, type: "disabled" },
-  { label: 23, type: "blue-start" },
-  { label: 24, type: "blue-mid" },
-  { label: 25, type: "blue-mid" },
-  { label: 26, type: "blue-mid" },
-  { label: 27, type: "blue-mid" },
+  { label: 23, type: "disabled" },
+  { label: 24, type: "disabled" },
+  { label: 25, type: "disabled" },
+  { label: 26, type: "disabled" },
+  { label: 27, type: "blue-start" },
   { label: 28, type: "blue-end" },
 
   { label: "3/1", type: "blue-start", calloutId: "document" },
