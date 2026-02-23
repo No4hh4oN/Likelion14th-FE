@@ -7,33 +7,64 @@ import Link from "next/link";
 const SPARKLES = [
   {
     id: "sparkle-1",
-    className: "left-[8%] top-[22%] w-7 lg:left-[12%] lg:top-[22%] lg:w-5",
+    className: "left-[11%] top-[30%] w-7 lg:left-[20%] lg:top-[55%] lg:w-9",
     delay: "0s",
+    hideOnMobile: false,
   },
   {
     id: "sparkle-2",
-    className: "left-[2%] top-[42%] w-14 lg:left-[27%] lg:top-[45%] lg:w-14",
+    className: "left-[2%] top-[42%] w-14 lg:left-[30%] lg:top-[64%] lg:w-14",
     delay: "0.9s",
+    hideOnMobile: false,
   },
   {
     id: "sparkle-3",
-    className: "right-[12%] top-[28%] w-13 lg:right-[18%] lg:top-[27%] lg:w-10",
+    className: "right-[12%] top-[34%] w-13 lg:right-[28%] lg:top-[35%] lg:w-13",
     delay: "1.2s",
+    hideOnMobile: false,
   },
   {
     id: "sparkle-4",
-    className: "right-[18%] top-[40%] w-9 lg:right-[35%] lg:top-[55%] lg:w-18",
+    className:
+      "right-[18%] top-[45%] w-9 lg:right-[36.5%] lg:top-[58%] lg:w-12",
     delay: "0.5s",
+    hideOnMobile: false,
   },
   {
     id: "sparkle-5",
-    className: "left-[10%] top-[62%] w-18 lg:left-[22%] lg:top-[73%] lg:w-10",
+    className: "left-[8%] top-[62%] w-18 lg:left-[59%] lg:top-[29%] lg:w-10",
     delay: "1.6s",
+    hideOnMobile: false,
   },
   {
     id: "sparkle-6",
-    className: "left-[70%] top-[65%] w-8 lg:left-[6%] lg:top-[38%] lg:w-16",
-    delay: "6.8s",
+    className: "right-[70%] top-[65%] w-8 lg:right-[37%] lg:top-[71%] lg:w-20",
+    delay: "1.8s",
+    hideOnMobile: true,
+  },
+  {
+    id: "sparkle2-1",
+    className: "left-[73%] top-[65%] w-8 lg:left-[10%] lg:top-[59%] lg:w-35",
+    delay: "0.3s",
+    hideOnMobile: true,
+  },
+  {
+    id: "sparkle2-2",
+    className: "left-[73%] top-[65%] w-8 lg:left-[26%] lg:top-[82%] lg:w-15",
+    delay: "1.4s",
+    hideOnMobile: true,
+  },
+  {
+    id: "sparkle2-3",
+    className: "left-[73%] top-[65%] w-8 lg:left-[30%] lg:top-[23%] lg:w-20",
+    delay: "0.7s",
+    hideOnMobile: true,
+  },
+  {
+    id: "sparkle2-4",
+    className: "right-[20%] top-[68%] w-10 lg:right-[20%] lg:top-[31%] lg:w-20",
+    delay: "1.3s",
+    hideOnMobile: false,
   },
 ];
 
@@ -43,10 +74,11 @@ const SPARKLES = [
 const BADGES = [
   {
     id: "badge-pytorch",
-    src: "/images/home/HeroSection/badge-pytorch.svg",
+    src: "/images/home/badges/badge-pytorch.svg",
     alt: "PyTorch badge",
     width: 365,
     height: 135,
+    useGlass: false,
     className:
       "left-[5px] top-[230px] w-[134px] lg:left-[18px] lg:top-[238px] lg:w-[246px]",
     behind: true,
@@ -56,12 +88,12 @@ const BADGES = [
   },
   {
     id: "badge-react",
-    src: "/images/home/HeroSection/badge-react.svg",
+    src: "/images/home/badges/badge-react.svg",
     alt: "React badge",
     width: 459,
     height: 159,
     className:
-      "right-[-10px] top-[38px] w-[196px] lg:right-[-50px] lg:top-[330px] lg:w-[330px]",
+      "right-[10px] top-[33px] w-[196px] lg:right-[-50px] lg:top-[330px] lg:w-[330px]",
     behind: false,
     muted: false,
     floatDelay: "0.8s",
@@ -69,7 +101,7 @@ const BADGES = [
   },
   {
     id: "badge-figma",
-    src: "/images/home/HeroSection/badge-figma.svg",
+    src: "/images/home/badges/badge-figma.svg",
     alt: "Figma badge",
     width: 358,
     height: 124,
@@ -91,11 +123,15 @@ function SparkleLayer() {
       {SPARKLES.map((sparkle) => (
         <Image
           key={sparkle.id}
-          src="/images/home/HeroSection/sparkle.png"
+          src={`/images/home/${
+            sparkle.id.split("-")[0] === "sparkle2" ? "sparkle2" : "sparkle"
+          }.png`}
           alt=""
           width={24}
           height={24}
-          className={`absolute opacity-90 motion-safe:animate-pulse ${sparkle.className}`}
+          className={`absolute motion-safe:animate-pulse ${sparkle.className} ${
+            sparkle.hideOnMobile ? "hidden lg:block" : ""
+          }`}
           style={{ animationDelay: sparkle.delay }}
           aria-hidden
         />
@@ -113,26 +149,27 @@ function BadgeLayer() {
       {BADGES.map((badge) => (
         <div
           key={badge.id}
-          className={`absolute ${badge.className} ${
+          className={`badge-float-bubble pointer-events-none absolute isolate ${badge.className} ${
             badge.behind ? "z-10" : "z-30"
-          } ${badge.muted ? "opacity-55 blur-[1.2px] saturate-75" : ""}`}
+          } float-gentle`}
+          style={{
+            animationDelay: badge.floatDelay,
+            animationDuration: badge.floatDuration,
+          }}
         >
-          <div
-            className="glass-effect float-gentle"
-            style={{
-              animationDelay: badge.floatDelay,
-              animationDuration: badge.floatDuration,
-            }}
-          >
-            <Image
-              src={badge.src}
-              alt={badge.alt}
-              width={badge.width}
-              height={badge.height}
-              className="h-auto w-full"
-              priority
+          {badge.useGlass !== false ? (
+            <span
+              className={`badge-refracted-glass ${badge.behind ? "blur-xl" : ""}`}
             />
-          </div>
+          ) : null}
+          <Image
+            src={badge.src}
+            alt={badge.alt}
+            width={badge.width}
+            height={badge.height}
+            className="relative z-10 h-auto w-full"
+            priority
+          />
         </div>
       ))}
     </>
@@ -144,13 +181,13 @@ function BadgeLayer() {
  */
 export default function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-background pb-20 pt-10 lg:pb-24 lg:pt-8">
+    <section className="relative overflow-hidden bg-background pb-20 pt-25 lg:pb-24 lg:pt-[100px]">
       <div className="pointer-events-none absolute inset-0 z-0">
-        <div className="absolute left-1/2 top-[83%] h-[clamp(920px,92.8vmax,1781px)] w-[clamp(920px,92.8vmax,1781px)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#070041]/95 blur-[clamp(180px,20vmax,380px)]" />
-        <div className="absolute left-1/2 top-[83%] h-[clamp(520px,53.1vmax,1019px)] w-[clamp(520px,53.1vmax,1019px)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-main-1/95 blur-[clamp(120px,14vmax,300px)]" />
+        <div className="absolute left-1/2 top-[83%] h-[clamp(920px,92.8vmax,1781px)] w-[clamp(920px,92.8vmax,1781px)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#070041] blur-[clamp(180px,15vmax,300px)]" />
+        <div className="absolute left-1/2 top-[83%] h-[clamp(420px,23.1vmax,1019px)] w-[clamp(520px,53.1vmax,1019px)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-main-1 blur-[clamp(120px,14vmax,300px)]" />
       </div>
 
-      <div className="pointer-events-none absolute inset-0 z-10">
+      <div className="pointer-events-none absolute inset-0 z-30">
         <SparkleLayer />
       </div>
 
@@ -183,10 +220,10 @@ export default function HeroSection() {
           <BadgeLayer />
 
           <Image
-            src="/images/lions/standing-full.png"
+            src="/images/lions/standing-full.webp"
             alt="노트북을 든 멋사 라이언 캐릭터"
-            width={768}
-            height={768}
+            width={527}
+            height={689}
             className="absolute bottom-[138px] left-1/2 z-20 w-[274px] -translate-x-1/2 lg:bottom-0 lg:w-[520px]"
             priority
           />
@@ -201,7 +238,10 @@ export default function HeroSection() {
               </p>
             </div>
 
-            <Link href="/14/apply" className="rounded-full bg-main-3 z-30 px-7 py-3.5 text-[24px] font-bold text-white transition-transform duration-300 cursor-pointer hover:translate-y-[-3px] lg:px-[72px] lg:py-4 lg:text-[36px]">
+            <Link
+              href="/14/apply"
+              className="rounded-full bg-main-3 z-30 px-7 py-3.5 text-[24px] font-bold text-white transition-transform duration-300 cursor-pointer hover:translate-y-[-3px] lg:px-[72px] lg:py-4 lg:text-[36px]"
+            >
               14기 지원하기
             </Link>
             <p className="mt-[-9px] text-[16px] text-gray-3 font-normal lg:hidden">
@@ -210,9 +250,9 @@ export default function HeroSection() {
             </p>
           </div>
 
-          <div className="absolute bottom-[12px] left-[10px] z-30 h-18 w-18 items-center justify-center lg:flex">
+          <div className="absolute bottom-[12px] left-[-20px] z-30 h-18 w-18 items-center justify-center lg:flex">
             <Image
-              src="/images/logo.png"
+              src="/images/syuLikeLion.webp"
               alt="LIKELION logo"
               width={72}
               height={72}
@@ -228,6 +268,3 @@ export default function HeroSection() {
     </section>
   );
 }
-
-
-
