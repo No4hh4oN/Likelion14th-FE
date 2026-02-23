@@ -27,6 +27,10 @@ const FAQData = [
     Q: "Q. 정기세션은 언제, 어디서 이루어지나요?",
     A: "정기 세션은 3주간 매주 화요일 18시에 진행되며, 교내 강의실을 대관하여 운영됩니다. <br />이후 파트별 세션은 각 파트별로 일정 및 장소를 조율하여 진행됩니다.",
   },
+  {
+    Q: "Q. 지원 시 포트폴리오 제출은 필수인가요?",
+    A: "백엔드, 프론트엔드, AI/ML 파트 지원자의 경우 포트폴리오 제출은 필수가 아니며 선택 사항입니다. 기획/디자인 파트 지원자의 경우에는 필수 제출 항목입니다. 다만, 해당 포트폴리오는 아기사자 커리큘럼의 수업 난이도 및 디자인 툴 이해도를 확인하기 위한 자료로, 개발과 직접적인 관련이 없는 포트폴리오를 제출하셔도 무관합니다. 또한 신입생의 경우, 포트폴리오를 제출하지 않으셔도 지원이 가능합니다. 제출된 모든 포트폴리오는 아기사자 모집 종료 후 안전하게 폐기됩니다.",
+  },
 ];
 
 type FAQItem = {
@@ -48,7 +52,7 @@ const FAQCard = ({ item }: { item: FAQItem }) => {
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
         aria-expanded={isOpen}
-        className={`w-full cursor-pointer bg-gray-2 px-[13px] py-[18px] lg:px-[29px] lg:py-[22px] flex items-center justify-between text-left transition-colors duration-300 ${
+        className={`w-full cursor-pointer bg-gray-2 px-[13px] py-[12px] lg:px-[29px] lg:py-[22px] flex items-center justify-between text-left transition-colors duration-300 ${
           isOpen ? "rounded-b-[10px]" : "rounded-none"
         }`}
       >
@@ -88,7 +92,7 @@ const FAQCard = ({ item }: { item: FAQItem }) => {
   );
 };
 
-const FAQSection = () => {
+const FaqSection = () => {
   return (
     <section className="w-full bg-foreground py-[117px] lg:py-92.5 px-[18px] lg:px-18">
       <div className="flex flex-col gap-[85px] items-center justify-center">
@@ -105,4 +109,4 @@ const FAQSection = () => {
   );
 };
 
-export default FAQSection;
+export default FaqSection;
