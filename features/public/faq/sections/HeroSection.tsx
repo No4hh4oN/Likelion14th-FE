@@ -1,42 +1,42 @@
 const desktopLions = [
   {
-    id: "3",
-    className: "h-[250px] w-[250px] rotate-[9.4deg] z-30",
+    id: "head-back",
+    className: "h-[220px] w-[220px] rotate-[10deg] translate-y-[10px]",
   },
   {
-    id: "1",
-    className: "h-[250px] w-[250px] -ml-2 z-20",
+    id: "head-design",
+    className: "h-[220px] w-[220px] rotate-[2deg]",
   },
   {
-    id: "4",
-    className: "h-[250px] w-[250px] -ml-8 z-10",
+    id: "head-ai",
+    className: "h-[220px] w-[220px] rotate-[-6deg]",
   },
   {
-    id: "2",
-    className: "h-[250px] w-[250px] -ml-2 scale-x-[-1] rotate-[12deg] z-0",
+    id: "head-front",
+    className: "h-[220px] w-[220px] rotate-[8deg] -translate-y-[6px]",
   },
 ];
 
 const mobileLions = [
   {
-    id: "3",
+    id: "head-back",
     className:
-      "absolute w-[200px] h-[200px] left-[-24px] top-[-8px] rotate-[-12.37deg] z-30",
+      "absolute w-[165px] h-[165px] left-[-8px] top-[32px] rotate-[-12.37deg] z-30",
   },
   {
-    id: "1",
+    id: "head-design",
     className:
-      "absolute w-[200px] h-[200px] right-[-24px] top-[54px] scale-x-[-1] z-20",
+      "absolute w-[165px] h-[165px] right-[-4px] top-[86px] scale-x-[-1] z-20",
   },
   {
-    id: "4",
+    id: "head-ai",
     className:
-      "absolute w-[200px] h-[200px] left-[-18px] bottom-[56px] scale-x-[-1] rotate-[-10.67deg] z-10",
+      "absolute w-[165px] h-[165px] left-[-6px] bottom-[62px] scale-x-[-1] rotate-[-10.67deg] z-10",
   },
   {
-    id: "2",
+    id: "head-front",
     className:
-      "absolute w-[200px] h-[200px] right-[-26px] bottom-0 scale-x-[-1] rotate-[12.8deg] z-0",
+      "absolute w-[160px] h-[160px] right-[-8px] bottom-2 rotate-[12.8deg] z-0",
   },
 ];
 
@@ -44,14 +44,14 @@ export default function HeroSection() {
   return (
     <section className="bg-foreground">
       <div className="overflow-hidden rounded-b-[50px] lg:rounded-b-[100px] bg-linear-to-b from-[#2A344A] via-background to-background">
-        <div className="mx-auto max-w-[1200px] px-5 pt-8 pb-[70px] lg:pt-10 lg:pb-[77px]">
+        <div className="mx-auto max-w-[1200px] px-5 pt-12 pb-[70px] lg:pt-35 lg:pb-[77px]">
           {/* Mobile lions */}
           <ul className="relative mx-auto h-[430px] w-[320px] lg:hidden">
             {mobileLions.map((lion) => (
               <li key={`mobile-${lion.id}`} className={lion.className}>
                 <img
-                  src={`/images/home/TracksSection/${lion.id}.png`}
-                  alt=""
+                  src={`/images/lions/${lion.id}.webp`}
+                  alt="#"
                   className="h-full w-full object-contain"
                 />
               </li>
@@ -59,11 +59,11 @@ export default function HeroSection() {
           </ul>
 
           {/* Desktop lions */}
-          <ul className="hidden lg:flex lg:justify-center lg:items-end">
+          <ul className="hidden lg:flex lg:justify-center lg:items-end lg:gap-6">
             {desktopLions.map((lion) => (
               <li key={`desktop-${lion.id}`} className={lion.className}>
                 <img
-                  src={`/images/home/TracksSection/${lion.id}.png`}
+                  src={`/images/lions/${lion.id}.webp`}
                   alt=""
                   className="h-full w-full object-contain"
                 />
@@ -72,7 +72,7 @@ export default function HeroSection() {
           </ul>
 
           {/* 텍스트/버튼 */}
-          <div className="lg:mt-6 text-center text-white-1">
+          <div className="lg:mt-16 text-center text-white-1">
             <p className="font-bold text-[28px] lg:text-[48px] leading-[1.27]">
               <span className="text-main-3">LIKELION at SYU 14th</span>
               <br />
