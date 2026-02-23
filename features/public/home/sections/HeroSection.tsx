@@ -1,5 +1,8 @@
 ﻿import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { getActiveRecruitment } from "../api";
+import type { ActiveRecruitmentResponse } from "../types";
 
 /**
  * 배경에 배치할 스파클 좌표/크기/펄스 지연값.
@@ -177,9 +180,85 @@ function BadgeLayer() {
 }
 
 /**
+ * 타임존 오프셋/UTC 접미사가 있는 날짜 문자열 패턴
+ */
+const kstDateTimePattern = /(Z|[+-]\d{2}:\d{2})$/;
+
+/**
+ * KST 기준으로 날짜 문자열을 파싱함.
+ * @param value 서버에서 받은 날짜 문자열
+ * @returns 파싱된 타임스탬프(ms)
+ */
+const parseKstDateTime = (value: string) => {
+  const normalized = kstDateTimePattern.test(value) ? value : `${value}+09:00`;
+  return Date.parse(normalized);
+};
+
+/**
+ * 지원 마감까지 D-Day 계산해주는 함수.
+ * @param endAt 지원마감 날짜 데이터
+ * @returns 남은 D-Day
+ */
+function calculateDday(endAt: string) {
+  const now = Date.now();
+  const end = parseKstDateTime(endAt);
+  const diffMs = end - now;
+  const remainDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  return remainDays - 1;
+}
+
+function formatDDayLabel(endAt: string) {
+  const remainDays = calculateDday(endAt);
+
+  if (remainDays > 0) {
+    return `D-${remainDays}`;
+  }
+
+  if (remainDays === 0) {
+    return "D-day";
+  }
+
+  return "마감";
+}
+
+/**
  * 메인 페이지 Hero 섹션
  */
 export default function HeroSection() {
+  const [ddayText, setDdayText] = useState("상태 확인 중");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchActiveRecruitment = async () => {
+      try {
+        const response: ActiveRecruitmentResponse | null =
+          await getActiveRecruitment();
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (response?.phaseType === "DOC_OPEN") {
+          setDdayText(formatDDayLabel(response.endAt));
+          return;
+        }
+
+        setDdayText("비공개");
+      } catch {
+        if (isMounted) {
+          setDdayText("상태 오류");
+        }
+      }
+    };
+
+    fetchActiveRecruitment();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <section className="relative overflow-hidden bg-background pb-20 pt-25 lg:pb-24 lg:pt-[100px]">
       <div className="pointer-events-none absolute inset-0 z-0">
@@ -246,11 +325,11 @@ export default function HeroSection() {
             </Link>
             <p className="mt-[-9px] text-[16px] text-gray-3 font-normal lg:hidden">
               지원 마감까지{" "}
-              <span className="text-main-3 font-bold">FIXME:날짜</span>
+              <span className="text-main-3 font-bold">{ddayText}</span>
             </p>
           </div>
 
-          <div className="absolute bottom-[12px] left-[-20px] z-30 h-18 w-18 items-center justify-center lg:flex">
+          <div className="absolute bottom-[12px] left-0 lg:left-[-20px] z-30 h-18 w-18 items-center justify-center lg:flex">
             <Image
               src="/images/syuLikeLion.webp"
               alt="LIKELION logo"
