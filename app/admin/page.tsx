@@ -1,5 +1,5 @@
-import AdminEntryPage from "@/features/admin/AdminEntryPage"
+import AdminEntryPage from "@/features/admin/AdminEntryPage";
 
 export default function AdminPage() {
-    return <AdminEntryPage />
+  return <AdminEntryPage />;
 }
