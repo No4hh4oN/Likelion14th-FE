@@ -11,14 +11,15 @@ export default function CTASection() {
             <br />
             지금 <span className="text-main-3">14기 아기사자 모집중!</span>
           </h2>
-          <div className="flex my-8 lg:my-16.5 ml-7">
+          <div className="relative my-8 lg:my-16.5 ml-7 inline-block overflow-hidden">
             <Image
-              src="/images/lions/lion-stand-half-gradient-black.webp"
+              src="/images/lions/lion-stand-half.webp"
               alt="노트북을 든 멋사 라이언 캐릭터"
               width={528}
               height={516}
-              className="w-54.5 lg:w-102.25 object-contain"
+              className="relative z-0 w-54.5 lg:w-102.25 object-contain"
             />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[35%] bg-linear-to-t from-background to-transparent" />
           </div>
           <p className="text-white-1 text-center w-32 lg:w-auto font-normal text-[14px] lg:text-[20px]">
             <span>아기사자 모집기간 :</span>
