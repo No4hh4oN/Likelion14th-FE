@@ -24,7 +24,7 @@ export default function CTASection() {
             아기사자 모집기간 : 2월 27일 ~ 3월 12일
           </p>
           <Link
-            href="/14/apply"
+            href="/14/faq"
             className="mt-10.25 lg:mt-11.5 cursor-pointer rounded-[100px] px-8.5 py-3.75 lg:px-19.75 lg:py-7.5 font-bold bg-main-1 text-white-1 text-[28px] lg:text-[36px]"
           >
             14기 지원하기
