@@ -1,5 +1,13 @@
-﻿import { MOCK_APPLICATION_HISTORY } from "../mock";
-import type { ApplicationRecord, MyPageUser } from "../types";
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { getDashboard, getMyApplicationHistory } from "../api";
+import type {
+  ApplicationHistoryItem,
+  DashboardItem,
+  MyPageUser,
+} from "../types";
 import ActionButton from "../components/ActionButton";
 
 type HistorySectionProps = {
@@ -8,31 +16,144 @@ type HistorySectionProps = {
 };
 
 export default function HistorySection({ user, onBack }: HistorySectionProps) {
-  const documentRecord = MOCK_APPLICATION_HISTORY.find(
-    (record) => record.type === "서류",
+  const router = useRouter();
+  const [historyItems, setHistoryItems] = useState<ApplicationHistoryItem[]>(
+    [],
   );
-  const canApplyInterview = documentRecord?.result === "합격";
+  const [dashboardByRecruitment, setDashboardByRecruitment] = useState<
+    Record<number, DashboardItem>
+  >({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const visibleRecords = MOCK_APPLICATION_HISTORY.filter((record) => {
-    if (record.type === "면접") {
-      return canApplyInterview;
+  useEffect(() => {
+    let isMounted = true;
+
+    if (user.role !== "게스트") {
+      setIsLoading(false);
+      return () => {
+        isMounted = false;
+      };
     }
 
-    return true;
-  });
+    const fetchHistory = async () => {
+      setIsLoading(true);
+      setErrorMessage("");
+      setDashboardByRecruitment({});
 
-  const handleEditClick = (record: ApplicationRecord) => {
-    if (record.type !== "서류") {
-      return;
+      try {
+        const response = await getMyApplicationHistory();
+
+        if (!isMounted) {
+          return;
+        }
+
+        const items = response.items ?? [];
+        setHistoryItems(items);
+
+        const recruitmentIds = Array.from(
+          new Set(items.map((item) => item.recruitmentId)),
+        );
+
+        if (recruitmentIds.length === 0) {
+          setDashboardByRecruitment({});
+          return;
+        }
+
+        const dashboardResults = await Promise.allSettled(
+          recruitmentIds.map(async (recruitmentId) => ({
+            recruitmentId,
+            dashboard: await getDashboard(recruitmentId),
+          })),
+        );
+
+        if (!isMounted) {
+          return;
+        }
+
+        const nextDashboardByRecruitment: Record<number, DashboardItem> = {};
+        dashboardResults.forEach((result) => {
+          if (result.status === "fulfilled") {
+            nextDashboardByRecruitment[result.value.recruitmentId] =
+              result.value.dashboard;
+          }
+        });
+
+        setDashboardByRecruitment(nextDashboardByRecruitment);
+      } catch {
+        if (!isMounted) {
+          return;
+        }
+
+        setErrorMessage(
+          "지원 내역을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
+        );
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchHistory();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user.role]);
+
+  const visibleRecords = useMemo(() => {
+    return historyItems
+      .filter((item) => item.status !== "DRAFT")
+      .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
+  }, [historyItems]);
+
+  const formatDateTime = (value: string | null | undefined) => {
+    if (!value) {
+      return "-";
     }
 
-    // TODO: 지원서 수정 페이지 연결
-    console.log("지원서 수정", record.id);
+    const parsed = Date.parse(value);
+    if (!Number.isFinite(parsed)) {
+      return value;
+    }
+
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Seoul",
+      year: "2-digit",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).formatToParts(new Date(parsed));
+
+    const getPart = (type: Intl.DateTimeFormatPartTypes) =>
+      parts.find((part) => part.type === type)?.value ?? "";
+
+    return `${getPart("year")}.${getPart("month")}.${getPart("day")} ${getPart(
+      "hour",
+    )}:${getPart("minute")}`;
   };
 
-  const handleResultClick = (record: ApplicationRecord) => {
+  const getActionVisibility = (record: ApplicationHistoryItem) => {
+    const dashboard = dashboardByRecruitment[record.recruitmentId];
+    const canEdit = dashboard?.myApplication.canEdit ?? record.canEdit;
+    const canSubmit = dashboard?.myApplication.canSubmit ?? record.canSubmit;
+
+    return {
+      canShowEditButton: canEdit === true,
+      canShowResultButton: canEdit === false && canSubmit === false,
+    };
+  };
+
+  const handleEditClick = (applicationId: number) => {
+    router.push(`/14/apply?applicationId=${applicationId}`);
+  };
+
+  const handleResultClick = (applicationId: number) => {
     // TODO: 전형별 결과 확인 페이지 연결
-    console.log("결과 확인", record.id);
+    console.log("결과 확인", applicationId);
   };
 
   if (user.role !== "게스트") {
@@ -112,50 +233,96 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
             </thead>
 
             <tbody>
-              {visibleRecords.map((record) => (
-                <tr key={record.id} className="text-white/85">
-                  <td className="border-b border-white/10 px-3 py-3">
-                    {record.id}
-                  </td>
-                  <td className="border-b border-white/10 px-3 py-3">
-                    {record.generation}
-                  </td>
-                  <td className="border-b border-white/10 px-3 py-3">
-                    {record.type}
-                  </td>
-                  <td className="border-b border-white/10 px-3 py-3">
-                    {record.appliedAt ?? "-"}
-                  </td>
-                  <td className="border-b border-white/10 px-3 py-3">
-                    {record.updatedAt ?? "-"}
-                  </td>
-                  <td className="border-b border-white/10 px-3 py-3">
-                    {record.type === "면접"
-                      ? (record.interviewAt ?? "미선택")
-                      : "-"}
-                  </td>
-                  <td className="border-b border-white/10 px-3 py-3">
-                    {record.type === "서류" && record.isWithinEditPeriod ? (
-                      <ActionButton
-                        text="수정하기"
-                        onClick={() => handleEditClick(record)}
-                        className="bg-main-3 px-5 py-2.25 text-[14px] leading-none"
-                        hoverClassName="hover:bg-amber-600"
-                      />
-                    ) : (
-                      <span className="text-white/50">-</span>
-                    )}
-                  </td>
-                  <td className="border-b border-white/10 px-3 py-3">
-                    <ActionButton
-                      text="결과 확인"
-                      onClick={() => handleResultClick(record)}
-                      className="bg-main-1 px-5 py-2.25 text-[14px] leading-none"
-                      hoverClassName="hover:bg-[#2289E6]"
-                    />
+              {isLoading ? (
+                <tr>
+                  <td
+                    colSpan={8}
+                    className="border-b border-white/10 px-3 py-10 text-center text-white/70"
+                  >
+                    지원 내역을 불러오는 중입니다.
                   </td>
                 </tr>
-              ))}
+              ) : null}
+
+              {!isLoading && errorMessage ? (
+                <tr>
+                  <td
+                    colSpan={8}
+                    className="border-b border-white/10 px-3 py-10 text-center text-[#ff9ea8]"
+                  >
+                    {errorMessage}
+                  </td>
+                </tr>
+              ) : null}
+
+              {!isLoading && !errorMessage && visibleRecords.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={8}
+                    className="border-b border-white/10 px-3 py-10 text-center text-white/70"
+                  >
+                    제출된 지원 내역이 없습니다.
+                  </td>
+                </tr>
+              ) : null}
+
+              {!isLoading && !errorMessage
+                ? visibleRecords.map((record) => {
+                    const { canShowEditButton, canShowResultButton } =
+                      getActionVisibility(record);
+
+                    return (
+                      <tr key={record.applicationId} className="text-white/85">
+                        <td className="border-b border-white/10 px-3 py-3">
+                          {record.applicationId}
+                        </td>
+                        <td className="border-b border-white/10 px-3 py-3">
+                          {record.generation}기
+                        </td>
+                        <td className="border-b border-white/10 px-3 py-3">
+                          서류
+                        </td>
+                        <td className="border-b border-white/10 px-3 py-3">
+                          {formatDateTime(record.submittedAt)}
+                        </td>
+                        <td className="border-b border-white/10 px-3 py-3">
+                          {formatDateTime(record.updatedAt)}
+                        </td>
+                        <td className="border-b border-white/10 px-3 py-3">
+                          -
+                        </td>
+                        <td className="border-b border-white/10 px-3 py-3">
+                          {canShowEditButton ? (
+                            <ActionButton
+                              text="수정하기"
+                              onClick={() =>
+                                handleEditClick(record.applicationId)
+                              }
+                              className="bg-main-3 px-5 py-2.25 text-[14px] leading-none"
+                              hoverClassName="hover:bg-amber-600"
+                            />
+                          ) : (
+                            <span className="text-white/50">-</span>
+                          )}
+                        </td>
+                        <td className="border-b border-white/10 px-3 py-3">
+                          {canShowResultButton ? (
+                            <ActionButton
+                              text="결과 확인"
+                              onClick={() =>
+                                handleResultClick(record.applicationId)
+                              }
+                              className="bg-main-1 px-5 py-2.25 text-[14px] leading-none"
+                              hoverClassName="hover:bg-[#2289E6]"
+                            />
+                          ) : (
+                            <span className="text-white/50">-</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                : null}
             </tbody>
           </table>
         </div>

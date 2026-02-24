@@ -8,6 +8,7 @@ type ProfileSectionProps = {
   user: MyPageUser;
   onNavigate: (section: MyPageSection) => void;
   onLogout: () => void;
+  isLoggingOut: boolean;
 };
 
 function getRoleChipClassName(role: UserRole) {
@@ -68,6 +69,7 @@ export default function ProfileSection({
   user,
   onNavigate,
   onLogout,
+  isLoggingOut,
 }: ProfileSectionProps) {
   const [activeTab, setActiveTab] = useState<MyPageTab>("과제");
   const message = getTabMessage(user.role, activeTab);
@@ -76,8 +78,9 @@ export default function ProfileSection({
     <section className="min-h-screen bg-background px-4 text-white-1 lg:px-6">
       <div className="relative mx-auto w-full max-w-[760px]">
         <ActionButton
-          text="로그아웃"
+          text={isLoggingOut ? "로그아웃 중..." : "로그아웃"}
           onClick={onLogout}
+          disabled={isLoggingOut}
           className="absolute top-[-46px] right-[18px] text-[11px] lg:min-w-[86px]"
           hoverClassName="hover:bg-gray-5"
         />
@@ -158,5 +161,3 @@ export default function ProfileSection({
     </section>
   );
 }
-
-

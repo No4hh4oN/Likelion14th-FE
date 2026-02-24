@@ -4,10 +4,10 @@ import type { ApplicationRecord, AuthStatus, MyPageUser } from "./types";
 export const MOCK_AUTH_STATUS: AuthStatus = "authenticated";
 
 export const MOCK_USER: MyPageUser = {
-  name: "박정우",
-  major: "컴퓨터공학부",
-  generation: "21학번",
-  role: "게스트",
+  name: "스텔레",
+  major: "은하열차팀",
+  generation: "5학번",
+  role: "운영진",
 };
 
 // TODO: 지원 내역 API 연동 시 서버 응답으로 교체하세요.
