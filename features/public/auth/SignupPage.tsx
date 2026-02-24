@@ -426,6 +426,8 @@ export default function SignupPageFeature() {
                   <option value="2">2</option>
                   <option value="3">3</option>
                   <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
                 </select>
                 <div className="h-10 min-w-0 w-1/3" />
                 <div className="flex h-10 min-w-0 w-1/3 items-center justify-end gap-3 whitespace-nowrap text-sm text-gray-100">

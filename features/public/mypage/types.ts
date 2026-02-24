@@ -29,7 +29,7 @@ export type MyPageUserApiResponse = {
     name: string;
     department: string;
     studentNo: string;
-    grade: 1 | 2 | 3 | 4;
+    grade: number;
     enrollment: string; //재학 상태 TODO: enum값 물어보기 (ENROLLED | )
     birthDate: string; //2026-02-23
     phone: string; //01012345678
