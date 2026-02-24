@@ -4,7 +4,7 @@ import React, { useState } from "react";
 
 const FAQData = [
   {
-    Q: "Q. 멋쟁이 사자처럼 동비는 얼마인가요?",
+    Q: "Q. 멋쟁이사자처럼 동비는 얼마인가요?",
     A: "회비는 30,000원이며, 연 1회 납부하시면 됩니다.",
   },
   {

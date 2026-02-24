@@ -7,7 +7,7 @@ export default function CTASection() {
       <div className="px-4.5 lg:px-[clamp(18px,12vw,392px)]">
         <div className="flex flex-col items-center">
           <h2 className="text-[24px] lg:text-[48px] font-bold leading-[1.27] text-center text-[#fafafa]">
-            멋쟁이 사자처럼 삼육대학교는
+            멋쟁이사자처럼 삼육대학교는
             <br />
             지금 <span className="text-main-3">14기 아기사자 모집중!</span>
           </h2>

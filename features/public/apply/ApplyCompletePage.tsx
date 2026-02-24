@@ -141,7 +141,7 @@ export default function ApplyCompletePage() {
         )}
 
         <div className="mt-11 text-[12px] font-light leading-[1.9] text-gray-5 lg:mt-9 lg:text-[16px]">
-          <p>* 1차 합격 결과 발표 후에는 지원서 수정이 불가능합니다.</p>
+          <p>* 서류 마감 기간 이후에는 지원서 수정이 불가능합니다.</p>
           <p>* 반드시 제출 기한이 지나기 전 수정을 완료해 주세요.</p>
         </div>
       </div>
@@ -153,7 +153,7 @@ export default function ApplyCompletePage() {
           role="presentation"
         >
           <div
-            className="w-full max-w-[460px] rounded-[20px] bg-surface px-6 py-7 text-center shadow-[0_18px_48px_rgba(0,0,0,0.35)] lg:px-9 lg:py-10"
+            className="w-full max-w-[520px] rounded-[20px] bg-surface px-6 py-7 text-center shadow-[0_18px_48px_rgba(0,0,0,0.35)] lg:px-9 lg:py-10"
             onClick={(event) => event.stopPropagation()}
             role="dialog"
             aria-modal="true"

@@ -293,11 +293,11 @@ export default function StaffPage() {
           </h2>
           <p className="font-medium text-[16px] lg:text-[24px]">
             <span className="hidden lg:inline">
-              멋쟁이 사자처럼 삼육대학교의{" "}
+              멋쟁이사자처럼 삼육대학교의{" "}
               <span className="text-main-3">14기 운영진</span>을 소개합니다.
             </span>
             <span className="lg:hidden">
-              멋쟁이 사자처럼 삼육대학교의
+              멋쟁이사자처럼 삼육대학교의
               <br />
               <span className="text-main-3">14기 운영진</span>을 소개합니다.
             </span>

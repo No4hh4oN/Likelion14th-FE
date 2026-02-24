@@ -34,7 +34,7 @@ export default function AboutSection() {
               </span>
             </div>
             <h4 className="mt-1 lg:mt-1.5 text-[16px] lg:text-[20px] font-semibold text-main-3">
-              멋쟁이 사자처럼 삼육대학교
+              멋쟁이사자처럼 삼육대학교
             </h4>
             <p className="mt-6.25 lg:mt-10.75 text-[#b7b7b7] font-light text-[18px] leading-[142%] break-keep">
               테크 기반의 아이디어 실현을 위한{" "}
