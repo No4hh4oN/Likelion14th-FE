@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import Sidebar from "@/components/layout/Sidebar";
 import Login from "@/components/layout/Login";
 import UserInfo from "@/components/layout/UserInfo";
@@ -42,10 +43,12 @@ function formatDDayLabel(endAt: string) {
 }
 
 export default function Header() {
+  const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [me, setMe] = useState<MeResponse | null>(null);
   const [ddayText, setDdayText] = useState("D-00");
   const [isDocOpen, setIsDocOpen] = useState(false);
+  const isFaqPage = pathname.startsWith("/14/faq");
 
   const checkAuth = useCallback(async () => {
     try {
@@ -148,7 +151,11 @@ export default function Header() {
           <div className="flex items-center gap-3 lg:gap-8">
             {isDocOpen ? (
               <>
-                <p className="whitespace-nowrap text-[12px] font-medium text-white-1 sm:text-[14px]">
+                <p
+                  className={`whitespace-nowrap text-[12px] font-medium text-white-1 sm:text-[14px] ${
+                    isFaqPage ? "block" : "hidden md:block"
+                  }`}
+                >
                   지원 마감까지{" "}
                   <span className="text-main-3 font-bold">{ddayText}</span>
                 </p>
