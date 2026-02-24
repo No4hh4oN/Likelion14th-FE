@@ -1,5 +1,11 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { getActiveRecruitment } from "@/features/public/home/api";
+import { getRecruitmentInfo } from "./api";
+import type { RecruitmentDetailResponse } from "./type";
 
 export type ResultPhase = "FIRST" | "FINAL";
 
@@ -7,22 +13,104 @@ type ResultPageProps = {
   phase?: ResultPhase;
 };
 
-const RESULT_COPY: Record<
-  ResultPhase,
-  { titleSuffix: string; scheduleText: string }
-> = {
+type ResultCopy = {
+  titleSuffix: string;
+  schedulePrefix: string;
+  fallbackScheduleText: string;
+};
+
+const RESULT_COPY: Record<ResultPhase, ResultCopy> = {
   FIRST: {
     titleSuffix: "1차 결과 발표",
-    scheduleText: "1차 발표 : 3월 13일 10시",
+    schedulePrefix: "1차 발표",
+    fallbackScheduleText: "1차 발표 : 3월 13일 10시",
   },
   FINAL: {
     titleSuffix: "최종 결과 발표",
-    scheduleText: "최종 발표 : 3월 18일 10시",
+    schedulePrefix: "최종 발표",
+    fallbackScheduleText: "최종 발표 : 3월 18일 10시",
   },
 };
 
+const kstDateTimePattern = /(Z|[+-]\d{2}:\d{2})$/;
+
+const parseKstDateTime = (value: string) => {
+  const normalized = kstDateTimePattern.test(value) ? value : `${value}+09:00`;
+  return Date.parse(normalized);
+};
+
+function formatAnnouncementTime(value: string) {
+  const parsed = parseKstDateTime(value);
+  if (!Number.isFinite(parsed)) {
+    return "";
+  }
+
+  const parts = new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    hour12: false,
+  }).formatToParts(new Date(parsed));
+
+  const getPart = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+
+  const month = getPart("month");
+  const day = getPart("day");
+  const hour = getPart("hour");
+
+  if (!month || !day || !hour) {
+    return "";
+  }
+
+  return `${month}월 ${day}일 ${hour}시`;
+}
+
 export default function ResultPage({ phase = "FIRST" }: ResultPageProps) {
   const copy = RESULT_COPY[phase];
+  const [recruitmentInfo, setRecruitmentInfo] =
+    useState<RecruitmentDetailResponse | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchSchedule = async () => {
+      try {
+        const activeRecruitment = await getActiveRecruitment();
+        if (!isMounted || !activeRecruitment) {
+          return;
+        }
+
+        const recruitmentDetail = await getRecruitmentInfo(
+          activeRecruitment.recruitmentId,
+        );
+        if (!isMounted) {
+          return;
+        }
+        setRecruitmentInfo(recruitmentDetail);
+      } catch {
+        // Keep fallback text when API request fails.
+      }
+    };
+
+    void fetchSchedule();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const announcementAt =
+    phase === "FIRST"
+      ? recruitmentInfo?.docResultAt
+      : recruitmentInfo?.finalResultAt;
+  const formattedAnnouncementAt = announcementAt
+    ? formatAnnouncementTime(announcementAt)
+    : "";
+  const scheduleText = formattedAnnouncementAt
+    ? `${copy.schedulePrefix} : ${formattedAnnouncementAt}`
+    : copy.fallbackScheduleText;
 
   return (
     <section className="pt-20 lg:pt-37.5 pb-19.75 lg:pb-91.25 bg-background">
@@ -44,7 +132,7 @@ export default function ResultPage({ phase = "FIRST" }: ResultPageProps) {
             />
           </div>
           <p className="text-white-1 text-center w-auto lg:w-auto font-normal text-[14px] lg:text-[20px]">
-            {copy.scheduleText}
+            {scheduleText}
           </p>
           <Link
             href="#"
