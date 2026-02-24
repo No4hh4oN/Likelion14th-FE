@@ -1,8 +1,12 @@
-import { apiClient } from "@/lib/axios";
+import { apiClient, clearAccessToken } from "@/lib/axios";
 import type {
   ApplicationHistoryApiResponse,
   DashboardItem,
   MyPageUserApiResponse,
+  UpdateMyProfileImageResponse,
+  UpdateMyProfileRequest,
+  UpdateMyProfileResponse,
+  WithdrawMeResponse,
 } from "./types";
 
 /**
@@ -32,5 +36,48 @@ export async function getDashboard(
   const response = await apiClient.get<DashboardItem>(
     `/me/recruitments/${recruitmentId}/dashboard`,
   );
+  return response.data;
+}
+
+/**
+ * 내 정보(email/newPassword/phone)를 수정합니다.
+ */
+export async function updateMyProfile(
+  payload: UpdateMyProfileRequest,
+): Promise<UpdateMyProfileResponse> {
+  const response = await apiClient.patch<UpdateMyProfileResponse>(
+    "/users/me",
+    payload,
+  );
+  return response.data;
+}
+
+/**
+ * 로그인한 사용자 기준으로 프로필 이미지를 교체합니다.
+ */
+export async function updateMyProfileImage(
+  profileImage: File,
+): Promise<UpdateMyProfileImageResponse> {
+  const formData = new FormData();
+  formData.append("profileImage", profileImage);
+
+  const response = await apiClient.post<UpdateMyProfileImageResponse>(
+    "/users/me/profile-image",
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    },
+  );
+  return response.data;
+}
+
+/**
+ * 로그인한 사용자를 탈퇴 처리합니다.
+ */
+export async function withdrawMe(): Promise<WithdrawMeResponse> {
+  const response = await apiClient.delete<WithdrawMeResponse>("/users/me");
+  clearAccessToken();
   return response.data;
 }

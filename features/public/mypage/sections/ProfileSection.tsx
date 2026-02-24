@@ -87,9 +87,19 @@ export default function ProfileSection({
         <div className="rounded-[10px] bg-gray-7 p-4 shadow-[0_16px_40px_rgba(0,0,0,0.28)] lg:p-8.5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex items-center gap-4 lg:gap-8 leading-[1.27]">
-              {/* TODO: 마이페이지 프로필 에셋 연동 */}
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[radial-gradient(circle_at_30%_25%,#D8DEF2_0%,#9AA8D2_54%,#6B74A3_100%)] text-[24px] font-bold text-[#2F3648] lg:h-36.75 lg:w-36.75 lg:text-[30px]">
-                M
+              <div className="h-16 w-16 overflow-hidden rounded-full bg-[radial-gradient(circle_at_30%_25%,#D8DEF2_0%,#9AA8D2_54%,#6B74A3_100%)] lg:h-36.75 lg:w-36.75">
+                {user.profileImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={user.profileImageUrl}
+                    alt={`${user.name} 프로필 이미지`}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-[24px] font-bold text-[#2F3648] lg:text-[30px]">
+                    {user.name.slice(0, 1) || "M"}
+                  </div>
+                )}
               </div>
 
               <div>

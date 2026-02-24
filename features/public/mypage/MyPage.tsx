@@ -2,7 +2,6 @@
 
 import { getAccessToken } from "@/lib/axios";
 import { logout } from "@/features/public/api";
-import { MOCK_USER } from "./mock";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -11,6 +10,14 @@ import ProfileSection from "./sections/ProfileSection";
 import EditSection from "./sections/EditSection";
 import HistorySection from "./sections/HistorySection";
 import type { MyPageSection, MyPageUser, MyPageUserApiResponse } from "./types";
+
+const DEFAULT_MY_PAGE_USER: MyPageUser = {
+  name: "사용자",
+  major: "-",
+  generation: "학번 미등록",
+  role: "게스트",
+  profileImageUrl: null,
+};
 
 function mapRoleLevelToUserRole(
   level: string | undefined,
@@ -55,14 +62,18 @@ function mapProfileToMyPageUser(profile: MyPageUserApiResponse): MyPageUser {
     profile.roles.find((role) => role.active) ?? profile.roles[0];
   const generation = toStudentNoGeneration(
     profile.homepage.studentNo,
-    MOCK_USER.generation,
+    DEFAULT_MY_PAGE_USER.generation,
   );
 
   return {
-    name: profile.homepage.name || MOCK_USER.name,
-    major: profile.homepage.department || MOCK_USER.major,
+    name:
+      profile.homepage.name ||
+      profile.sso.loginId ||
+      DEFAULT_MY_PAGE_USER.name,
+    major: profile.homepage.department || DEFAULT_MY_PAGE_USER.major,
     generation,
-    role: mapRoleLevelToUserRole(activeRole?.level, MOCK_USER.role),
+    role: mapRoleLevelToUserRole(activeRole?.level, DEFAULT_MY_PAGE_USER.role),
+    profileImageUrl: profile.homepage.profileImage?.url ?? null,
   };
 }
 
