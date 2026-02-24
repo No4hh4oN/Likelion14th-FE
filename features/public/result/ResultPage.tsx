@@ -113,7 +113,7 @@ export default function ResultPage({ phase = "FIRST" }: ResultPageProps) {
     : copy.fallbackScheduleText;
 
   return (
-    <section className="pt-20 lg:pt-37.5 pb-19.75 lg:pb-91.25 bg-background">
+    <section className="pt-20 lg:pt-20.5 pb-15 lg:pb-21 bg-background">
       <div className="px-4.5 lg:px-[clamp(18px,12vw,392px)]">
         <div className="flex flex-col items-center">
           <h2 className="text-[22px] lg:text-[48px] font-bold leading-[1.27] text-center text-white-1">
