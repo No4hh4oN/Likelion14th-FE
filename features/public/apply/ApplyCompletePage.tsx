@@ -86,7 +86,7 @@ export default function ApplyCompletePage() {
     <section className="bg-background px-4 py-16 text-white lg:px-6 lg:py-24">
       <div className="mx-auto flex w-full max-w-290 flex-col items-center text-center">
         <Image
-          src="/images/lions/standing-thankyou.png"
+          src="/images/lions/standing-thankyou.webp"
           alt="지원 완료 라이언"
           width={180}
           height={180}
