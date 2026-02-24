@@ -20,8 +20,11 @@ export default function CTASection() {
               className="w-54.5 lg:w-102.25 object-contain"
             />
           </div>
-          <p className="text-white-1 text-center w-29.5 lg:w-auto font-normal text-[14px] lg:text-[20px]">
-            아기사자 모집기간 : 2월 27일 ~ 3월 12일
+          <p className="text-white-1 text-center w-32 lg:w-auto font-normal text-[14px] lg:text-[20px]">
+            <span>아기사자 모집기간 :</span>
+            <br className="lg:hidden" />
+            <span className="hidden lg:inline"> </span>
+            <span>2월 27일 ~ 3월 12일</span>
           </p>
           <Link
             href="/14/faq"
