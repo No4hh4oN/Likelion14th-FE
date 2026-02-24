@@ -136,15 +136,81 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
     )}:${getPart("minute")}`;
   };
 
+  const getDashboardForRecord = (record: ApplicationHistoryItem) =>
+    dashboardByRecruitment[record.recruitmentId];
+
+  const getNormalizedStatus = (record: ApplicationHistoryItem) => {
+    const dashboard = getDashboardForRecord(record);
+    return String(dashboard?.myApplication.status ?? record.status).toUpperCase();
+  };
+
+  const getInterviewReservation = (record: ApplicationHistoryItem) =>
+    getDashboardForRecord(record)?.interview?.myReservation;
+
+  const hasInterviewReservation = (record: ApplicationHistoryItem) =>
+    Boolean(getInterviewReservation(record)?.startAt);
+
+  const formatInterviewDateTime = (record: ApplicationHistoryItem) => {
+    const reservation = getInterviewReservation(record);
+    if (!reservation?.startAt) {
+      return "-";
+    }
+
+    const startText = formatDateTime(reservation.startAt);
+    if (!reservation.endAt) {
+      return startText;
+    }
+
+    const endText = formatDateTime(reservation.endAt);
+    if (startText === "-" || endText === "-") {
+      return startText;
+    }
+
+    const startDay = startText.split(" ")[0];
+    const endDay = endText.split(" ")[0];
+    const startTime = startText.split(" ")[1];
+    const endTime = endText.split(" ")[1];
+
+    if (startDay && endDay && startTime && endTime && startDay === endDay) {
+      return `${startDay} ${startTime}-${endTime}`;
+    }
+
+    return `${startText} ~ ${endText}`;
+  };
+
   const getActionVisibility = (record: ApplicationHistoryItem) => {
-    const dashboard = dashboardByRecruitment[record.recruitmentId];
+    const dashboard = getDashboardForRecord(record);
     const canEdit = dashboard?.myApplication.canEdit ?? record.canEdit;
-    const canSubmit = dashboard?.myApplication.canSubmit ?? record.canSubmit;
+    const normalizedStatus = getNormalizedStatus(record);
+    const canShowResultByStatus =
+      normalizedStatus.startsWith("DOC_") || normalizedStatus.startsWith("FINAL_");
+    const canShowResultByDashboard = dashboard?.documentResult.visible === true;
+    const isInterview = hasInterviewReservation(record);
 
     return {
-      canShowEditButton: canEdit === true,
-      canShowResultButton: canEdit === false && canSubmit === false,
+      canShowEditButton: canEdit === true && !isInterview,
+      canShowResultButton: canShowResultByDashboard || canShowResultByStatus,
     };
+  };
+
+  const getApplicationTypeLabel = (record: ApplicationHistoryItem) => {
+    if (hasInterviewReservation(record)) {
+      return "면접";
+    }
+
+    const normalizedStatus = getNormalizedStatus(record);
+    if (
+      normalizedStatus.startsWith("DOC_") ||
+      normalizedStatus === "SUBMITTED"
+    ) {
+      return "서류";
+    }
+
+    if (normalizedStatus.startsWith("FINAL_")) {
+      return "면접";
+    }
+
+    return "-";
   };
 
   const handleEditClick = (applicationId: number) => {
@@ -152,8 +218,7 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
   };
 
   const handleResultClick = (applicationId: number) => {
-    // TODO: 전형별 결과 확인 페이지 연결
-    console.log("결과 확인", applicationId);
+    router.push(`/14/result?applicationId=${applicationId}`);
   };
 
   if (user.role !== "게스트") {
@@ -267,29 +332,34 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
               ) : null}
 
               {!isLoading && !errorMessage
-                ? visibleRecords.map((record) => {
+                ? visibleRecords.map((record, index) => {
                     const { canShowEditButton, canShowResultButton } =
                       getActionVisibility(record);
+                    const isInterviewRecord = hasInterviewReservation(record);
 
                     return (
                       <tr key={record.applicationId} className="text-white/85">
                         <td className="border-b border-white/10 px-3 py-3">
-                          {record.applicationId}
+                          {index + 1}
                         </td>
                         <td className="border-b border-white/10 px-3 py-3">
                           {record.generation}기
                         </td>
                         <td className="border-b border-white/10 px-3 py-3">
-                          서류
+                          {getApplicationTypeLabel(record)}
                         </td>
                         <td className="border-b border-white/10 px-3 py-3">
-                          {formatDateTime(record.submittedAt)}
+                          {isInterviewRecord
+                            ? "-"
+                            : formatDateTime(record.submittedAt)}
                         </td>
                         <td className="border-b border-white/10 px-3 py-3">
-                          {formatDateTime(record.updatedAt)}
+                          {isInterviewRecord
+                            ? "-"
+                            : formatDateTime(record.updatedAt)}
                         </td>
                         <td className="border-b border-white/10 px-3 py-3">
-                          -
+                          {isInterviewRecord ? formatInterviewDateTime(record) : "-"}
                         </td>
                         <td className="border-b border-white/10 px-3 py-3">
                           {canShowEditButton ? (
