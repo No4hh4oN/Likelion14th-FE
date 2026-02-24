@@ -68,6 +68,7 @@ export type DocumentQuestionsResponse = {
 
 /**
  * 지원서 페이지 초기/로딩 상태 타입입니다.
+ * TODO: enum값 맞는지 체크
  */
 export type ApplyPageStatus =
   | "loading"

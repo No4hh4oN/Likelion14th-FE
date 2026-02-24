@@ -318,7 +318,7 @@ export default function HeroSection() {
             </div>
 
             <Link
-              href="/14/apply"
+              href="/14/faq"
               className="rounded-full bg-main-3 z-30 px-7 py-3.5 text-[24px] font-bold text-white transition-transform duration-300 cursor-pointer hover:translate-y-[-3px] lg:px-[72px] lg:py-4 lg:text-[36px]"
             >
               14기 지원하기

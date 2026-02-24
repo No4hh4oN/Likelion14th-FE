@@ -1,6 +1,13 @@
 "use client";
 
-import { ChangeEvent, ReactNode, useEffect, useMemo, useState } from "react";
+import {
+  ChangeEvent,
+  ReactNode,
+  Suspense,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getAccessToken } from "@/lib/axios";
@@ -322,11 +329,21 @@ const createEmptyAnswers = (count: number) =>
 const sectionCardClass =
   "rounded-[10px] bg-gray-7 px-3 py-6 shadow-[0_8px_24px_rgba(0,0,0,0.16)] lg:px-7 lg:py-12";
 
+function ApplyPageLoadingFallback() {
+  return (
+    <section className="bg-background px-4 py-20 text-white lg:px-6">
+      <div className="mx-auto max-w-290 rounded-[10px] bg-gray-7 px-6 py-12 text-center">
+        모집 정보를 불러오는 중입니다.
+      </div>
+    </section>
+  );
+}
+
 /**
- * 지원서 작성 페이지 컴포넌트
+ * 지원서 작성 페이지 본문 컴포넌트
  * @returns 지원서 작성 UI
  */
-export default function ApplyPage() {
+function ApplyPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   /**
@@ -914,7 +931,7 @@ export default function ApplyPage() {
 
   if (pageStatus === "closed") {
     return (
-      <section className="bg-background px-4 py-20 text-white lg:px-6">
+      <section className="bg-background px-4 py-20 text-white mt-8 lg:px-6">
         <div className="mx-auto max-w-290 rounded-[10px] bg-gray-7 px-6 py-12 text-center">
           <p>현재는 지원 기간이 아닙니다.</p>
           {activeRecruitment && (
@@ -1172,5 +1189,16 @@ export default function ApplyPage() {
         </div>
       </div>
     </section>
+  );
+}
+
+/**
+ * Suspense 경계에서 ApplyPage 본문을 감싸 prerender 빌드 오류를 방지함.
+ */
+export default function ApplyPage() {
+  return (
+    <Suspense fallback={<ApplyPageLoadingFallback />}>
+      <ApplyPageContent />
+    </Suspense>
   );
 }

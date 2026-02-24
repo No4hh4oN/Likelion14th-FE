@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const desktopLions = [
   {
     id: "head-back",
@@ -83,12 +85,17 @@ export default function HeroSection() {
                 서류 모집
               </span>
               <span className="font-normal text-[16px] lg:text-[18px]">
-                2/16(월) - 3/12(목)
+                2/27(월) - 3/12(목)
               </span>
             </div>
-            <button className="mt-[12px] lg:mt-[18px] bg-main-1 px-[45px] py-[21px] rounded-[100px] cursor-pointer text-[24px] lg:text-[30px] font-bold">
-              14기 지원서 쓰기
-            </button>
+            <div className="mt-[28px] lg:mt-[30px]">
+              <Link
+                href="/14/apply"
+                className="bg-main-1 px-[45px] py-[21px] rounded-[100px] cursor-pointer text-[24px] lg:text-[30px] font-bold"
+              >
+                14기 지원서 쓰기
+              </Link>
+            </div>
           </div>
         </div>
       </div>

@@ -86,7 +86,7 @@ export default function ApplyCompletePage() {
     <section className="bg-background px-4 py-16 text-white lg:px-6 lg:py-24">
       <div className="mx-auto flex w-full max-w-290 flex-col items-center text-center">
         <Image
-          src="/images/lions/standing-thankyou.png"
+          src="/images/lions/standing-thankyou.webp"
           alt="지원 완료 라이언"
           width={180}
           height={180}
@@ -160,10 +160,10 @@ export default function ApplyCompletePage() {
             aria-label="지원 취소 확인"
           >
             <p className="text-[22px] font-bold text-white lg:text-[30px]">
-              정말로 삭제하시겠습니까?
+              정말로 지원을 취소하시겠습니까?
             </p>
             <p className="mt-3 text-[13px] text-gray-3 lg:text-[16px]">
-              삭제 후에는 복구할 수 없습니다.
+              삭제된 지원내역은 복구할 수 없습니다.
             </p>
 
             <div className="mt-8 flex items-center justify-center gap-3 lg:gap-4">

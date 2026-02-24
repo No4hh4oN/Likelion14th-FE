@@ -1,5 +1,4 @@
-// app/(public)/layout.tsx
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "@/styles/globals.css";
 import Header from "@/components/layout/Header";
@@ -7,6 +6,13 @@ import Header from "@/components/layout/Header";
 export const metadata: Metadata = {
   title: "LIKELION SYU",
   description: "멋쟁이사자처럼 14기 사이트",
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.svg?v=2", type: "image/svg+xml" },
+    ],
+    shortcut: "/favicon.svg",
+  },
 };
 
 const pretendard = localFont({
