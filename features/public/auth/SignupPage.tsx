@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ChangeEvent, FormEvent, useMemo, useState } from "react";
 import {
   checkLoginIdAvailability,
@@ -87,6 +88,7 @@ function makeBirthDate(year: string, month: string, day: string): string {
 }
 
 export default function SignupPageFeature() {
+  const router = useRouter();
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -103,6 +105,7 @@ export default function SignupPageFeature() {
   const [hasAttemptedEmailCodeSend, setHasAttemptedEmailCodeSend] =
     useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSignupSuccessModal, setShowSignupSuccessModal] = useState(false);
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -289,7 +292,7 @@ export default function SignupPageFeature() {
         profileImageId = uploadResult.profileImageId;
       }
 
-      const result = await register({
+      await register({
         loginId: form.loginId,
         email: form.email,
         password: form.password,
@@ -302,14 +305,18 @@ export default function SignupPageFeature() {
         phone: form.phone,
         profileImageId,
       });
-      setMessage(
-        `회원가입이 완료되었습니다. (${result.userUuid}) 로그인 페이지로 이동해주세요.`,
-      );
+      setMessage("");
+      setShowSignupSuccessModal(true);
     } catch {
       setErrorMessage("회원가입에 실패했습니다.");
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleMoveToLoginPage = () => {
+    setShowSignupSuccessModal(false);
+    router.push("/auth");
   };
 
   return (
@@ -749,6 +756,36 @@ export default function SignupPageFeature() {
           </div>
         </form>
       </section>
+
+      {showSignupSuccessModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="signup-success-title"
+            className="w-full max-w-[420px] rounded-[16px] bg-[#303136] px-6 py-8 text-center shadow-[0_12px_32px_rgba(0,0,0,0.45)]"
+          >
+            <h2
+              id="signup-success-title"
+              className="text-[24px] font-bold text-white"
+            >
+              회원가입 완료
+            </h2>
+            <p className="mt-3 text-[15px] text-gray-200">
+              회원가입이 완료되었습니다.
+              <br />
+              로그인 페이지로 이동합니다.
+            </p>
+            <button
+              type="button"
+              onClick={handleMoveToLoginPage}
+              className="mt-7 inline-flex h-11 min-w-[180px] items-center justify-center rounded-md bg-main-1 px-6 text-base font-semibold text-white"
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
