@@ -624,7 +624,7 @@ export default function SignupPageFeature() {
               </p>
             ) : null}
             <p className="text-xs text-gray-400 md:pl-[82px]">
-              * 4~20자 영문, 숫자만 가능합니다.
+              *4~20자 영문, 숫자만 가능합니다.
             </p>
 
             <div className="flex items-center gap-2">
