@@ -47,6 +47,8 @@ const INITIAL_FORM: FormState = {
   code: "",
 };
 
+const PHONE_NUMBER_PATTERN = /^010\d{8}$/;
+
 const DEPARTMENTS = [
   "신학과",
   "간호학과",
@@ -97,6 +99,9 @@ export default function SignupPageFeature() {
   const [phoneAvailable, setPhoneAvailable] = useState<boolean | null>(null);
   const [emailCodeSent, setEmailCodeSent] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
+  const [isSendingEmailCode, setIsSendingEmailCode] = useState(false);
+  const [hasAttemptedEmailCodeSend, setHasAttemptedEmailCodeSend] =
+    useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -142,11 +147,18 @@ export default function SignupPageFeature() {
     if (key === "email") {
       setEmailCodeSent(false);
       setEmailVerified(false);
+      setHasAttemptedEmailCodeSend(false);
     }
     if (key === "phone") {
       setPhoneAvailable(null);
     }
   };
+
+  const emailSendButtonText = isSendingEmailCode
+    ? "전송 중..."
+    : hasAttemptedEmailCodeSend
+      ? "다시 발송"
+      : "인증번호 전송";
 
   const handleProfileImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const nextFile = event.target.files?.[0] ?? null;
@@ -183,6 +195,13 @@ export default function SignupPageFeature() {
 
   const handleCheckPhone = async () => {
     setErrorMessage("");
+    if (!PHONE_NUMBER_PATTERN.test(form.phone)) {
+      setPhoneAvailable(null);
+      setErrorMessage(
+        "전화번호는 01012345678 형식(하이픈 없이)으로 입력해주세요.",
+      );
+      return;
+    }
     try {
       const result = await checkPhoneAvailability(form.phone);
       setPhoneAvailable(result.available);
@@ -192,8 +211,21 @@ export default function SignupPageFeature() {
   };
 
   const handleSendEmailCode = async () => {
+    if (isSendingEmailCode) {
+      return;
+    }
+
+    if (hasAttemptedEmailCodeSend) {
+      const confirmed = window.confirm("정말로 다시 발송하시겠습니까?");
+      if (!confirmed) {
+        return;
+      }
+    }
+
     setErrorMessage("");
     setMessage("");
+    setIsSendingEmailCode(true);
+    setEmailVerified(false);
     try {
       const result = await sendEmailCode({
         email: form.email,
@@ -202,7 +234,11 @@ export default function SignupPageFeature() {
       setEmailCodeSent(result.ok);
       setMessage(result.message || "인증 코드를 전송했습니다.");
     } catch {
+      setEmailCodeSent(false);
       setErrorMessage("인증 코드 전송에 실패했습니다.");
+    } finally {
+      setIsSendingEmailCode(false);
+      setHasAttemptedEmailCodeSend(true);
     }
   };
 
@@ -383,6 +419,7 @@ export default function SignupPageFeature() {
                 <input
                   value={form.studentNo}
                   onChange={(e) => updateField("studentNo", e.target.value)}
+                  placeholder="2026000001"
                   className="h-10 w-full rounded bg-[#d9d9d9] px-3 pr-[86px] text-sm text-black md:pr-3"
                   required
                 />
@@ -490,7 +527,16 @@ export default function SignupPageFeature() {
               <div className="relative min-w-0 flex-1">
                 <input
                   value={form.phone}
-                  onChange={(e) => updateField("phone", e.target.value)}
+                  onChange={(e) =>
+                    updateField(
+                      "phone",
+                      e.target.value.replace(/\D/g, "").slice(0, 11),
+                    )
+                  }
+                  placeholder="01012345678"
+                  inputMode="numeric"
+                  maxLength={11}
+                  pattern="010[0-9]{8}"
                   className="h-10 w-full rounded bg-[#d9d9d9] px-3 pr-[86px] text-sm text-black md:pr-3"
                   required
                 />
@@ -534,17 +580,19 @@ export default function SignupPageFeature() {
                 <button
                   type="button"
                   onClick={handleSendEmailCode}
-                  className="absolute right-1 top-1 inline-flex h-8 items-center rounded bg-[#4b9cff] px-2 text-[11px] font-semibold text-white md:hidden"
+                  disabled={isSendingEmailCode}
+                  className="absolute right-1 top-1 inline-flex h-8 items-center rounded bg-[#4b9cff] px-2 text-[11px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 md:hidden"
                 >
-                  인증번호 전송
+                  {emailSendButtonText}
                 </button>
               </div>
               <button
                 type="button"
                 onClick={handleSendEmailCode}
-                className="hidden h-9 rounded bg-[#4b9cff] px-2 text-xs font-semibold text-white md:inline-flex md:w-[84px] md:items-center md:justify-center"
+                disabled={isSendingEmailCode}
+                className="hidden h-9 rounded bg-[#4b9cff] px-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 md:inline-flex md:w-[84px] md:items-center md:justify-center"
               >
-                인증번호 전송
+                {emailSendButtonText}
               </button>
             </div>
             {emailCodeSent ? (
