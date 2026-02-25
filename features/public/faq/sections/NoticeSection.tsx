@@ -8,7 +8,7 @@ const IDEAL_MEMBER = [
 ];
 
 const SESSION_NOTICE = [
-  "정기 세션은 매주 화요일 18시에 진행됩니다.",
+  "정기세션은 매주 화요일 18시에 진행됩니다.",
   "각 파트별 세션 일정은 해당 파트의 일정에 따라 추후 조정될 예정입니다.",
   "시험 전 주 및 시험 기간에는 세션이 진행되지 않습니다.",
   "활동은 1학기, 여름방학, 2학기 동안 모두 진행됩니다.",
@@ -67,7 +67,7 @@ const NoticeSection = () => {
               </h3>
               <ul className="mt-2.5 lg:mt-6 pl-5 text-[14px] lg:text-[18px] text-background list-disc list-outside marker:text-[0.6em] leading-[1.66] font-normal">
                 <li>
-                  정기 세션은{" "}
+                  정기세션은{" "}
                   <span className="font-semibold">매주 화요일 18시</span>에
                   진행됩니다.
                 </li>
@@ -173,8 +173,8 @@ const NoticeSection = () => {
 
                   <p className="mt-[12px] lg:mt-[21px] text-[12px] font-normal lg:text-[14px] text-gray-5">
                     * 행사 일정은 내부 사정에 따라 변동될 수 있습니다. <br />*
-                    연합 해커톤의 경우, 현재는 11월에 진행되는 간지톤 1회만
-                    계획되어 있으나, 추후 연합 해커톤 일정이 추가될 경우 해당
+                    연합해커톤의 경우, 현재는 11월에 진행되는 간지톤 1회만
+                    계획되어 있으나, 추후 연합해커톤 일정이 추가될 경우 해당
                     행사 중 1회만 참여하시면 됩니다.
                   </p>
 
