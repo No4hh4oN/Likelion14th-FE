@@ -85,7 +85,7 @@ export default function HeroSection() {
                 서류 모집
               </span>
               <span className="font-normal text-[16px] lg:text-[18px]">
-                2/27(월) - 3/12(목)
+                2/27(금) - 3/12(목)
               </span>
             </div>
             <div className="mt-[28px] lg:mt-[30px]">
