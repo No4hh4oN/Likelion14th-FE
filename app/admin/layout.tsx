@@ -3,8 +3,8 @@ import "@/styles/globals.css";
 import Header from "@/components/layout/Header";
 
 export const metadata: Metadata = {
-  title: "삼육멋사14기 운영페이지",
-  description: "멋쟁이사자처럼 14기 사이트",
+  title: "멋쟁이사자처럼14기 운영페이지",
+  description: "멋쟁이사자처럼 14기 관리자 페이지",
   icons: {
     icon: "/favicon.svg",
   },
