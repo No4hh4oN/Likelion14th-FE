@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import Image from "next/image"
 import Link from "next/link"
@@ -14,17 +14,17 @@ type EntryItem = {
 const ENTRY_ITEMS: EntryItem[] = [
     {
         title: "멋사 SYU 14TH\n지원자 관리",
-        description: "멋사 SYU 14TH 아기사자 지원 내역을 확인하고\n합격/불합격 처리를 해요.",
-        href: "/admin/applicants",
+        description: "멋사 SYU 14TH 서류 지원자 목록을 확인하고\n합격/불합격 처리를 해요.",
+        href: "/admin/applications",
     },
     {
-        title: "멋사 SYU 14TH\n아기사자 관리",
-        description: "아기사자의 출결과 과제를 관리할 수 있어요.\n커뮤니티와 공지사항도 함께 관리해요.",
-        href: "/admin/baby-lions",
+        title: "멋사 SYU 14TH\n면접자 관리",
+        description: "면접 대상자 출결과 과제를 관리하고\n커뮤니티와 공지사항 운영을 진행해요.",
+        href: "/admin/interviews/candidates",
     },
     {
         title: "멋사 SYU 14TH\n운영진 주요업무",
-        description: "운영진의 주요 업무를 수행해요.\n아기사자용/스태프용 페이지를 관리해요.",
+        description: "운영진의 주요 업무를 수행해요.\n지원자와 스태프 운영 페이지를 관리해요.",
         href: "/admin/staff-tasks",
     },
 ]
