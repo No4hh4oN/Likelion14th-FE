@@ -1,146 +1,253 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { getActiveRecruitment } from "@/features/public/home/api";
-import { getRecruitmentInfo } from "./api";
-import type { RecruitmentDetailResponse } from "./type";
+import {
+  getApplicationForResult,
+  getDashboardForResult,
+  getInterviewSlots,
+  getRecruitmentInfo,
+  reserveInterviewSlot,
+} from "./api";
+import type {
+  DashboardForResultResponse,
+  InterviewReservation,
+  InterviewSlot,
+  RecruitmentDetailResponse,
+  ResultStatus,
+} from "./type";
+import FailedSection from "./sections/FailedSection";
+import PassedSection from "./sections/PassedSection";
+import FinalPassedSection from "./sections/FinalPassedSection";
 
-export type ResultPhase = "FIRST" | "FINAL";
+const VALID_STATUSES: ResultStatus[] = [
+  "DRAFT",
+  "SUBMITTED",
+  "DOC_FAILED",
+  "DOC_PASSED",
+  "FINAL_FAILED",
+  "FINAL_PASSED",
+];
 
-type ResultPageProps = {
-  phase?: ResultPhase;
-};
-
-type ResultCopy = {
-  titleSuffix: string;
-  schedulePrefix: string;
-  fallbackScheduleText: string;
-};
-
-const RESULT_COPY: Record<ResultPhase, ResultCopy> = {
-  FIRST: {
-    titleSuffix: "1차 결과 발표",
-    schedulePrefix: "1차 발표",
-    fallbackScheduleText: "1차 발표 : 3월 13일 10시",
-  },
-  FINAL: {
-    titleSuffix: "최종 결과 발표",
-    schedulePrefix: "최종 발표",
-    fallbackScheduleText: "최종 발표 : 3월 18일 10시",
-  },
-};
-
-const kstDateTimePattern = /(Z|[+-]\d{2}:\d{2})$/;
-
-const parseKstDateTime = (value: string) => {
-  const normalized = kstDateTimePattern.test(value) ? value : `${value}+09:00`;
-  return Date.parse(normalized);
-};
-
-function formatAnnouncementTime(value: string) {
-  const parsed = parseKstDateTime(value);
-  if (!Number.isFinite(parsed)) {
-    return "";
+const normalizeStatus = (value: string | null | undefined): ResultStatus | null => {
+  if (!value) {
+    return null;
   }
 
-  const parts = new Intl.DateTimeFormat("ko-KR", {
-    timeZone: "Asia/Seoul",
-    month: "numeric",
-    day: "numeric",
-    hour: "numeric",
-    hour12: false,
-  }).formatToParts(new Date(parsed));
+  const normalized = value.toUpperCase();
+  return VALID_STATUSES.includes(normalized as ResultStatus)
+    ? (normalized as ResultStatus)
+    : null;
+};
 
-  const getPart = (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find((part) => part.type === type)?.value ?? "";
+export default function ResultPage() {
+  const searchParams = useSearchParams();
+  const requestedApplicationId = useMemo(() => {
+    const raw = searchParams.get("applicationId");
+    if (!raw) {
+      return null;
+    }
 
-  const month = getPart("month");
-  const day = getPart("day");
-  const hour = getPart("hour");
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : null;
+  }, [searchParams]);
 
-  if (!month || !day || !hour) {
-    return "";
-  }
-
-  return `${month}월 ${day}일 ${hour}시`;
-}
-
-export default function ResultPage({ phase = "FIRST" }: ResultPageProps) {
-  const copy = RESULT_COPY[phase];
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadErrorMessage, setLoadErrorMessage] = useState("");
+  const [status, setStatus] = useState<ResultStatus | null>(null);
+  const [targetRecruitmentId, setTargetRecruitmentId] = useState<number | null>(
+    null,
+  );
   const [recruitmentInfo, setRecruitmentInfo] =
     useState<RecruitmentDetailResponse | null>(null);
+  const [dashboard, setDashboard] = useState<DashboardForResultResponse | null>(
+    null,
+  );
+  const [slots, setSlots] = useState<InterviewSlot[]>([]);
+  const [isReserving, setIsReserving] = useState(false);
+  const [reserveErrorMessage, setReserveErrorMessage] = useState("");
+  const [reserveSuccessMessage, setReserveSuccessMessage] = useState("");
 
   useEffect(() => {
     let isMounted = true;
 
-    const fetchSchedule = async () => {
+    const loadResultData = async () => {
+      setIsLoading(true);
+      setLoadErrorMessage("");
+      setReserveErrorMessage("");
+      setReserveSuccessMessage("");
+
       try {
-        const activeRecruitment = await getActiveRecruitment();
-        if (!isMounted || !activeRecruitment) {
-          return;
+        let recruitmentId: number | null = null;
+        let statusFromApplication: ResultStatus | null = null;
+
+        if (requestedApplicationId) {
+          const application = await getApplicationForResult(requestedApplicationId);
+          recruitmentId = application.recruitmentId;
+          statusFromApplication = normalizeStatus(application.status);
         }
 
-        const recruitmentDetail = await getRecruitmentInfo(
-          activeRecruitment.recruitmentId,
-        );
+        if (!recruitmentId) {
+          const activeRecruitment = await getActiveRecruitment();
+          recruitmentId = activeRecruitment?.recruitmentId ?? null;
+        }
+
+        if (!recruitmentId) {
+          throw new Error("NO_RECRUITMENT");
+        }
+
+        const [nextRecruitmentInfo, nextDashboard] = await Promise.all([
+          getRecruitmentInfo(recruitmentId),
+          getDashboardForResult(recruitmentId),
+        ]);
+
+        const resolvedStatus =
+          normalizeStatus(nextDashboard.myApplication.status) ||
+          statusFromApplication;
+
+        let nextSlots: InterviewSlot[] = [];
+        if (resolvedStatus === "DOC_PASSED") {
+          try {
+            nextSlots = await getInterviewSlots(recruitmentId);
+          } catch {
+            nextSlots = [];
+          }
+        }
+
         if (!isMounted) {
           return;
         }
-        setRecruitmentInfo(recruitmentDetail);
-      } catch {
-        // Keep fallback text when API request fails.
+
+        setTargetRecruitmentId(recruitmentId);
+        setRecruitmentInfo(nextRecruitmentInfo);
+        setDashboard(nextDashboard);
+        setStatus(resolvedStatus);
+        setSlots(nextSlots);
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        const maybeMessage =
+          error instanceof Error && error.message === "NO_RECRUITMENT"
+            ? "조회 가능한 모집 결과가 없습니다."
+            : "결과 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
+
+        setLoadErrorMessage(maybeMessage);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
-    void fetchSchedule();
+    void loadResultData();
 
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [requestedApplicationId]);
 
-  const announcementAt =
-    phase === "FIRST"
-      ? recruitmentInfo?.docResultAt
-      : recruitmentInfo?.finalResultAt;
-  const formattedAnnouncementAt = announcementAt
-    ? formatAnnouncementTime(announcementAt)
-    : "";
-  const scheduleText = formattedAnnouncementAt
-    ? `${copy.schedulePrefix} : ${formattedAnnouncementAt}`
-    : copy.fallbackScheduleText;
+  const reservation: InterviewReservation | null =
+    dashboard?.interview?.myReservation ?? null;
 
-  return (
-    <section className="pt-20 lg:pt-20.5 pb-15 lg:pb-21 bg-background">
-      <div className="px-4.5 lg:px-[clamp(18px,12vw,392px)]">
-        <div className="flex flex-col items-center">
-          <h2 className="text-[22px] lg:text-[48px] font-bold leading-[1.27] text-center text-white-1">
-            멋쟁이사자처럼
-            <br />
-            <span className="text-main-3">14기 아기사자 모집</span>{" "}
-            {copy.titleSuffix}
-          </h2>
-          <div className="flex my-8 lg:my-16.5 ml-7">
-            <Image
-              src="/images/lions/lion-stand-half-gradient-black.webp"
-              alt="노트북을 든 멋사 라이언 캐릭터"
-              width={528}
-              height={516}
-              className="w-54.5 lg:w-102.25 object-contain"
-            />
-          </div>
-          <p className="text-white-1 text-center w-auto lg:w-auto font-normal text-[14px] lg:text-[20px]">
-            {scheduleText}
-          </p>
+  const handleReserveInterview = async (slotId: number) => {
+    if (!targetRecruitmentId || isReserving) {
+      return;
+    }
+
+    setIsReserving(true);
+    setReserveErrorMessage("");
+    setReserveSuccessMessage("");
+
+    try {
+      await reserveInterviewSlot(targetRecruitmentId, slotId);
+
+      const [nextDashboard, nextSlots] = await Promise.all([
+        getDashboardForResult(targetRecruitmentId),
+        getInterviewSlots(targetRecruitmentId).catch(() => []),
+      ]);
+
+      setDashboard(nextDashboard);
+      setSlots(nextSlots);
+      setStatus(normalizeStatus(nextDashboard.myApplication.status));
+      setReserveSuccessMessage("면접 일정이 확정되었습니다.");
+    } catch {
+      setReserveErrorMessage(
+        "면접 시간 확정에 실패했습니다. 이미 마감된 시간이거나 잠시 오류가 발생했습니다.",
+      );
+    } finally {
+      setIsReserving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <section className="min-h-screen bg-background px-4 pt-28 text-white lg:px-6">
+        <div className="mx-auto w-full max-w-[820px] rounded-[14px] bg-[#343740] px-8 py-10 text-center text-[20px]">
+          결과 정보를 불러오는 중입니다.
+        </div>
+      </section>
+    );
+  }
+
+  if (loadErrorMessage) {
+    return (
+      <section className="min-h-screen bg-background px-4 pt-28 text-white lg:px-6">
+        <div className="mx-auto w-full max-w-[820px] rounded-[14px] bg-[#343740] px-8 py-10 text-center">
+          <p className="text-[20px] text-[#FFD5D9]">{loadErrorMessage}</p>
           <Link
-            href="#"
-            className="mt-10 lg:mt-4 cursor-pointer rounded-[100px] px-11.75 lg:px-[132px] py-4.5 font-bold bg-main-1 text-white-1 text-[14px] lg:text-[36px]"
+            href="/"
+            className="mt-8 inline-flex h-[56px] items-center justify-center rounded-full bg-main-1 px-8 text-[18px] font-semibold text-white"
           >
-            결과 확인하기
+            메인으로 이동
           </Link>
         </div>
+      </section>
+    );
+  }
+
+  if (status === "DOC_FAILED") {
+    return <FailedSection stage="DOCUMENT" />;
+  }
+
+  if (status === "FINAL_FAILED") {
+    return <FailedSection stage="FINAL" />;
+  }
+
+  if (status === "DOC_PASSED") {
+    return (
+      <PassedSection
+        slots={slots}
+        reservation={reservation}
+        isReserving={isReserving}
+        reserveErrorMessage={reserveErrorMessage}
+        reserveSuccessMessage={reserveSuccessMessage}
+        onReserve={handleReserveInterview}
+      />
+    );
+  }
+
+  if (status === "FINAL_PASSED") {
+    return <FinalPassedSection />;
+  }
+
+  return (
+    <section className="min-h-screen bg-background px-4 pt-28 text-white lg:px-6">
+      <div className="mx-auto w-full max-w-[980px] rounded-[16px] bg-[#343740] px-8 py-12 text-center">
+        <h2 className="text-[30px] font-bold text-main-3 lg:text-[44px]">
+          결과 확인 준비중
+        </h2>
+        <p className="mt-4 text-[18px] text-white/80 lg:text-[24px]">
+          아직 결과 발표 전입니다.
+        </p>
+        {recruitmentInfo?.phaseType && (
+          <p className="mt-3 text-[14px] text-white/55 lg:text-[16px]">
+            현재 모집 단계: {recruitmentInfo.phaseType}
+          </p>
+        )}
       </div>
     </section>
   );
