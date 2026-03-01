@@ -235,7 +235,7 @@ export const STAFF_MEMBERS: StaffMember[] = [
     contact: "9ay20n@syu-likelion.org",
     previewCareer: [
       "멋쟁이사자처럼 13기 아기사자",
-      "멋쟁이사자처럼 14시 중앙운영단",
+      "멋쟁이사자처럼 14기 중앙운영단",
       "제64대 총학생회비상대책위원회 대외협력국 국장",
     ],
     career: [
