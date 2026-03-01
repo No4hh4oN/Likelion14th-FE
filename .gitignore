@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+api-docs.json
 
 # next.js
 /.next/
