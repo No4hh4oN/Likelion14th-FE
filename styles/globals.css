@@ -38,7 +38,8 @@
   --color-main-1: var(--main-1);
   --color-main-2: var(--main-2);
   --color-main-3: var(--main-3);
-
+  --color-green-1: var(--green-1);
+  --color-red-1: var(--red-1);
   --font-sans: var(--font-pretendard);
 }
 
