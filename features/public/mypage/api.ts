@@ -3,9 +3,14 @@ import type {
   ApplicationHistoryApiResponse,
   DashboardItem,
   MyPageUserApiResponse,
+  NoticeCategory,
+  NoticeListApiResponse,
+  ProjectListItem,
+  QnaListApiResponse,
   UpdateMyProfileImageResponse,
   UpdateMyProfileRequest,
   UpdateMyProfileResponse,
+  UserTrack,
   WithdrawMeResponse,
 } from "./types";
 
@@ -79,5 +84,58 @@ export async function updateMyProfileImage(
 export async function withdrawMe(): Promise<WithdrawMeResponse> {
   const response = await apiClient.delete<WithdrawMeResponse>("/users/me");
   clearAccessToken();
+  return response.data;
+}
+
+type GetQnaListParams = {
+  page?: number;
+  size?: number;
+  part?: UserTrack;
+};
+
+/**
+ * 커뮤니티 질문 목록을 조회합니다.
+ */
+export async function getQnaList(
+  params: GetQnaListParams = {},
+): Promise<QnaListApiResponse> {
+  const response = await apiClient.get<QnaListApiResponse>("/community/qna", {
+    params,
+  });
+  return response.data;
+}
+
+type GetNoticeListParams = {
+  page?: number;
+  size?: number;
+  category?: NoticeCategory;
+  part?: UserTrack;
+};
+
+/**
+ * 공지/세션 자료 목록을 조회합니다.
+ */
+export async function getNoticeList(
+  params: GetNoticeListParams = {},
+): Promise<NoticeListApiResponse> {
+  const response = await apiClient.get<NoticeListApiResponse>("/notice", {
+    params,
+  });
+  return response.data;
+}
+
+type GetProjectListParams = {
+  track?: UserTrack;
+};
+
+/**
+ * 과제 목록을 조회합니다.
+ */
+export async function getProjectList(
+  params: GetProjectListParams = {},
+): Promise<ProjectListItem[]> {
+  const response = await apiClient.get<ProjectListItem[]>("/projects", {
+    params,
+  });
   return response.data;
 }

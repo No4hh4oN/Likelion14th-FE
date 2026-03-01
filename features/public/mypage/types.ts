@@ -1,12 +1,14 @@
 export type UserRole = "게스트" | "아기사자" | "운영진";
-export type MyPageTab = "내 정보" | "과제";
+export type MyPageTab = "내 활동" | "과제";
 export type MyPageSection = "profile" | "edit" | "history";
+export type UserTrack = "FRONTEND" | "BACKEND" | "AI_ML" | "PM_DESIGN" | "ETC";
 
 export type MyPageUser = {
   name: string;
   major: string;
   generation: string;
   role: UserRole;
+  track?: UserTrack | null;
   profileImageUrl?: string | null;
 };
 
@@ -48,7 +50,7 @@ export type MyPageUserApiResponse = {
     id: number;
     generation: number;
     level: string; //TODO: enum값 물어보기 (OUTSIDER | )
-    track: string; //FRONTEND | BACKEND | AI_ML | PM_DESIGN
+    track: UserTrack | string; //FRONTEND | BACKEND | AI_ML | PM_DESIGN
     position: string; //TODO: enum값 물어보기 (PRESIDENT | )
     active: boolean;
     createdAt: string; //2026-02-23T14:36:13.229Z
@@ -154,4 +156,49 @@ export type UpdateMyProfileImageResponse = {
 
 export type WithdrawMeResponse = {
   ok: boolean;
+};
+
+export type NoticeCategory = "NOTICE" | "SESSION_DATA";
+
+export type NoticeSummaryItem = {
+  noticeId: number;
+  title: string;
+  category: NoticeCategory | string;
+  part: UserTrack | string;
+  createdAt: string;
+  fileCount: number;
+};
+
+export type NoticeListApiResponse = {
+  noticeList: NoticeSummaryItem[];
+  totalPages: number;
+  totalElements: number;
+};
+
+export type QnaSummaryItem = {
+  qnaId: number;
+  title: string;
+  isSecret: boolean;
+  part: UserTrack | string;
+  status: "ACTIVE" | "DELETED" | string;
+  createdAt: string;
+  updatedAt: string;
+  fileCount: number;
+  hasAnswer: boolean;
+};
+
+export type QnaListApiResponse = {
+  qnaList: QnaSummaryItem[];
+  totalPages: number;
+  totalElements: number;
+};
+
+export type ProjectListItem = {
+  id: number;
+  title: string;
+  description: string;
+  track?: UserTrack | string;
+  startDate: string;
+  deadline: string;
+  status: string;
 };
