@@ -1,4 +1,8 @@
-﻿import { redirect } from "next/navigation";
+import { redirect } from "next/navigation";
+
+export function generateStaticParams() {
+  return [{ applicationId: "1" }];
+}
 
 type AdminApplicantDetailRouteProps = {
   params: Promise<{
