@@ -1,6 +1,7 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import "@/styles/globals.css";
 import Header from "@/components/layout/Header";
+import AdminAccessGuard from "@/features/admin/AdminAccessGuard";
 
 export const metadata: Metadata = {
   title: "멋쟁이사자처럼14기 운영페이지",
@@ -21,10 +22,13 @@ export default function AdminLayout({
         <div className="admin-layout">
           <div className="admin-content">
             <Header />
-            <main>{children}</main>
+            <main>
+              <AdminAccessGuard>{children}</AdminAccessGuard>
+            </main>
           </div>
         </div>
       </body>
     </html>
   );
 }
+
