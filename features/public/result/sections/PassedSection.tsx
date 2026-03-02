@@ -8,40 +8,64 @@ import type { InterviewReservation, InterviewSlot } from "../type";
 type PassedSectionProps = {
   slots: InterviewSlot[];
   reservation: InterviewReservation | null;
+  canReserve: boolean;
   isReserving: boolean;
   reserveErrorMessage: string;
   reserveSuccessMessage: string;
   onReserve: (slotId: number) => Promise<void>;
 };
 
-const DAY_KEYS = ["2026-03-15", "2026-03-16", "2026-03-17"] as const;
-const DAY_LABELS: Record<(typeof DAY_KEYS)[number], string> = {
-  "2026-03-15": "15",
-  "2026-03-16": "16",
-  "2026-03-17": "17",
-};
-
 const DATE_WITH_TZ_PATTERN = /(Z|[+-]\d{2}:\d{2})$/;
+const KST_DATE_TIME_FORMATTER = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Seoul",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
 
-const parseKstDate = (value: string) => {
+const parseDateWithKstFallback = (value: string) => {
   const normalized = DATE_WITH_TZ_PATTERN.test(value) ? value : `${value}+09:00`;
   return new Date(normalized);
 };
 
+const getPart = (parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes) =>
+  parts.find((part) => part.type === type)?.value ?? "";
+
+const getKstDateTimeParts = (value: string) => {
+  const parts = KST_DATE_TIME_FORMATTER.formatToParts(parseDateWithKstFallback(value));
+
+  return {
+    year: getPart(parts, "year"),
+    month: getPart(parts, "month"),
+    day: getPart(parts, "day"),
+    hour: getPart(parts, "hour"),
+    minute: getPart(parts, "minute"),
+  };
+};
+
 const toDayKey = (value: string) => {
-  const date = parseKstDate(value);
-  const yyyy = date.getFullYear();
-  const mm = `${date.getMonth() + 1}`.padStart(2, "0");
-  const dd = `${date.getDate()}`.padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
+  const { year, month, day } = getKstDateTimeParts(value);
+  return `${year}-${month}-${day}`;
 };
 
 const formatTime = (value: string) => {
-  const date = parseKstDate(value);
-  const hh = `${date.getHours()}`.padStart(2, "0");
-  const mm = `${date.getMinutes()}`.padStart(2, "0");
-  return `${hh}:${mm}`;
+  const { hour, minute } = getKstDateTimeParts(value);
+  return `${hour}:${minute}`;
 };
+
+const formatMonthLabel = (dayKey: string | null) => {
+  if (!dayKey) {
+    return "-";
+  }
+
+  const month = Number(dayKey.split("-")[1]);
+  return `${month}월`;
+};
+
+const formatDayLabel = (dayKey: string) => `${Number(dayKey.split("-")[2])}`;
 
 const getSlotLabel = (slot: InterviewSlot) =>
   `${formatTime(slot.startAt)}-${formatTime(slot.endAt)}`;
@@ -49,6 +73,7 @@ const getSlotLabel = (slot: InterviewSlot) =>
 export default function PassedSection({
   slots,
   reservation,
+  canReserve,
   isReserving,
   reserveErrorMessage,
   reserveSuccessMessage,
@@ -73,8 +98,22 @@ export default function PassedSection({
   }, [slots]);
 
   const reservationDayKey = reservation ? toDayKey(reservation.startAt) : null;
+  const dayKeys = useMemo(() => {
+    const keys = new Set<string>();
+
+    Object.keys(slotsByDay).forEach((dayKey) => {
+      keys.add(dayKey);
+    });
+
+    if (reservationDayKey) {
+      keys.add(reservationDayKey);
+    }
+
+    return Array.from(keys).sort((a, b) => a.localeCompare(b));
+  }, [reservationDayKey, slotsByDay]);
+
   const firstDayWithSlot =
-    DAY_KEYS.find((key) => (slotsByDay[key] ?? []).length > 0) ?? DAY_KEYS[0];
+    dayKeys.find((key) => (slotsByDay[key] ?? []).length > 0) ?? dayKeys[0] ?? null;
 
   const [manualSelectedDayKey, setManualSelectedDayKey] = useState<string | null>(
     null,
@@ -83,11 +122,13 @@ export default function PassedSection({
     null,
   );
 
-  const selectedDayKey = reservationDayKey ?? manualSelectedDayKey ?? firstDayWithSlot;
+  const selectedDayKey =
+    reservationDayKey ?? manualSelectedDayKey ?? firstDayWithSlot;
   const daySlots = useMemo(
-    () => slotsByDay[selectedDayKey] ?? [],
+    () => (selectedDayKey ? slotsByDay[selectedDayKey] ?? [] : []),
     [selectedDayKey, slotsByDay],
   );
+  const monthLabel = formatMonthLabel(selectedDayKey ?? firstDayWithSlot);
 
   const selectedSlotId = useMemo(() => {
     if (reservation) {
@@ -95,7 +136,7 @@ export default function PassedSection({
     }
 
     if (
-      manualSelectedSlotId &&
+      manualSelectedSlotId !== null &&
       daySlots.some((slot) => slot.slotId === manualSelectedSlotId)
     ) {
       return manualSelectedSlotId;
@@ -113,7 +154,7 @@ export default function PassedSection({
   }, [daySlots, manualSelectedSlotId, reservation]);
 
   const onClickReserve = async () => {
-    if (!selectedSlotId || isReserving || reservation) {
+    if (!selectedSlotId || isReserving || reservation || !canReserve) {
       return;
     }
 
@@ -154,22 +195,8 @@ export default function PassedSection({
           <h2 className="text-[26px] font-bold lg:text-[42px]">면접 시간</h2>
           <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_1.35fr]">
             <div className="rounded-[14px] bg-[#343740] p-5 lg:p-6">
-              <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  className="h-9 w-9 rounded-full bg-[#454B5B] text-[20px] text-white/70"
-                  aria-label="previous month"
-                >
-                  〈
-                </button>
-                <span className="text-[28px] font-bold">3월</span>
-                <button
-                  type="button"
-                  className="h-9 w-9 rounded-full bg-[#454B5B] text-[20px] text-white/70"
-                  aria-label="next month"
-                >
-                  〉
-                </button>
+              <div className="flex items-center justify-center">
+                <span className="text-[28px] font-bold">{monthLabel}</span>
               </div>
 
               <div className="mt-4 grid grid-cols-7 text-center text-[16px] text-white/65">
@@ -179,7 +206,7 @@ export default function PassedSection({
               </div>
 
               <div className="mt-5 grid grid-cols-3 gap-3">
-                {DAY_KEYS.map((dayKey) => {
+                {dayKeys.map((dayKey) => {
                   const hasSlot = (slotsByDay[dayKey] ?? []).length > 0;
                   const selected = selectedDayKey === dayKey;
 
@@ -191,18 +218,24 @@ export default function PassedSection({
                         setManualSelectedDayKey(dayKey);
                         setManualSelectedSlotId(null);
                       }}
-                      disabled={!hasSlot || Boolean(reservation)}
+                      disabled={!hasSlot || Boolean(reservation) || !canReserve}
                       className={clsx(
                         "h-14 rounded-full text-[24px] font-bold transition",
                         selected ? "bg-main-1 text-white" : "bg-[#454B5B] text-white/75",
-                        (!hasSlot || reservation) &&
+                        (!hasSlot || reservation || !canReserve) &&
                           "cursor-not-allowed bg-[#3A3F4E] text-white/35",
                       )}
                     >
-                      {DAY_LABELS[dayKey]}
+                      {formatDayLabel(dayKey)}
                     </button>
                   );
                 })}
+
+                {dayKeys.length === 0 && (
+                  <p className="col-span-3 text-center text-[15px] text-white/50">
+                    선택 가능한 날짜가 없습니다.
+                  </p>
+                )}
               </div>
             </div>
 
@@ -216,6 +249,7 @@ export default function PassedSection({
                   daySlots.map((slot) => {
                     const selected = selectedSlotId === slot.slotId;
                     const disabled =
+                      !canReserve ||
                       Boolean(reservation) ||
                       slot.closed ||
                       (slot.remainingCount !== null && slot.remainingCount <= 0);
@@ -257,6 +291,12 @@ export default function PassedSection({
               )}
             >
               {reserveErrorMessage || reserveSuccessMessage}
+            </p>
+          )}
+
+          {!reserveErrorMessage && !reserveSuccessMessage && !canReserve && !reservation && (
+            <p className="mt-4 text-[16px] font-medium text-[#FFD9A0]">
+              현재 면접 일정 선택 기간이 아닙니다.
             </p>
           )}
         </div>
@@ -303,16 +343,18 @@ export default function PassedSection({
           <button
             type="button"
             onClick={onClickReserve}
-            disabled={!selectedSlotId || isReserving || Boolean(reservation)}
+            disabled={!selectedSlotId || isReserving || Boolean(reservation) || !canReserve}
             className={clsx(
               "h-[74px] min-w-[420px] rounded-full px-10 text-[34px] font-bold transition",
-              !selectedSlotId || isReserving || reservation
+              !selectedSlotId || isReserving || reservation || !canReserve
                 ? "cursor-not-allowed bg-[#4A4F60] text-white/45"
                 : "bg-main-1 text-white hover:bg-[#3A79D7]",
             )}
           >
             {reservation
               ? "2차 면접 일정 선택 완료"
+              : !canReserve
+                ? "선택 기간 아님"
               : isReserving
                 ? "저장 중..."
                 : "2차 면접 일정 확정"}

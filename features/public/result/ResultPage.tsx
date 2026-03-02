@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { getActiveRecruitment } from "@/features/public/home/api";
+import { getMyProfile } from "@/features/public/mypage/api";
 import {
   getApplicationForResult,
   getDashboardForResult,
@@ -42,6 +43,73 @@ const normalizeStatus = (value: string | null | undefined): ResultStatus | null 
     : null;
 };
 
+const parseStatusFromDocumentResult = (
+  value: string | null | undefined,
+): ResultStatus | null => {
+  if (!value) {
+    return null;
+  }
+
+  const normalized = value
+    .toUpperCase()
+    .trim()
+    .replace(/\s+/g, "_")
+    .replace(/-/g, "_");
+
+  const normalizedAsStatus = normalizeStatus(normalized);
+  if (normalizedAsStatus) {
+    return normalizedAsStatus;
+  }
+
+  if (normalized.includes("FINAL") && normalized.includes("PASS")) {
+    return "FINAL_PASSED";
+  }
+
+  if (normalized.includes("FINAL") && normalized.includes("FAIL")) {
+    return "FINAL_FAILED";
+  }
+
+  if (normalized.includes("DOC") && normalized.includes("PASS")) {
+    return "DOC_PASSED";
+  }
+
+  if (normalized.includes("DOC") && normalized.includes("FAIL")) {
+    return "DOC_FAILED";
+  }
+
+  if (normalized === "PASS" || normalized === "PASSED") {
+    return "DOC_PASSED";
+  }
+
+  if (normalized === "FAIL" || normalized === "FAILED") {
+    return "DOC_FAILED";
+  }
+
+  return null;
+};
+
+const resolveResultStatus = (params: {
+  dashboardStatus: string | null | undefined;
+  applicationStatus: ResultStatus | null;
+  isDocumentResultVisible: boolean;
+  documentResult: string | null | undefined;
+}): ResultStatus | null => {
+  const statusFromDashboard = normalizeStatus(params.dashboardStatus);
+  if (statusFromDashboard) {
+    return statusFromDashboard;
+  }
+
+  if (params.applicationStatus) {
+    return params.applicationStatus;
+  }
+
+  if (!params.isDocumentResultVisible) {
+    return null;
+  }
+
+  return parseStatusFromDocumentResult(params.documentResult);
+};
+
 export default function ResultPage() {
   const searchParams = useSearchParams();
   const requestedApplicationId = useMemo(() => {
@@ -66,6 +134,7 @@ export default function ResultPage() {
     null,
   );
   const [slots, setSlots] = useState<InterviewSlot[]>([]);
+  const [userName, setUserName] = useState("");
   const [isReserving, setIsReserving] = useState(false);
   const [reserveErrorMessage, setReserveErrorMessage] = useState("");
   const [reserveSuccessMessage, setReserveSuccessMessage] = useState("");
@@ -98,14 +167,18 @@ export default function ResultPage() {
           throw new Error("NO_RECRUITMENT");
         }
 
-        const [nextRecruitmentInfo, nextDashboard] = await Promise.all([
+        const [nextRecruitmentInfo, nextDashboard, nextProfile] = await Promise.all([
           getRecruitmentInfo(recruitmentId),
           getDashboardForResult(recruitmentId),
+          getMyProfile().catch(() => null),
         ]);
 
-        const resolvedStatus =
-          normalizeStatus(nextDashboard.myApplication.status) ||
-          statusFromApplication;
+        const resolvedStatus = resolveResultStatus({
+          dashboardStatus: nextDashboard.myApplication?.status,
+          applicationStatus: statusFromApplication,
+          isDocumentResultVisible: nextDashboard.documentResult.visible === true,
+          documentResult: nextDashboard.documentResult.result,
+        });
 
         let nextSlots: InterviewSlot[] = [];
         if (resolvedStatus === "DOC_PASSED") {
@@ -123,6 +196,7 @@ export default function ResultPage() {
         setTargetRecruitmentId(recruitmentId);
         setRecruitmentInfo(nextRecruitmentInfo);
         setDashboard(nextDashboard);
+        setUserName(nextProfile?.homepage?.name?.trim() ?? "");
         setStatus(resolvedStatus);
         setSlots(nextSlots);
       } catch (error) {
@@ -152,9 +226,25 @@ export default function ResultPage() {
 
   const reservation: InterviewReservation | null =
     dashboard?.interview?.myReservation ?? null;
+  const hasDashboardApplication = dashboard?.myApplication != null;
+  const canReserveInterview = dashboard?.interview?.canReserve === true;
+  const isFinalResultStatus =
+    status === "FINAL_FAILED" || status === "FINAL_PASSED";
+  const isResultVisible =
+    dashboard?.documentResult.visible === true || isFinalResultStatus;
 
   const handleReserveInterview = async (slotId: number) => {
     if (!targetRecruitmentId || isReserving) {
+      return;
+    }
+
+    if (!canReserveInterview) {
+      setReserveErrorMessage("현재 면접 일정 선택 기간이 아닙니다.");
+      setReserveSuccessMessage("");
+      return;
+    }
+
+    if (reservation) {
       return;
     }
 
@@ -172,7 +262,14 @@ export default function ResultPage() {
 
       setDashboard(nextDashboard);
       setSlots(nextSlots);
-      setStatus(normalizeStatus(nextDashboard.myApplication.status));
+      setStatus(
+        resolveResultStatus({
+          dashboardStatus: nextDashboard.myApplication?.status,
+          applicationStatus: null,
+          isDocumentResultVisible: nextDashboard.documentResult.visible === true,
+          documentResult: nextDashboard.documentResult.result,
+        }),
+      );
       setReserveSuccessMessage("면접 일정이 확정되었습니다.");
     } catch {
       setReserveErrorMessage(
@@ -209,12 +306,53 @@ export default function ResultPage() {
     );
   }
 
+  if (!hasDashboardApplication && status === null) {
+    return (
+      <section className="min-h-screen bg-background px-4 pt-28 text-white lg:px-6">
+        <div className="mx-auto w-full max-w-[980px] rounded-[16px] bg-[#343740] px-8 py-12 text-center">
+          <h2 className="text-[30px] font-bold text-main-3 lg:text-[44px]">
+            지원 내역이 없습니다
+          </h2>
+          <p className="mt-4 text-[18px] text-white/80 lg:text-[24px]">
+            해당 모집에 제출된 지원서를 먼저 작성해 주세요.
+          </p>
+          <Link
+            href="/14/apply"
+            className="mt-8 inline-flex h-[56px] items-center justify-center rounded-full bg-main-1 px-8 text-[18px] font-semibold text-white"
+          >
+            지원하러 가기
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
+  if (!isResultVisible) {
+    return (
+      <section className="min-h-screen bg-background px-4 pt-28 text-white lg:px-6">
+        <div className="mx-auto w-full max-w-[980px] rounded-[16px] bg-[#343740] px-8 py-12 text-center">
+          <h2 className="text-[30px] font-bold text-main-3 lg:text-[44px]">
+            결과 확인 준비중
+          </h2>
+          <p className="mt-4 text-[18px] text-white/80 lg:text-[24px]">
+            아직 결과 발표 전입니다.
+          </p>
+          {recruitmentInfo?.phaseType && (
+            <p className="mt-3 text-[14px] text-white/55 lg:text-[16px]">
+              현재 모집 단계: {recruitmentInfo.phaseType}
+            </p>
+          )}
+        </div>
+      </section>
+    );
+  }
+
   if (status === "DOC_FAILED") {
-    return <FailedSection stage="DOCUMENT" />;
+    return <FailedSection stage="DOCUMENT" userName={userName} />;
   }
 
   if (status === "FINAL_FAILED") {
-    return <FailedSection stage="FINAL" />;
+    return <FailedSection stage="FINAL" userName={userName} />;
   }
 
   if (status === "DOC_PASSED") {
@@ -222,6 +360,7 @@ export default function ResultPage() {
       <PassedSection
         slots={slots}
         reservation={reservation}
+        canReserve={canReserveInterview}
         isReserving={isReserving}
         reserveErrorMessage={reserveErrorMessage}
         reserveSuccessMessage={reserveSuccessMessage}
@@ -238,16 +377,11 @@ export default function ResultPage() {
     <section className="min-h-screen bg-background px-4 pt-28 text-white lg:px-6">
       <div className="mx-auto w-full max-w-[980px] rounded-[16px] bg-[#343740] px-8 py-12 text-center">
         <h2 className="text-[30px] font-bold text-main-3 lg:text-[44px]">
-          결과 확인 준비중
+          결과 정보를 확인할 수 없습니다
         </h2>
         <p className="mt-4 text-[18px] text-white/80 lg:text-[24px]">
-          아직 결과 발표 전입니다.
+          잠시 후 다시 시도해 주세요.
         </p>
-        {recruitmentInfo?.phaseType && (
-          <p className="mt-3 text-[14px] text-white/55 lg:text-[16px]">
-            현재 모집 단계: {recruitmentInfo.phaseType}
-          </p>
-        )}
       </div>
     </section>
   );

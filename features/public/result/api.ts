@@ -44,11 +44,27 @@ const interviewSlotPaths = (recruitmentId: number) => [
   `/recruitments/${recruitmentId}/interview/slots`,
 ];
 
-const interviewReservationPaths = (recruitmentId: number) => [
-  `/me/recruitments/${recruitmentId}/interview-reservations`,
-  `/me/recruitments/${recruitmentId}/interview/reservations`,
-  `/recruitments/${recruitmentId}/interview-reservations`,
-  `/recruitments/${recruitmentId}/interview/reservations`,
+const interviewReservationPaths = (recruitmentId: number, slotId: number) => [
+  {
+    path: `/interview-slots/${slotId}/reserve`,
+    body: undefined,
+  },
+  {
+    path: `/me/recruitments/${recruitmentId}/interview-reservations`,
+    body: { slotId },
+  },
+  {
+    path: `/me/recruitments/${recruitmentId}/interview/reservations`,
+    body: { slotId },
+  },
+  {
+    path: `/recruitments/${recruitmentId}/interview-reservations`,
+    body: { slotId },
+  },
+  {
+    path: `/recruitments/${recruitmentId}/interview/reservations`,
+    body: { slotId },
+  },
 ];
 
 const toNumberOrNull = (value: unknown): number | null => {
@@ -102,10 +118,18 @@ const parseInterviewSlot = (value: unknown): InterviewSlot | null => {
   }
 
   const record = value as Record<string, unknown>;
+  const capacity = toNumberOrNull(record.capacity);
+  const reservedCount = toNumberOrNull(record.reservedCount);
+  const remainingCountByCapacity =
+    typeof capacity === "number" && typeof reservedCount === "number"
+      ? Math.max(capacity - reservedCount, 0)
+      : null;
   const remainingCount =
     toNumberOrNull(
       record.remainingCount ?? record.availableCount ?? record.leftCount,
-    ) ?? null;
+    ) ??
+    remainingCountByCapacity ??
+    null;
 
   const closedByField =
     typeof record.closed === "boolean"
@@ -113,9 +137,13 @@ const parseInterviewSlot = (value: unknown): InterviewSlot | null => {
       : typeof record.status === "string"
         ? record.status.toUpperCase() === "CLOSED"
         : false;
+  const closedByAvailability =
+    typeof record.available === "boolean" ? !record.available : false;
 
   const closed =
-    closedByField || (typeof remainingCount === "number" && remainingCount <= 0);
+    closedByField ||
+    closedByAvailability ||
+    (typeof remainingCount === "number" && remainingCount <= 0);
 
   return {
     ...reservation,
@@ -185,9 +213,9 @@ export async function reserveInterviewSlot(
 ): Promise<InterviewReservation | null> {
   let lastError: unknown = null;
 
-  for (const path of interviewReservationPaths(recruitmentId)) {
+  for (const candidate of interviewReservationPaths(recruitmentId, slotId)) {
     try {
-      const response = await apiClient.post(path, { slotId }, {
+      const response = await apiClient.post(candidate.path, candidate.body, {
         validateStatus: (status) =>
           status === 200 || status === 201 || status === 204 || status === 404,
       });
@@ -205,6 +233,10 @@ export async function reserveInterviewSlot(
         parseInterviewReservation(
           (response.data as { myReservation?: unknown } | null | undefined)
             ?.myReservation,
+        ) ||
+        parseInterviewReservation(
+          (response.data as { reservation?: unknown } | null | undefined)
+            ?.reservation,
         );
 
       if (!parsedReservation) {

@@ -182,14 +182,13 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
     const dashboard = getDashboardForRecord(record);
     const canEdit = dashboard?.myApplication.canEdit ?? record.canEdit;
     const normalizedStatus = getNormalizedStatus(record);
-    const canShowResultByStatus =
-      normalizedStatus.startsWith("DOC_") || normalizedStatus.startsWith("FINAL_");
+    const hasFinalResult = normalizedStatus.startsWith("FINAL_");
     const canShowResultByDashboard = dashboard?.documentResult.visible === true;
     const isInterview = hasInterviewReservation(record);
 
     return {
       canShowEditButton: canEdit === true && !isInterview,
-      canShowResultButton: canShowResultByDashboard || canShowResultByStatus,
+      canShowResultButton: canShowResultByDashboard || hasFinalResult,
     };
   };
 

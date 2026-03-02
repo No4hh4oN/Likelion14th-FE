@@ -52,10 +52,10 @@ export type DashboardForResultResponse = {
     status: ApplicationHistoryStatus | string;
     canEdit: boolean;
     canSubmit: boolean;
-  };
+  } | null;
   documentResult: {
     visible: boolean;
-    result: string;
+    result: string | null;
   };
   interview: {
     canReserve: boolean;
