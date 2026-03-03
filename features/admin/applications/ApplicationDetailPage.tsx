@@ -54,6 +54,13 @@ function formatDateTime(value: string) {
   }).format(date);
 }
 
+function formatFileSize(size: number) {
+  if (!Number.isFinite(size) || size <= 0) return "-";
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 function getTabLabel(tab: DetailTab) {
   if (tab === "document") return "서류 보기";
   if (tab === "score") return "점수 매기기";
@@ -271,6 +278,66 @@ export default function ApplicationDetailPage({
 
       {!isLoading && detail && activeTab === "document" && (
         <div className="mt-8 space-y-8">
+          <article className="space-y-3">
+            <h3 className="text-lg font-semibold">포트폴리오</h3>
+            <div className="rounded-lg bg-[#404654] p-4 text-sm text-gray-2">
+              <dl className="space-y-3">
+                <div className="grid grid-cols-[90px_1fr] items-start gap-2">
+                  <dt className="text-gray-4">링크</dt>
+                  <dd className="min-w-0">
+                    {detail.portfolioUrl && detail.portfolioUrl.trim().length > 0 ? (
+                      <a
+                        href={detail.portfolioUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="break-all text-[#8fd3ff] underline underline-offset-2"
+                      >
+                        {detail.portfolioUrl}
+                      </a>
+                    ) : (
+                      <span className="text-gray-4">-</span>
+                    )}
+                  </dd>
+                </div>
+                <div className="grid grid-cols-[90px_1fr] items-start gap-2">
+                  <dt className="text-gray-4">첨부 파일</dt>
+                  <dd className="min-w-0">
+                    {detail.files.length > 0 ? (
+                      <ul className="space-y-2">
+                        {detail.files.map((file) => (
+                          <li key={file.fileId}>
+                            {file.url && file.url.trim().length > 0 ? (
+                              <a
+                                href={file.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex max-w-full items-center gap-2 text-[#8fd3ff] underline underline-offset-2"
+                              >
+                                <span className="truncate">{file.originalName}</span>
+                                <span className="shrink-0 text-xs text-gray-4">
+                                  ({formatFileSize(file.size)})
+                                </span>
+                              </a>
+                            ) : (
+                              <span className="inline-flex max-w-full items-center gap-2 text-gray-2">
+                                <span className="truncate">{file.originalName}</span>
+                                <span className="shrink-0 text-xs text-gray-4">
+                                  ({formatFileSize(file.size)})
+                                </span>
+                              </span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <span className="text-gray-4">-</span>
+                    )}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </article>
+
           {detail.answers.map((answer, index) => (
             <article key={answer.questionId} className="space-y-3">
               <h3 className="text-lg font-semibold">

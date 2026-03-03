@@ -66,6 +66,7 @@ export type AdminApplicationDetailResponse = {
   applyPart: AdminApplyPart | string;
   status: AdminApplicationStatus | string;
   submittedAt: string;
+  portfolioUrl: string | null;
   applicant: {
     department: string;
     studentNoPrefix: string;
