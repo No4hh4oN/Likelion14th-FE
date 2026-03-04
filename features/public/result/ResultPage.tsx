@@ -22,6 +22,7 @@ import type {
 import FailedSection from "./sections/FailedSection";
 import PassedSection from "./sections/PassedSection";
 import FinalPassedSection from "./sections/FinalPassedSection";
+import ReservedSection from "./sections/ReservedSection";
 
 const VALID_STATUSES: ResultStatus[] = [
   "DRAFT",
@@ -226,6 +227,14 @@ export default function ResultPage() {
 
   const reservation: InterviewReservation | null =
     dashboard?.interview?.myReservation ?? null;
+  const reservationLocation = useMemo(() => {
+    if (!reservation) {
+      return null;
+    }
+
+    const matchedSlot = slots.find((slot) => slot.slotId === reservation.slotId);
+    return matchedSlot?.location ?? reservation.location ?? null;
+  }, [reservation, slots]);
   const hasDashboardApplication = dashboard?.myApplication != null;
   const canReserveInterview = dashboard?.interview?.canReserve === true;
   const isFinalResultStatus =
@@ -356,6 +365,12 @@ export default function ResultPage() {
   }
 
   if (status === "DOC_PASSED") {
+    if (reservation) {
+      return (
+        <ReservedSection reservation={reservation} location={reservationLocation} />
+      );
+    }
+
     return (
       <PassedSection
         slots={slots}

@@ -27,15 +27,21 @@ const KST_DATE_TIME_FORMATTER = new Intl.DateTimeFormat("en-GB", {
 });
 
 const parseDateWithKstFallback = (value: string) => {
-  const normalized = DATE_WITH_TZ_PATTERN.test(value) ? value : `${value}+09:00`;
+  const normalized = DATE_WITH_TZ_PATTERN.test(value)
+    ? value
+    : `${value}+09:00`;
   return new Date(normalized);
 };
 
-const getPart = (parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes) =>
-  parts.find((part) => part.type === type)?.value ?? "";
+const getPart = (
+  parts: Intl.DateTimeFormatPart[],
+  type: Intl.DateTimeFormatPartTypes,
+) => parts.find((part) => part.type === type)?.value ?? "";
 
 const getKstDateTimeParts = (value: string) => {
-  const parts = KST_DATE_TIME_FORMATTER.formatToParts(parseDateWithKstFallback(value));
+  const parts = KST_DATE_TIME_FORMATTER.formatToParts(
+    parseDateWithKstFallback(value),
+  );
 
   return {
     year: getPart(parts, "year"),
@@ -113,19 +119,21 @@ export default function PassedSection({
   }, [reservationDayKey, slotsByDay]);
 
   const firstDayWithSlot =
-    dayKeys.find((key) => (slotsByDay[key] ?? []).length > 0) ?? dayKeys[0] ?? null;
+    dayKeys.find((key) => (slotsByDay[key] ?? []).length > 0) ??
+    dayKeys[0] ??
+    null;
 
-  const [manualSelectedDayKey, setManualSelectedDayKey] = useState<string | null>(
-    null,
-  );
-  const [manualSelectedSlotId, setManualSelectedSlotId] = useState<number | null>(
-    null,
-  );
+  const [manualSelectedDayKey, setManualSelectedDayKey] = useState<
+    string | null
+  >(null);
+  const [manualSelectedSlotId, setManualSelectedSlotId] = useState<
+    number | null
+  >(null);
 
   const selectedDayKey =
     reservationDayKey ?? manualSelectedDayKey ?? firstDayWithSlot;
   const daySlots = useMemo(
-    () => (selectedDayKey ? slotsByDay[selectedDayKey] ?? [] : []),
+    () => (selectedDayKey ? (slotsByDay[selectedDayKey] ?? []) : []),
     [selectedDayKey, slotsByDay],
   );
   const monthLabel = formatMonthLabel(selectedDayKey ?? firstDayWithSlot);
@@ -221,7 +229,9 @@ export default function PassedSection({
                       disabled={!hasSlot || Boolean(reservation) || !canReserve}
                       className={clsx(
                         "h-14 rounded-full text-[24px] font-bold transition",
-                        selected ? "bg-main-1 text-white" : "bg-[#454B5B] text-white/75",
+                        selected
+                          ? "bg-main-1 text-white"
+                          : "bg-[#454B5B] text-white/75",
                         (!hasSlot || reservation || !canReserve) &&
                           "cursor-not-allowed bg-[#3A3F4E] text-white/35",
                       )}
@@ -252,7 +262,8 @@ export default function PassedSection({
                       !canReserve ||
                       Boolean(reservation) ||
                       slot.closed ||
-                      (slot.remainingCount !== null && slot.remainingCount <= 0);
+                      (slot.remainingCount !== null &&
+                        slot.remainingCount <= 0);
 
                     return (
                       <button
@@ -265,7 +276,8 @@ export default function PassedSection({
                           selected
                             ? "bg-main-1 text-white"
                             : "bg-[#4A5163] text-white/85",
-                          disabled && "cursor-not-allowed bg-[#3D4353] text-white/35",
+                          disabled &&
+                            "cursor-not-allowed bg-[#3D4353] text-white/35",
                         )}
                       >
                         {getSlotLabel(slot)}
@@ -277,7 +289,10 @@ export default function PassedSection({
 
               <ul className="mt-5 space-y-1 text-[13px] text-white/60 lg:text-[15px]">
                 <li>*면접 시간은 선착순입니다.</li>
-                <li>*면접 시간은 반드시 참석해 주시기 바라며, 개인 사정 시 자동 불참 처리됩니다.</li>
+                <li>
+                  *면접 시간은 반드시 참석해 주시기 바라며, 개인 사정 시 자동
+                  불참 처리됩니다.
+                </li>
                 <li>*한 번 선택한 면접 시간은 변경이 어렵습니다.</li>
               </ul>
             </div>
@@ -294,11 +309,14 @@ export default function PassedSection({
             </p>
           )}
 
-          {!reserveErrorMessage && !reserveSuccessMessage && !canReserve && !reservation && (
-            <p className="mt-4 text-[16px] font-medium text-[#FFD9A0]">
-              현재 면접 일정 선택 기간이 아닙니다.
-            </p>
-          )}
+          {!reserveErrorMessage &&
+            !reserveSuccessMessage &&
+            !canReserve &&
+            !reservation && (
+              <p className="mt-4 text-[16px] font-medium text-[#FFD9A0]">
+                현재 면접 일정 선택 기간이 아닙니다.
+              </p>
+            )}
         </div>
 
         <div className="mt-14">
@@ -333,7 +351,9 @@ export default function PassedSection({
 
               <ul className="space-y-1 text-[13px] text-white/60 lg:text-[15px]">
                 <li>*면접 시작 5분 전까지 도착해 주시기 바랍니다.</li>
-                <li>*도착 후 대기 공간에서 안내를 받고 면접장으로 이동해 주세요.</li>
+                <li>
+                  *도착 후 대기 공간에서 안내를 받고 면접장으로 이동해 주세요.
+                </li>
               </ul>
             </div>
           </div>
@@ -343,7 +363,12 @@ export default function PassedSection({
           <button
             type="button"
             onClick={onClickReserve}
-            disabled={!selectedSlotId || isReserving || Boolean(reservation) || !canReserve}
+            disabled={
+              !selectedSlotId ||
+              isReserving ||
+              Boolean(reservation) ||
+              !canReserve
+            }
             className={clsx(
               "h-[74px] min-w-[420px] rounded-full px-10 text-[34px] font-bold transition",
               !selectedSlotId || isReserving || reservation || !canReserve
@@ -355,9 +380,9 @@ export default function PassedSection({
               ? "2차 면접 일정 선택 완료"
               : !canReserve
                 ? "선택 기간 아님"
-              : isReserving
-                ? "저장 중..."
-                : "2차 면접 일정 확정"}
+                : isReserving
+                  ? "저장 중..."
+                  : "2차 면접 일정 확정"}
           </button>
         </div>
       </div>

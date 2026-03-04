@@ -20,12 +20,14 @@ export type InterviewReservation = {
   slotId: number;
   startAt: string;
   endAt: string;
+  location?: string | null;
 };
 
 export type InterviewSlot = {
   slotId: number;
   startAt: string;
   endAt: string;
+  location: string | null;
   remainingCount: number | null;
   closed: boolean;
 };

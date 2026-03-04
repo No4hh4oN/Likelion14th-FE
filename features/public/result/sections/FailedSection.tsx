@@ -38,7 +38,7 @@ const FAILED_COPY = {
 
 export default function FailedSection({ stage, userName }: FailedSectionProps) {
   const copy = FAILED_COPY[stage];
-  const displayName = userName?.trim() ? userName.trim() : "귀교생";
+  const displayName = userName?.trim() ? userName.trim() : "지원자";
 
   return (
     <section className="min-h-screen bg-background px-4 pb-24 pt-16 text-white lg:px-6 lg:pt-24">

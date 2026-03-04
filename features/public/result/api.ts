@@ -99,6 +99,7 @@ const parseInterviewReservation = (value: unknown): InterviewReservation | null 
       : typeof record.endsAt === "string"
         ? record.endsAt
         : null;
+  const location = typeof record.location === "string" ? record.location : null;
 
   if (!slotId || !startAt || !endAt) {
     return null;
@@ -108,6 +109,7 @@ const parseInterviewReservation = (value: unknown): InterviewReservation | null 
     slotId,
     startAt,
     endAt,
+    location,
   };
 };
 
@@ -147,6 +149,7 @@ const parseInterviewSlot = (value: unknown): InterviewSlot | null => {
 
   return {
     ...reservation,
+    location: typeof record.location === "string" ? record.location : reservation.location ?? null,
     remainingCount,
     closed,
   };
