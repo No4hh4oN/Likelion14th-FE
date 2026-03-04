@@ -2,14 +2,23 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { isAxiosError } from "axios";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { deleteApplication } from "./api";
+import { deleteApplication, getApplications } from "./api";
 
 export default function ApplyCompletePage() {
+  const APPLICATION_LIST_PAGE_SIZE = 100;
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isCancelAvailabilityLoading, setIsCancelAvailabilityLoading] =
+    useState(false);
+  const [canCancelApplication, setCanCancelApplication] = useState<
+    boolean | null
+  >(null);
+  const [cancelAvailabilityError, setCancelAvailabilityError] = useState("");
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [cancelErrorMessage, setCancelErrorMessage] = useState("");
 
@@ -32,6 +41,115 @@ export default function ApplyCompletePage() {
     : "/14/apply";
 
   useEffect(() => {
+    let mounted = true;
+
+    const loadCancelAvailability = async () => {
+      if (!applicationId) {
+        setCanCancelApplication(null);
+        setCancelAvailabilityError("");
+        return;
+      }
+
+      setIsCancelAvailabilityLoading(true);
+      setCanCancelApplication(null);
+      setCancelErrorMessage("");
+      setCancelAvailabilityError("");
+
+      try {
+        let nextPage = 0;
+        let totalPages = 1;
+        let targetCanEdit: boolean | null = null;
+
+        while (nextPage < totalPages && nextPage < 10) {
+          const response = await getApplications({
+            page: nextPage,
+            size: APPLICATION_LIST_PAGE_SIZE,
+          });
+          if (!mounted) {
+            return;
+          }
+
+          const target = response.items.find(
+            (item) => Number(item.applicationId) === applicationId,
+          );
+
+          if (target) {
+            if (typeof target.canEdit === "boolean") {
+              targetCanEdit = target.canEdit;
+            } else {
+              // Some backend responses omit canEdit; avoid false-negative lock.
+              targetCanEdit = true;
+            }
+            break;
+          }
+
+          totalPages = Math.max(1, response.page.totalPages);
+          nextPage += 1;
+        }
+
+        if (targetCanEdit !== null) {
+          setCanCancelApplication(targetCanEdit);
+          return;
+        }
+
+        setCanCancelApplication(true);
+        setCancelAvailabilityError(
+          "취소 가능 여부 자동 확인이 지연되고 있습니다. 버튼 클릭 후 최종 확인됩니다.",
+        );
+      } catch {
+        if (!mounted) {
+          return;
+        }
+        setCanCancelApplication(false);
+        setCancelAvailabilityError(
+          "지원 취소 가능 여부를 확인하지 못했습니다. 잠시 후 새로고침해 주세요.",
+        );
+      } finally {
+        if (!mounted) {
+          return;
+        }
+        setIsCancelAvailabilityLoading(false);
+      }
+    };
+
+    void loadCancelAvailability();
+
+    return () => {
+      mounted = false;
+    };
+  }, [applicationId]);
+
+  const cancelDisabledReason = useMemo(() => {
+    if (isCancelAvailabilityLoading || canCancelApplication === null) {
+      return "지원 취소 가능 여부를 확인하고 있습니다.";
+    }
+
+    if (!applicationId) {
+      return "지원서 정보를 찾을 수 없습니다.";
+    }
+
+    if (isCancelling) {
+      return "지원 취소 처리 중입니다.";
+    }
+
+    if (cancelAvailabilityError) {
+      return cancelAvailabilityError;
+    }
+
+    if (canCancelApplication === false) {
+      return "지원서를 수정할 수 없는 기간입니다. 지원 취소도 불가능합니다.";
+    }
+
+    return "";
+  }, [
+    applicationId,
+    canCancelApplication,
+    cancelAvailabilityError,
+    isCancelAvailabilityLoading,
+    isCancelling,
+  ]);
+
+  useEffect(() => {
     if (!isCancelModalOpen) {
       return;
     }
@@ -47,7 +165,12 @@ export default function ApplyCompletePage() {
   }, [isCancelModalOpen, isCancelling]);
 
   const openCancelModal = () => {
-    if (!applicationId || isCancelling) {
+    if (
+      !applicationId ||
+      isCancelling ||
+      isCancelAvailabilityLoading ||
+      canCancelApplication !== true
+    ) {
       return;
     }
     setCancelErrorMessage("");
@@ -62,7 +185,7 @@ export default function ApplyCompletePage() {
   };
 
   const handleCancelApplication = async () => {
-    if (!applicationId || isCancelling) {
+    if (!applicationId || isCancelling || canCancelApplication !== true) {
       return;
     }
 
@@ -73,10 +196,30 @@ export default function ApplyCompletePage() {
       await deleteApplication(applicationId);
       setIsCancelModalOpen(false);
       router.replace("/14/apply");
-    } catch {
-      setCancelErrorMessage(
-        "지원 취소에 실패했습니다. 잠시 후 다시 시도해주세요.",
-      );
+    } catch (error) {
+      if (isAxiosError(error)) {
+        if (error.response?.status === 404) {
+          setCancelErrorMessage("삭제할 지원서를 찾을 수 없습니다.");
+          return;
+        }
+
+        if (error.response?.status === 409 || error.response?.status === 400) {
+          setCancelErrorMessage(
+            "지원 취소 가능한 기간이 아니거나 현재 상태에서는 취소할 수 없습니다.",
+          );
+          setCanCancelApplication(false);
+          return;
+        }
+
+        if (error.response?.status === 500) {
+          setCancelErrorMessage(
+            "지원 취소 처리 중 서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+          );
+          return;
+        }
+      }
+
+      setCancelErrorMessage("지원 취소에 실패했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
       setIsCancelling(false);
     }
@@ -127,12 +270,24 @@ export default function ApplyCompletePage() {
           <button
             type="button"
             onClick={openCancelModal}
-            disabled={!applicationId || isCancelling}
+            disabled={
+              !applicationId ||
+              isCancelling ||
+              isCancelAvailabilityLoading ||
+              canCancelApplication !== true
+            }
+            title={cancelDisabledReason || undefined}
             className="rounded-[14px] bg-gray-5 px-10.5 py-4 cursor-pointer text-[18px] font-bold text-surface disabled:cursor-not-allowed disabled:opacity-60 hover:bg-red-400 hover:text-white-1 lg:px-16 lg:py-6 lg:text-[24px]"
           >
             {isCancelling ? "취소 중..." : "지원 취소"}
           </button>
         </div>
+
+        {cancelDisabledReason && (
+          <p className="mt-3 text-[12px] text-gray-4 lg:text-[14px]">
+            {cancelDisabledReason}
+          </p>
+        )}
 
         {cancelErrorMessage && (
           <p className="mt-4 text-[12px] text-[#ff9ea8] lg:text-[16px]">
@@ -142,6 +297,7 @@ export default function ApplyCompletePage() {
 
         <div className="mt-11 text-[12px] font-light leading-[1.9] text-gray-5 lg:mt-9 lg:text-[16px]">
           <p>* 서류 마감 기간 이후에는 지원서 수정이 불가능합니다.</p>
+          <p>* 지원 취소 버튼은 취소 가능한 기간에만 활성화됩니다.</p>
           <p>* 반드시 제출 기한이 지나기 전 수정을 완료해 주세요.</p>
         </div>
       </div>
@@ -178,7 +334,12 @@ export default function ApplyCompletePage() {
               <button
                 type="button"
                 onClick={handleCancelApplication}
-                disabled={!applicationId || isCancelling}
+                disabled={
+                  !applicationId ||
+                  isCancelling ||
+                  isCancelAvailabilityLoading ||
+                  canCancelApplication !== true
+                }
                 className="rounded-[12px] bg-[#d64657] px-6 py-3 text-[14px] cursor-pointer hover:bg-red-400 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60 lg:px-8 lg:py-3.5 lg:text-[16px]"
               >
                 {isCancelling ? "삭제 중..." : "예, 삭제할게요"}

@@ -154,10 +154,14 @@ export type ApplicationDetailResponse = {
 export type ApplicationListItem = {
   applicationId: number;
   recruitmentId: number;
+  generation?: number;
   applyPart: ApplyPartKey | string;
   status: ApplicationStatus | string;
-  canEdit: boolean;
-  canSubmit: boolean;
+  submittedAt?: string;
+  updatedAt?: string;
+  portfolioUrl?: string;
+  canEdit?: boolean;
+  canSubmit?: boolean;
 };
 
 /**
