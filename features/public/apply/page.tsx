@@ -740,12 +740,23 @@ function ApplyPageContent() {
    * 임시저장/수정 API 요청 바디를 생성합니다.
    * @returns 저장 요청 바디
    */
-  const buildDraftPayload = () => ({
-    applyPart: partKeyToApplyPart[selectedPart],
-    portfolioUrl: portfolioUrl.trim(),
-    answers: buildDraftAnswers(),
-    fileIds: uploadedFileIds,
-  });
+  const buildDraftPayload = (includeSubmittedAt = false) => {
+    const payload = {
+      applyPart: partKeyToApplyPart[selectedPart],
+      portfolioUrl: portfolioUrl.trim(),
+      answers: buildDraftAnswers(),
+      fileIds: uploadedFileIds,
+    };
+
+    if (includeSubmittedAt) {
+      return {
+        ...payload,
+        submittedAt: new Date().toISOString(),
+      };
+    }
+
+    return payload;
+  };
 
   /**
    * DRAFT 상태 지원서를 저장합니다.
@@ -760,7 +771,8 @@ function ApplyPageContent() {
     setActionErrorMessage("");
 
     try {
-      const payload = buildDraftPayload();
+      const isNewDraft = !applicationId;
+      const payload = buildDraftPayload(isNewDraft);
 
       if (applicationId) {
         const updated = await updateApplicationDraft(applicationId, payload);
@@ -930,7 +942,7 @@ function ApplyPageContent() {
         }
         const created = await createApplicationDraft(
           activeRecruitment.recruitmentId,
-          buildDraftPayload(),
+          buildDraftPayload(true),
         );
         targetApplicationId = created.applicationId;
         setApplicationId(created.applicationId);
@@ -1064,7 +1076,7 @@ function ApplyPageContent() {
         }
         const created = await createApplicationDraft(
           activeRecruitment.recruitmentId,
-          buildDraftPayload(),
+          buildDraftPayload(true),
         );
         targetApplicationId = created.applicationId;
         setApplicationId(created.applicationId);

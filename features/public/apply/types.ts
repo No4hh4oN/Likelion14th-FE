@@ -93,6 +93,7 @@ export type SaveApplicationDraftRequest = {
   portfolioUrl: string;
   answers: ApplyAnswerPayload[];
   fileIds: number[];
+  submittedAt?: string;
 };
 
 /**
