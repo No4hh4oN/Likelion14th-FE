@@ -31,6 +31,14 @@ function formatDateTime(value: string) {
   }).format(date);
 }
 
+function formatSubmittedAtByStatus(status: string, submittedAt: string) {
+  const normalizedStatus = status.toUpperCase();
+  if (normalizedStatus === "DRAFT") {
+    return "임시저장됨";
+  }
+  return formatDateTime(submittedAt);
+}
+
 type ApplicantTableProps = {
   result: AdminApplicationListResponse;
   isLoading: boolean;
@@ -101,7 +109,9 @@ export default function ApplicantTable({
                     {item.grade}학년 {formatEnrollment(item.enrollment)}
                   </td>
                 )}
-                {!compact && <td>{formatDateTime(item.submittedAt)}</td>}
+                {!compact && (
+                  <td>{formatSubmittedAtByStatus(item.status, item.submittedAt)}</td>
+                )}
                 <td>
                   {typeof item.docAvgScore === "number"
                     ? item.docAvgScore.toFixed(1)
