@@ -385,7 +385,7 @@ export default function ResultPage() {
   }
 
   if (status === "FINAL_PASSED") {
-    return <FinalPassedSection />;
+    return <FinalPassedSection userName={userName} />;
   }
 
   return (
