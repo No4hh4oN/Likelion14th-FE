@@ -86,7 +86,7 @@ export default function CommonSpacePage() {
 
   return (
     <div className="mx-auto max-w-[1440px] leading-[1.27] pt-16">
-      <div className="grid grid-cols-1 items-start lg:grid-cols-[160px_minmax(0,1fr)_160px] lg:gap-8">
+      <div className="grid grid-cols-1 items-start lg:grid-cols-[165px_minmax(0,1fr)_165px] lg:gap-8">
         <aside className="lg:sticky lg:self-start mt-60">
           <nav>
             <ul className="flex flex-col gap-8">
