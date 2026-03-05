@@ -1436,7 +1436,7 @@ function ApplyPageContent() {
                 disabled={isBusy || !canEditApplication}
                 className="px-[36px] py-[14px] lg:px-[73px] lg:py-[19px] text-[16px] lg:text-[24px] font-semibold cursor-pointer rounded-full bg-gray-5 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isSaving ? "저장 중..." : "지원서 저장하기"}
+                {isSaving ? "저장 중..." : "지원서 임시 저장하기"}
               </button>
               <button
                 type="button"
