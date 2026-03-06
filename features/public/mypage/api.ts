@@ -7,6 +7,7 @@ import type {
   NoticeListApiResponse,
   ProjectListItem,
   QnaListApiResponse,
+  RecruitmentDetailItem,
   UpdateMyProfileImageResponse,
   UpdateMyProfileRequest,
   UpdateMyProfileResponse,
@@ -40,6 +41,18 @@ export async function getDashboard(
 ): Promise<DashboardItem> {
   const response = await apiClient.get<DashboardItem>(
     `/me/recruitments/${recruitmentId}/dashboard`,
+  );
+  return response.data;
+}
+
+/**
+ * 모집 상세를 조회합니다.
+ */
+export async function getRecruitmentDetail(
+  recruitmentId: number,
+): Promise<RecruitmentDetailItem> {
+  const response = await apiClient.get<RecruitmentDetailItem>(
+    `/recruitments/${recruitmentId}`,
   );
   return response.data;
 }

@@ -131,6 +131,20 @@ export type DashboardItem = {
   };
 };
 
+export type RecruitmentDetailItem = {
+  serverTime: string;
+  recruitmentId: number;
+  generation: number;
+  title: string;
+  phaseType: PhaseType;
+  docStartAt: string;
+  docEndAt: string;
+  docResultAt: string;
+  interviewSelectStartAt: string;
+  interviewSelectEndAt: string;
+  finalResultAt: string;
+};
+
 export type UpdateMyProfileRequest = {
   email?: string;
   newPassword?: string;

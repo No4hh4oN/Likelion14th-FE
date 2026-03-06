@@ -2,20 +2,23 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getDashboard, getMyApplicationHistory } from "../api";
+import {
+  getDashboard,
+  getMyApplicationHistory,
+  getRecruitmentDetail,
+} from "../api";
 import type {
   ApplicationHistoryItem,
   DashboardItem,
-  MyPageUser,
+  RecruitmentDetailItem,
 } from "../types";
 import ActionButton from "../components/ActionButton";
 
 type HistorySectionProps = {
-  user: MyPageUser;
   onBack: () => void;
 };
 
-export default function HistorySection({ user, onBack }: HistorySectionProps) {
+export default function HistorySection({ onBack }: HistorySectionProps) {
   const router = useRouter();
   const [historyItems, setHistoryItems] = useState<ApplicationHistoryItem[]>(
     [],
@@ -23,23 +26,20 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
   const [dashboardByRecruitment, setDashboardByRecruitment] = useState<
     Record<number, DashboardItem>
   >({});
+  const [recruitmentDetailById, setRecruitmentDetailById] = useState<
+    Record<number, RecruitmentDetailItem>
+  >({});
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     let isMounted = true;
 
-    if (user.role !== "게스트") {
-      setIsLoading(false);
-      return () => {
-        isMounted = false;
-      };
-    }
-
     const fetchHistory = async () => {
       setIsLoading(true);
       setErrorMessage("");
       setDashboardByRecruitment({});
+      setRecruitmentDetailById({});
 
       try {
         const response = await getMyApplicationHistory();
@@ -60,6 +60,13 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
           return;
         }
 
+        const detailResults = await Promise.allSettled(
+          recruitmentIds.map(async (recruitmentId) => ({
+            recruitmentId,
+            recruitmentDetail: await getRecruitmentDetail(recruitmentId),
+          })),
+        );
+
         const dashboardResults = await Promise.allSettled(
           recruitmentIds.map(async (recruitmentId) => ({
             recruitmentId,
@@ -72,6 +79,14 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
         }
 
         const nextDashboardByRecruitment: Record<number, DashboardItem> = {};
+        const nextRecruitmentDetailById: Record<number, RecruitmentDetailItem> =
+          {};
+        detailResults.forEach((result) => {
+          if (result.status === "fulfilled") {
+            nextRecruitmentDetailById[result.value.recruitmentId] =
+              result.value.recruitmentDetail;
+          }
+        });
         dashboardResults.forEach((result) => {
           if (result.status === "fulfilled") {
             nextDashboardByRecruitment[result.value.recruitmentId] =
@@ -80,6 +95,7 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
         });
 
         setDashboardByRecruitment(nextDashboardByRecruitment);
+        setRecruitmentDetailById(nextRecruitmentDetailById);
       } catch {
         if (!isMounted) {
           return;
@@ -100,7 +116,7 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
     return () => {
       isMounted = false;
     };
-  }, [user.role]);
+  }, []);
 
   const visibleRecords = useMemo(() => {
     return historyItems
@@ -139,9 +155,14 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
   const getDashboardForRecord = (record: ApplicationHistoryItem) =>
     dashboardByRecruitment[record.recruitmentId];
 
+  const getRecruitmentDetailForRecord = (record: ApplicationHistoryItem) =>
+    recruitmentDetailById[record.recruitmentId];
+
   const getNormalizedStatus = (record: ApplicationHistoryItem) => {
     const dashboard = getDashboardForRecord(record);
-    return String(dashboard?.myApplication.status ?? record.status).toUpperCase();
+    return String(
+      dashboard?.myApplication.status ?? record.status,
+    ).toUpperCase();
   };
 
   const getInterviewReservation = (record: ApplicationHistoryItem) =>
@@ -180,15 +201,25 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
 
   const getActionVisibility = (record: ApplicationHistoryItem) => {
     const dashboard = getDashboardForRecord(record);
+    const recruitmentDetail = getRecruitmentDetailForRecord(record);
     const canEdit = dashboard?.myApplication.canEdit ?? record.canEdit;
     const normalizedStatus = getNormalizedStatus(record);
     const hasFinalResult = normalizedStatus.startsWith("FINAL_");
     const canShowResultByDashboard = dashboard?.documentResult.visible === true;
+    const docResultAt = Date.parse(recruitmentDetail?.docResultAt ?? "");
+    const serverTime = Date.parse(
+      recruitmentDetail?.serverTime ?? dashboard?.serverTime ?? "",
+    );
+    const hasReachedDocResultAt =
+      Number.isFinite(docResultAt) &&
+      Number.isFinite(serverTime) &&
+      serverTime >= docResultAt;
     const isInterview = hasInterviewReservation(record);
 
     return {
       canShowEditButton: canEdit === true && !isInterview,
-      canShowResultButton: canShowResultByDashboard || hasFinalResult,
+      canShowResultButton:
+        canShowResultByDashboard || hasReachedDocResultAt || hasFinalResult,
     };
   };
 
@@ -219,29 +250,6 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
   const handleResultClick = (applicationId: number) => {
     router.push(`/14/result?applicationId=${applicationId}`);
   };
-
-  if (user.role !== "게스트") {
-    return (
-      <section className="min-h-screen bg-background px-4 text-white-1 lg:px-6">
-        <div className="mx-auto w-full max-w-[960px] rounded-[8px] border border-white/10 bg-[#2E313A]/95 p-4 shadow-[0_16px_40px_rgba(0,0,0,0.28)] lg:p-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-[24px] font-bold lg:text-[30px]">
-              나의 지원 내역
-            </h1>
-            <ActionButton
-              text="돌아가기"
-              onClick={onBack}
-              className="text-[12px]"
-              hoverClassName="hover:bg-gray-5"
-            />
-          </div>
-          <p className="mt-4 text-[14px] text-white/75 lg:text-[16px]">
-            지원 내역은 게스트 등급에서만 확인할 수 있습니다.
-          </p>
-        </div>
-      </section>
-    );
-  }
 
   return (
     <section className="min-h-screen bg-background px-4 text-white-1 lg:px-6">
@@ -358,7 +366,9 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
                             : formatDateTime(record.updatedAt)}
                         </td>
                         <td className="border-b border-white/10 px-3 py-3">
-                          {isInterviewRecord ? formatInterviewDateTime(record) : "-"}
+                          {isInterviewRecord
+                            ? formatInterviewDateTime(record)
+                            : "-"}
                         </td>
                         <td className="border-b border-white/10 px-3 py-3">
                           {canShowEditButton ? (
