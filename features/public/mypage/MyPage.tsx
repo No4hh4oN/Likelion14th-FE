@@ -203,12 +203,7 @@ export default function MyPage() {
     }
 
     if (currentSection === "history") {
-      return (
-        <HistorySection
-          user={user}
-          onBack={() => setCurrentSection("profile")}
-        />
-      );
+      return <HistorySection onBack={() => setCurrentSection("profile")} />;
     }
 
     return (

@@ -717,7 +717,10 @@ export default function MyActivityTab({ user }: MyActivityTabProps) {
 
           <div className="space-y-2">
             <div className="rounded-[8px] bg-[#4A4E5A] px-4 py-3">
-              <p className="text-[14px] font-semibold text-white/85">TODAY</p>
+              <p className="text-[14px] font-semibold text-white/85">
+                TODAY
+                <span className="inline-block h-2 w-2 rounded-full bg-main-1 ml-2" />
+              </p>
               <div className="mt-2 rounded-[5px] bg-white/20 px-3 py-2 text-[12px] text-white/85">
                 {isScheduleLoading ? (
                   <p>일정을 불러오는 중입니다.</p>
@@ -739,6 +742,7 @@ export default function MyActivityTab({ user }: MyActivityTabProps) {
             <div className="rounded-[8px] bg-[#4A4E5A] px-4 py-3">
               <p className="text-[14px] font-semibold text-white/85">
                 Schedule
+                <span className="inline-block h-2 w-2 rounded-full bg-green-1 ml-2" />
               </p>
               <ul className="mt-2 space-y-1.5">
                 {upcomingScheduleEvents.length > 0 ? (
@@ -765,6 +769,7 @@ export default function MyActivityTab({ user }: MyActivityTabProps) {
             <div className="rounded-[8px] bg-[#4A4E5A] px-4 py-3">
               <p className="text-[14px] font-semibold text-white/85">
                 Homework
+                <span className="inline-block h-2 w-2 rounded-full bg-main-3 ml-2" />
               </p>
               <ul className="mt-2 space-y-1.5">
                 {upcomingHomeworkEvents.length > 0 ? (
