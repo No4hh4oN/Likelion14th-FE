@@ -171,7 +171,7 @@ export default function PassedSection({
 
   return (
     <section className="min-h-screen bg-background px-4 pb-24 pt-10 text-white lg:px-6 lg:pt-16">
-      <div className="mx-auto w-full max-w-[1200px]">
+      <div className="mx-auto w-full max-w-[1200px] pt-36">
         <h1 className="text-center leading-[1.2]">
           <span className="block text-[34px] font-bold text-main-3 lg:text-[58px]">
             LIKELION at SYU 14th
@@ -193,7 +193,7 @@ export default function PassedSection({
         </div>
 
         <div className="mx-auto mt-[-10px] w-full rounded-[20px] bg-[#343740]/90 px-6 py-7 text-center text-[18px] leading-[1.7] text-[#E6EAF2] lg:px-12 lg:py-9 lg:text-[28px]">
-          귀교생님께서는 멋쟁이사자처럼 삼육대학교 14기 아기사자 모집에{" "}
+          귀하께서는 멋쟁이사자처럼 삼육대학교 14기 아기사자 모집에{" "}
           <span className="text-[#69A4FF]">1차 합격</span>하셨음을 안내드립니다.
           <br />
           아래 내용을 확인하신 후, 면접 일정을 선택해 주시기 바랍니다.

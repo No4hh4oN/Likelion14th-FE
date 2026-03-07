@@ -12,7 +12,9 @@ type ReservedSectionProps = {
 const DATE_WITH_TZ_PATTERN = /(Z|[+-]\d{2}:\d{2})$/;
 
 const parseDateWithKstFallback = (value: string) => {
-  const normalized = DATE_WITH_TZ_PATTERN.test(value) ? value : `${value}+09:00`;
+  const normalized = DATE_WITH_TZ_PATTERN.test(value)
+    ? value
+    : `${value}+09:00`;
   return new Date(normalized);
 };
 
@@ -41,33 +43,32 @@ export default function ReservedSection({
     reservation.endAt,
   )}`;
   const interviewLocation =
-    location ?? reservation.location ?? "면접 장소는 운영진 안내를 확인해 주세요.";
+    location ??
+    reservation.location ??
+    "면접 장소는 운영진 안내를 확인해 주세요.";
 
   return (
     <section className="min-h-screen bg-background px-4 pb-24 pt-16 text-white lg:px-6 lg:pt-24">
-      <div className="mx-auto flex w-full max-w-[980px] flex-col items-center">
-        <h1 className="text-center leading-[1.2]">
-          <span className="block text-[32px] font-bold text-main-3 lg:text-[58px]">
+      <div className="mx-auto flex w-full max-w-[980px] flex-col items-center pt-12">
+        <h1 className="flex flex-col items-center text-center leading-[1.2] font-bold">
+          <Image
+            src="/images/lions/standing-thankyou.webp"
+            alt="예약 완료 라이언"
+            width={180}
+            height={180}
+            className="h-auto w-[130px] lg:w-[180px]"
+            priority
+          />
+          <span className="mt-5 lg:mt-6 block text-[28px] font-bold text-main-3 lg:text-[48px]">
             LIKELION at SYU 14th
           </span>
-          <span className="mt-2 block text-[30px] font-bold text-white-1 lg:text-[56px]">
-            면접 예약 완료
+          <span className="mt-3 lg:mt-0 block text-[18px] font-bold text-white-1 lg:text-[48px]">
+            면접 예약이 완료되었습니다.
           </span>
         </h1>
 
-        <div className="relative mt-10 flex w-full justify-center lg:mt-14">
-          <Image
-            src="/images/lions/standing-thankyou.webp"
-            alt="면접 예약 완료 안내 라이언"
-            width={220}
-            height={220}
-            className="z-10 h-[130px] w-[130px] lg:h-[180px] lg:w-[180px]"
-          />
-          <div className="absolute bottom-0 h-16 w-full bg-gradient-to-t from-background to-transparent" />
-        </div>
-
-        <div className="mt-[-10px] w-full rounded-[20px] bg-[#343740]/90 px-6 py-8 text-center text-[20px] leading-[1.65] text-[#E6EAF2] lg:px-14 lg:py-10 lg:text-[34px]">
-          2차 면접 일정이 확정되었습니다.
+        <div className="mt-12 w-full rounded-[20px] bg-[#343740]/90 px-6 py-8 text-center text-[20px] leading-[1.65] text-[#E6EAF2] lg:px-14 lg:py-10 lg:text-[34px]">
+          면접 일정이 확정되었습니다.
           <br />
           아래 예약 정보를 확인해 주세요.
         </div>
