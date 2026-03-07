@@ -334,6 +334,18 @@ const createEmptyAnswers = (count: number) =>
 const sectionCardClass =
   "rounded-[10px] bg-gray-7 px-3 py-6 shadow-[0_8px_24px_rgba(0,0,0,0.16)] lg:px-7 lg:py-12";
 const MAX_PORTFOLIO_FILES = 3;
+const partQuestionGuideTextMap: Partial<Record<PartKey, string>> = {
+  "front-end": `이 문제는 정답을 맞히는 것이 목적이 아닙니다.
+실제로 왜 이런 일이 발생할지 자유롭게 추측하고, 본인이 프론트엔드라면 어떤 방식으로 문제를 줄일지 논리를 설명해 주세요.
+정확한 기술 용어를 몰라도 괜찮습니다.`,
+  "back-end": `이 문제는 정답을 맞히는 것이 목적이 아닙니다.
+실제로 왜 이런 일이 발생할지 자유롭게 추측하고, 본인이 백엔드라면 어떤 방식으로 문제를 줄일지 논리를 설명해 주세요.
+정확한 기술 용어를 몰라도 괜찮습니다.`,
+  "ai-ml": `이 문제는 정답을 맞히는 것이 목적이 아닙니다.
+코드를 읽고 어떤 점이 아쉽거나 개선될 수 있을지 자유롭게 설명해 주세요.
+반드시 하나의 정답이 있는 문제는 아니며, 왜 그렇게 생각했는지 본인의 논리를 함께 적어주시면 됩니다.
+정확한 기술 용어를 몰라도 괜찮습니다.`,
+};
 
 const isPdfFile = (file: File) =>
   file.type === "application/pdf" || /\.pdf$/i.test(file.name);
@@ -416,6 +428,7 @@ function ApplyPageContent() {
     useState<ActiveRecruitmentResponse | null>(null);
   const [pageStatus, setPageStatus] = useState<ApplyPageStatus>("loading");
   const [loadErrorMessage, setLoadErrorMessage] = useState("");
+  const [isPartQuestionGuideOpen, setIsPartQuestionGuideOpen] = useState(false);
   const [apiCommonQuestions, setApiCommonQuestions] = useState<QuestionItem[]>(
     [],
   );
@@ -426,6 +439,7 @@ function ApplyPageContent() {
     () => apiPartQuestionMap[selectedPart] ?? [],
     [apiPartQuestionMap, selectedPart],
   );
+  const selectedPartQuestionGuideText = partQuestionGuideTextMap[selectedPart];
   /**
    * 저장/제출/파일 업로드 중 하나라도 진행 중인지 여부입니다.
    */
@@ -688,6 +702,10 @@ function ApplyPageContent() {
       isMounted = false;
     };
   }, [router, searchParams]);
+
+  useEffect(() => {
+    setIsPartQuestionGuideOpen(false);
+  }, [selectedPart]);
 
   /**
    * 공통 질문 답변 값을 갱신함.
@@ -1277,15 +1295,47 @@ function ApplyPageContent() {
             <div className="mt-[37px] space-y-3 lg:mt-[65px] lg:space-y-5">
               {selectedPartQuestions.map((question, index) => {
                 const parsedQuestion = splitQuestionContent(question.content);
+                const isLastPartQuestion =
+                  index === selectedPartQuestions.length - 1;
+                const shouldShowQuestionGuide =
+                  isLastPartQuestion && !!selectedPartQuestionGuideText;
 
                 return (
                   <div
                     key={`${selectedPart}-${question.questionId}`}
                     className="space-y-[10px] lg:space-y-[22px]"
                   >
-                    <p className="whitespace-pre-line text-[16px] font-medium lg:text-[22px]">
-                      Q. {parsedQuestion.questionText}
-                    </p>
+                    <div className="relative">
+                      <p className="whitespace-pre-line text-[16px] font-medium lg:text-[22px]">
+                        Q. {parsedQuestion.questionText}
+                        {shouldShowQuestionGuide && (
+                          <span className="relative ml-1 inline-flex align-middle">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setIsPartQuestionGuideOpen((prev) => !prev)
+                              }
+                              aria-expanded={isPartQuestionGuideOpen}
+                              aria-label="마지막 문항 안내 보기"
+                              className="flex ml-2 h-3 w-3 items-center justify-center rounded-full border border-main-1/60 bg-main-1 text-[14px] font-bold text-main-2 transition hover:bg-main-1/12 focus:outline-none focus:ring-2 focus:ring-main-1/60 lg:h-6 lg:w-6 lg:text-[18px]"
+                            >
+                              <span aria-hidden="true">i</span>
+                            </button>
+                            {isPartQuestionGuideOpen && (
+                              <span
+                                role="note"
+                                className="absolute left-1/2 top-full z-10 mt-2 block w-[260px] -translate-x-1/2 rounded-[14px] border border-main-1/30 bg-[#101726] px-4 py-3 text-left text-[12px] font-medium leading-[1.6] text-gray-2 shadow-[0_12px_30px_rgba(0,0,0,0.3)] lg:w-[360px] lg:px-5 lg:py-4 lg:text-[15px]"
+                              >
+                                <span className="absolute -top-2 left-1/2 h-4 w-4 -translate-x-1/2 rotate-45 border-l border-t border-main-1/30 bg-[#101726]" />
+                                <span className="whitespace-pre-line">
+                                  {selectedPartQuestionGuideText}
+                                </span>
+                              </span>
+                            )}
+                          </span>
+                        )}
+                      </p>
+                    </div>
                     {parsedQuestion.codeSnippet &&
                       renderQuestionCodeBlock(
                         parsedQuestion.codeSnippet,
