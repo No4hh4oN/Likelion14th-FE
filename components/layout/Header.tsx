@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
@@ -11,6 +11,7 @@ import { getMyInfo } from "@/features/public/api";
 import { getActiveRecruitment } from "@/features/public/home/api";
 import type { MeResponse } from "@/features/public/type";
 import type { ActiveRecruitmentResponse } from "@/features/public/home/types";
+import { isDocumentOpenPhase } from "@/features/public/recruitmentPhase";
 import { AUTH_CHANGED_EVENT } from "@/lib/axios";
 
 const kstDateTimePattern = /(Z|[+-]\d{2}:\d{2})$/;
@@ -28,7 +29,35 @@ function calculateDday(endAt: string) {
   return remainDays - 1;
 }
 
+function formatRemainingTime(diffMs: number) {
+  const totalSeconds = Math.max(Math.floor(diffMs / 1000), 0);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return [hours, minutes, seconds]
+    .map((value) => String(value).padStart(2, "0"))
+    .join(":");
+}
+
+function isUrgentDeadline(endAt: string) {
+  const diffMs = parseKstDateTime(endAt) - Date.now();
+  return diffMs > 0 && diffMs <= 1000 * 60 * 60;
+}
+
 function formatDDayLabel(endAt: string) {
+  const now = Date.now();
+  const end = parseKstDateTime(endAt);
+  const diffMs = end - now;
+
+  if (diffMs <= 0) {
+    return "마감";
+  }
+
+  if (diffMs <= 1000 * 60 * 60 * 24) {
+    return formatRemainingTime(diffMs);
+  }
+
   const remainDays = calculateDday(endAt);
 
   if (remainDays > 0) {
@@ -48,6 +77,8 @@ export default function Header() {
   const [me, setMe] = useState<MeResponse | null>(null);
   const [ddayText, setDdayText] = useState("D-00");
   const [isDocOpen, setIsDocOpen] = useState(false);
+  const [activeEndAt, setActiveEndAt] = useState<string | null>(null);
+  const [isDeadlineUrgent, setIsDeadlineUrgent] = useState(false);
   const isFaqPage = pathname.startsWith("/14/faq");
 
   const checkAuth = useCallback(async () => {
@@ -96,16 +127,22 @@ export default function Header() {
           return;
         }
 
-        if (response?.phaseType === "DOC_OPEN") {
+        if (isDocumentOpenPhase(response?.phaseType)) {
           setDdayText(formatDDayLabel(response.endAt));
           setIsDocOpen(true);
+          setActiveEndAt(response.endAt);
+          setIsDeadlineUrgent(isUrgentDeadline(response.endAt));
           return;
         }
 
         setIsDocOpen(false);
+        setActiveEndAt(null);
+        setIsDeadlineUrgent(false);
       } catch {
         if (isMounted) {
           setIsDocOpen(false);
+          setActiveEndAt(null);
+          setIsDeadlineUrgent(false);
         }
       }
     };
@@ -116,6 +153,21 @@ export default function Header() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!activeEndAt) {
+      return;
+    }
+
+    const timerId = window.setInterval(() => {
+      setDdayText(formatDDayLabel(activeEndAt));
+      setIsDeadlineUrgent(isUrgentDeadline(activeEndAt));
+    }, 1000);
+
+    return () => {
+      window.clearInterval(timerId);
+    };
+  }, [activeEndAt]);
 
   const authSection = me ? (
     <UserInfo
@@ -157,7 +209,13 @@ export default function Header() {
                   }`}
                 >
                   지원 마감까지{" "}
-                  <span className="text-main-3 font-bold">{ddayText}</span>
+                  <span
+                    className={`font-bold ${
+                      isDeadlineUrgent ? "text-[#FF5A5A]" : "text-main-3"
+                    }`}
+                  >
+                    {ddayText}
+                  </span>
                 </p>
                 <Link
                   href="/14/apply"
@@ -195,3 +253,4 @@ export default function Header() {
     </>
   );
 }
+
