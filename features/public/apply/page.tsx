@@ -1,15 +1,18 @@
-"use client";
+﻿"use client";
 
 import {
   ChangeEvent,
   ReactNode,
   Suspense,
+  useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
+import { isDocumentOpenPhase } from "@/features/public/recruitmentPhase";
 import { getAccessToken } from "@/lib/axios";
 import {
   createApplicationDraft,
@@ -37,6 +40,10 @@ type PartKey = "front-end" | "back-end" | "ai-ml" | "pm-design";
 type QuestionItem = Pick<DocumentQuestion, "questionId" | "content">;
 type PartQuestionMap = Record<PartKey, QuestionItem[]>;
 type PartAnswerMap = Record<PartKey, string[]>;
+type UploadedPortfolioFile = {
+  fileId: number;
+  originalName: string;
+};
 
 /** 파트 선택 버튼 라벨 매핑 */
 const partLabels: Record<PartKey, string> = {
@@ -328,6 +335,30 @@ const createEmptyAnswers = (count: number) =>
  */
 const sectionCardClass =
   "rounded-[10px] bg-gray-7 px-3 py-6 shadow-[0_8px_24px_rgba(0,0,0,0.16)] lg:px-7 lg:py-12";
+const MAX_PORTFOLIO_FILES = 3;
+const partQuestionGuideTextMap: Partial<Record<PartKey, string>> = {
+  "front-end": `이 문제는 정답을 맞히는 것이 목적이 아닙니다.
+실제로 왜 이런 일이 발생할지 자유롭게 추측하고, 본인이 프론트엔드라면 어떤 방식으로 문제를 줄일지 논리를 설명해 주세요.
+정확한 기술 용어를 몰라도 괜찮습니다.`,
+  "back-end": `이 문제는 정답을 맞히는 것이 목적이 아닙니다.
+실제로 왜 이런 일이 발생할지 자유롭게 추측하고, 본인이 백엔드라면 어떤 방식으로 문제를 줄일지 논리를 설명해 주세요.
+정확한 기술 용어를 몰라도 괜찮습니다.`,
+  "ai-ml": `이 문제는 정답을 맞히는 것이 목적이 아닙니다.
+코드를 읽고 어떤 점이 아쉽거나 개선될 수 있을지 자유롭게 설명해 주세요.
+반드시 하나의 정답이 있는 문제는 아니며, 왜 그렇게 생각했는지 본인의 논리를 함께 적어주시면 됩니다.
+정확한 기술 용어를 몰라도 괜찮습니다.`,
+};
+
+const isPdfFile = (file: File) =>
+  file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+
+const normalizePortfolioFileName = (fileId: number, originalName?: string) => {
+  const trimmed = originalName?.trim();
+  if (trimmed) {
+    return trimmed;
+  }
+  return `첨부파일-${fileId}`;
+};
 
 function ApplyPageLoadingFallback() {
   return (
@@ -346,6 +377,24 @@ function ApplyPageLoadingFallback() {
 function ApplyPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const requestedApplicationIdRaw = searchParams.get("applicationId");
+  const buildResultRedirectHref = useCallback(
+    (recruitmentId?: number | null) => {
+      const nextSearchParams = new URLSearchParams();
+
+      if (requestedApplicationIdRaw) {
+        nextSearchParams.set("applicationId", requestedApplicationIdRaw);
+      }
+
+      if (recruitmentId) {
+        nextSearchParams.set("recruitmentId", String(recruitmentId));
+      }
+
+      const queryString = nextSearchParams.toString();
+      return queryString ? `/14/result?${queryString}` : "/14/result";
+    },
+    [requestedApplicationIdRaw],
+  );
   /**
    * 공통 질문 답변 상태
    */
@@ -364,13 +413,11 @@ function ApplyPageContent() {
    */
   const [portfolioUrl, setPortfolioUrl] = useState("");
   /**
-   * 선택된 포트폴리오 파일명 상태
+   * 현재 지원서에 연결된 포트폴리오 파일 목록
    */
-  const [portfolioFileName, setPortfolioFileName] = useState("");
-  /**
-   * 업로드된 포트폴리오 파일 ID 목록입니다.
-   */
-  const [uploadedFileIds, setUploadedFileIds] = useState<number[]>([]);
+  const [uploadedPortfolioFiles, setUploadedPortfolioFiles] = useState<
+    UploadedPortfolioFile[]
+  >([]);
   /**
    * 현재 편집 중인 지원서 ID입니다.
    */
@@ -391,12 +438,17 @@ function ApplyPageContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingFile, setIsUploadingFile] = useState(false);
+  const [replaceTargetFileId, setReplaceTargetFileId] = useState<number | null>(
+    null,
+  );
+  const replaceFileInputRef = useRef<HTMLInputElement>(null);
   const [actionMessage, setActionMessage] = useState("");
   const [actionErrorMessage, setActionErrorMessage] = useState("");
   const [activeRecruitment, setActiveRecruitment] =
     useState<ActiveRecruitmentResponse | null>(null);
   const [pageStatus, setPageStatus] = useState<ApplyPageStatus>("loading");
   const [loadErrorMessage, setLoadErrorMessage] = useState("");
+  const [isPartQuestionGuideOpen, setIsPartQuestionGuideOpen] = useState(false);
   const [apiCommonQuestions, setApiCommonQuestions] = useState<QuestionItem[]>(
     [],
   );
@@ -407,14 +459,36 @@ function ApplyPageContent() {
     () => apiPartQuestionMap[selectedPart] ?? [],
     [apiPartQuestionMap, selectedPart],
   );
+  const selectedPartQuestionGuideText = partQuestionGuideTextMap[selectedPart];
   /**
    * 저장/제출/파일 업로드 중 하나라도 진행 중인지 여부입니다.
    */
   const isBusy = isSaving || isSubmitting || isUploadingFile;
+  const uploadedFileIds = uploadedPortfolioFiles.map((file) => file.fileId);
+  const portfolioFileCount = uploadedPortfolioFiles.length;
   /**
    * 현재 지원서가 제출 완료 상태인지 여부입니다.
    */
   const isSubmitted = applicationStatus === "SUBMITTED";
+  const remainingPortfolioFileSlots = Math.max(
+    0,
+    MAX_PORTFOLIO_FILES - portfolioFileCount,
+  );
+  const canAddMorePortfolioFiles = remainingPortfolioFileSlots > 0;
+  const isPortfolioUploadDisabled =
+    !canEditApplication || isBusy || !canAddMorePortfolioFiles;
+  const portfolioFileSummaryText =
+    portfolioFileCount > 0
+      ? `${portfolioFileCount}/${MAX_PORTFOLIO_FILES}개 파일 업로드됨`
+      : "포트폴리오 파일을 선택해 주세요.";
+  const portfolioUploadButtonText = isUploadingFile
+    ? "업로드 중..."
+    : canAddMorePortfolioFiles
+      ? "파일 찾기"
+      : "업로드 완료";
+  const portfolioUploadGuideText = canAddMorePortfolioFiles
+    ? `PDF만 업로드 가능 (최대 ${MAX_PORTFOLIO_FILES}개, 남은 ${remainingPortfolioFileSlots}개)`
+    : `최대 ${MAX_PORTFOLIO_FILES}개 업로드를 완료했습니다.`;
 
   useEffect(() => {
     let isMounted = true;
@@ -446,8 +520,8 @@ function ApplyPageContent() {
 
         setActiveRecruitment(recruitment);
 
-        if (recruitment.phaseType !== "DOC_OPEN") {
-          setPageStatus("closed");
+        if (!isDocumentOpenPhase(recruitment.phaseType)) {
+          router.replace(buildResultRedirectHref(recruitment.recruitmentId));
           return;
         }
 
@@ -456,8 +530,13 @@ function ApplyPageContent() {
         const now = Date.now();
 
         if (Number.isFinite(start) && Number.isFinite(end)) {
-          if (now < start || now > end) {
+          if (now < start) {
             setPageStatus("closed");
+            return;
+          }
+
+          if (now > end) {
+            router.replace(buildResultRedirectHref(recruitment.recruitmentId));
             return;
           }
         }
@@ -516,8 +595,7 @@ function ApplyPageContent() {
         let nextCanEditApplication = true;
         let nextCanSubmitApplication = true;
         let nextPortfolioUrl = "";
-        let nextPortfolioFileName = "";
-        let nextUploadedFileIds: number[] = [];
+        let nextUploadedPortfolioFiles: UploadedPortfolioFile[] = [];
         let nextCommonAnswers = createEmptyAnswers(commonQuestionItems.length);
         let nextPartAnswers: PartAnswerMap = {
           "front-end": createEmptyAnswers(
@@ -559,9 +637,13 @@ function ApplyPageContent() {
             }
 
             nextPortfolioUrl = detail.portfolioUrl ?? "";
-            nextUploadedFileIds = detail.files.map((file) => file.fileId);
-            nextPortfolioFileName =
-              detail.files[detail.files.length - 1]?.originalName ?? "";
+            nextUploadedPortfolioFiles = detail.files.map((file) => ({
+              fileId: file.fileId,
+              originalName: normalizePortfolioFileName(
+                file.fileId,
+                file.originalName,
+              ),
+            }));
 
             const answerByQuestionId = new Map(
               detail.answers.map((item) => [item.questionId, item.answer]),
@@ -601,8 +683,7 @@ function ApplyPageContent() {
         setCommonAnswers(nextCommonAnswers);
         setPartAnswers(nextPartAnswers);
         setPortfolioUrl(nextPortfolioUrl);
-        setPortfolioFileName(nextPortfolioFileName);
-        setUploadedFileIds(nextUploadedFileIds);
+        setUploadedPortfolioFiles(nextUploadedPortfolioFiles);
         setApplicationId(nextApplicationId);
         setApplicationStatus(nextApplicationStatus);
         setCanEditApplication(nextCanEditApplication);
@@ -610,7 +691,6 @@ function ApplyPageContent() {
         setActionMessage("");
         setActionErrorMessage("");
 
-        const requestedApplicationIdRaw = searchParams.get("applicationId");
         const requestedApplicationId = Number(requestedApplicationIdRaw);
         const isEditRequestForSubmitted =
           !!requestedApplicationIdRaw &&
@@ -645,7 +725,11 @@ function ApplyPageContent() {
     return () => {
       isMounted = false;
     };
-  }, [router, searchParams]);
+  }, [buildResultRedirectHref, requestedApplicationIdRaw, router]);
+
+  useEffect(() => {
+    setIsPartQuestionGuideOpen(false);
+  }, [selectedPart]);
 
   /**
    * 공통 질문 답변 값을 갱신함.
@@ -698,12 +782,23 @@ function ApplyPageContent() {
    * 임시저장/수정 API 요청 바디를 생성합니다.
    * @returns 저장 요청 바디
    */
-  const buildDraftPayload = () => ({
-    applyPart: partKeyToApplyPart[selectedPart],
-    portfolioUrl: portfolioUrl.trim(),
-    answers: buildDraftAnswers(),
-    fileIds: uploadedFileIds,
-  });
+  const buildDraftPayload = (includeSubmittedAt = false) => {
+    const payload = {
+      applyPart: partKeyToApplyPart[selectedPart],
+      portfolioUrl: portfolioUrl.trim(),
+      answers: buildDraftAnswers(),
+      fileIds: uploadedFileIds,
+    };
+
+    if (includeSubmittedAt) {
+      return {
+        ...payload,
+        submittedAt: new Date().toISOString(),
+      };
+    }
+
+    return payload;
+  };
 
   /**
    * DRAFT 상태 지원서를 저장합니다.
@@ -718,7 +813,8 @@ function ApplyPageContent() {
     setActionErrorMessage("");
 
     try {
-      const payload = buildDraftPayload();
+      const isNewDraft = !applicationId;
+      const payload = buildDraftPayload(isNewDraft);
 
       if (applicationId) {
         const updated = await updateApplicationDraft(applicationId, payload);
@@ -835,16 +931,43 @@ function ApplyPageContent() {
   };
 
   /**
-   * 업로드 파일 선택 시 파일명을 상태에 반영함.
+   * 업로드 파일 선택 시 파일을 현재 지원서 첨부 목록에 반영합니다.
    * @param event 파일 입력 change 이벤트
    */
   const onSelectPortfolioFile = async (
     event: ChangeEvent<HTMLInputElement>,
   ) => {
-    const selectedFile = event.target.files?.[0];
+    const selectedFiles = Array.from(event.target.files ?? []);
     event.target.value = "";
 
-    if (!selectedFile || !canEditApplication || isBusy || !activeRecruitment) {
+    if (
+      selectedFiles.length === 0 ||
+      !canEditApplication ||
+      isBusy ||
+      (!activeRecruitment && !applicationId)
+    ) {
+      return;
+    }
+
+    if (remainingPortfolioFileSlots <= 0) {
+      setActionMessage("");
+      setActionErrorMessage(
+        "포트폴리오 파일은 최대 3개까지 업로드할 수 있습니다.",
+      );
+      return;
+    }
+
+    if (selectedFiles.length > remainingPortfolioFileSlots) {
+      setActionMessage("");
+      setActionErrorMessage(
+        `포트폴리오 파일은 최대 3개까지 업로드할 수 있습니다. (남은 업로드 가능 수: ${remainingPortfolioFileSlots}개)`,
+      );
+      return;
+    }
+
+    if (selectedFiles.some((file) => !isPdfFile(file))) {
+      setActionMessage("");
+      setActionErrorMessage("PDF 파일만 업로드할 수 있습니다.");
       return;
     }
 
@@ -856,9 +979,146 @@ function ApplyPageContent() {
       let targetApplicationId = applicationId;
 
       if (!targetApplicationId) {
+        if (!activeRecruitment) {
+          throw new Error("MISSING_RECRUITMENT");
+        }
         const created = await createApplicationDraft(
           activeRecruitment.recruitmentId,
-          buildDraftPayload(),
+          buildDraftPayload(true),
+        );
+        targetApplicationId = created.applicationId;
+        setApplicationId(created.applicationId);
+        setApplicationStatus("DRAFT");
+      }
+
+      const uploadedFiles: UploadedPortfolioFile[] = [];
+
+      for (const selectedFile of selectedFiles) {
+        const uploaded = await uploadApplicationFile(
+          targetApplicationId,
+          selectedFile,
+        );
+        uploadedFiles.push({
+          fileId: uploaded.fileId,
+          originalName: normalizePortfolioFileName(
+            uploaded.fileId,
+            uploaded.originalName ?? selectedFile.name,
+          ),
+        });
+      }
+
+      setUploadedPortfolioFiles((prev) => {
+        const existingFileIds = new Set(prev.map((file) => file.fileId));
+        const uniqueUploadedFiles = uploadedFiles.filter(
+          (file) => !existingFileIds.has(file.fileId),
+        );
+        return [...prev, ...uniqueUploadedFiles];
+      });
+
+      const nextCount = Math.min(
+        MAX_PORTFOLIO_FILES,
+        portfolioFileCount + uploadedFiles.length,
+      );
+      setActionMessage(
+        `${uploadedFiles.length}개 파일 업로드 완료 (${nextCount}/${MAX_PORTFOLIO_FILES})`,
+      );
+    } catch {
+      setActionErrorMessage(
+        "파일 업로드에 실패했습니다. 잠시 후 다시 시도해주세요.",
+      );
+    } finally {
+      setIsUploadingFile(false);
+    }
+  };
+
+  /**
+   * 첨부 목록에서 파일을 제거합니다.
+   * 실제 반영은 저장/수정/제출 시 fileIds 기준으로 처리됩니다.
+   */
+  const handleRemovePortfolioFile = (fileId: number) => {
+    if (!canEditApplication || isBusy) {
+      return;
+    }
+
+    setUploadedPortfolioFiles((prev) =>
+      prev.filter((file) => file.fileId !== fileId),
+    );
+    if (replaceTargetFileId === fileId) {
+      setReplaceTargetFileId(null);
+    }
+    setActionErrorMessage("");
+    setActionMessage(
+      "파일을 목록에서 삭제했습니다. 저장/수정/제출 시 반영됩니다.",
+    );
+  };
+
+  /**
+   * 특정 파일의 교체(수정)를 위해 파일 선택창을 엽니다.
+   */
+  const handleReplacePortfolioFileClick = (fileId: number) => {
+    if (!canEditApplication || isBusy) {
+      return;
+    }
+    setReplaceTargetFileId(fileId);
+    replaceFileInputRef.current?.click();
+  };
+
+  /**
+   * 선택한 파일을 업로드해 기존 첨부 파일을 교체합니다.
+   */
+  const onReplacePortfolioFile = async (
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
+    const selectedFile = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!selectedFile) {
+      setReplaceTargetFileId(null);
+      return;
+    }
+
+    if (
+      replaceTargetFileId === null ||
+      !canEditApplication ||
+      isBusy ||
+      (!activeRecruitment && !applicationId)
+    ) {
+      return;
+    }
+
+    if (!isPdfFile(selectedFile)) {
+      setActionMessage("");
+      setActionErrorMessage("PDF 파일만 업로드할 수 있습니다.");
+      setReplaceTargetFileId(null);
+      return;
+    }
+
+    const hasTargetFile = uploadedPortfolioFiles.some(
+      (file) => file.fileId === replaceTargetFileId,
+    );
+    if (!hasTargetFile) {
+      setActionMessage("");
+      setActionErrorMessage(
+        "교체할 파일을 찾을 수 없습니다. 다시 시도해주세요.",
+      );
+      setReplaceTargetFileId(null);
+      return;
+    }
+
+    setIsUploadingFile(true);
+    setActionMessage("");
+    setActionErrorMessage("");
+
+    try {
+      let targetApplicationId = applicationId;
+
+      if (!targetApplicationId) {
+        if (!activeRecruitment) {
+          throw new Error("MISSING_RECRUITMENT");
+        }
+        const created = await createApplicationDraft(
+          activeRecruitment.recruitmentId,
+          buildDraftPayload(true),
         );
         targetApplicationId = created.applicationId;
         setApplicationId(created.applicationId);
@@ -869,17 +1129,27 @@ function ApplyPageContent() {
         targetApplicationId,
         selectedFile,
       );
-      setUploadedFileIds((prev) =>
-        prev.includes(uploaded.fileId) ? prev : [...prev, uploaded.fileId],
+      const replacementFile: UploadedPortfolioFile = {
+        fileId: uploaded.fileId,
+        originalName: normalizePortfolioFileName(
+          uploaded.fileId,
+          uploaded.originalName ?? selectedFile.name,
+        ),
+      };
+
+      setUploadedPortfolioFiles((prev) =>
+        prev.map((file) =>
+          file.fileId === replaceTargetFileId ? replacementFile : file,
+        ),
       );
-      setPortfolioFileName(uploaded.originalName ?? selectedFile.name);
-      setActionMessage("파일 업로드가 완료되었습니다.");
+      setActionMessage("파일을 교체했습니다. 저장/수정/제출 시 반영됩니다.");
     } catch {
       setActionErrorMessage(
-        "파일 업로드에 실패했습니다. 잠시 후 다시 시도해주세요.",
+        "파일 교체에 실패했습니다. 잠시 후 다시 시도해주세요.",
       );
     } finally {
       setIsUploadingFile(false);
+      setReplaceTargetFileId(null);
     }
   };
 
@@ -1049,15 +1319,47 @@ function ApplyPageContent() {
             <div className="mt-[37px] space-y-3 lg:mt-[65px] lg:space-y-5">
               {selectedPartQuestions.map((question, index) => {
                 const parsedQuestion = splitQuestionContent(question.content);
+                const isLastPartQuestion =
+                  index === selectedPartQuestions.length - 1;
+                const shouldShowQuestionGuide =
+                  isLastPartQuestion && !!selectedPartQuestionGuideText;
 
                 return (
                   <div
                     key={`${selectedPart}-${question.questionId}`}
                     className="space-y-[10px] lg:space-y-[22px]"
                   >
-                    <p className="whitespace-pre-line text-[16px] font-medium lg:text-[22px]">
-                      Q. {parsedQuestion.questionText}
-                    </p>
+                    <div className="relative">
+                      <p className="whitespace-pre-line text-[16px] font-medium lg:text-[22px]">
+                        Q. {parsedQuestion.questionText}
+                        {shouldShowQuestionGuide && (
+                          <span className="relative ml-1 inline-flex align-middle">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setIsPartQuestionGuideOpen((prev) => !prev)
+                              }
+                              aria-expanded={isPartQuestionGuideOpen}
+                              aria-label="마지막 문항 안내 보기"
+                              className="flex ml-2 h-3 w-3 items-center justify-center rounded-full border border-main-1/60 bg-main-1 text-[14px] font-bold text-main-2 transition hover:bg-main-1/12 focus:outline-none focus:ring-2 focus:ring-main-1/60 lg:h-6 lg:w-6 lg:text-[18px]"
+                            >
+                              <span aria-hidden="true">i</span>
+                            </button>
+                            {isPartQuestionGuideOpen && (
+                              <span
+                                role="note"
+                                className="absolute left-1/2 top-full z-10 mt-2 block w-[260px] -translate-x-1/2 rounded-[14px] border border-main-1/30 bg-[#101726] px-4 py-3 text-left text-[12px] font-medium leading-[1.6] text-gray-2 shadow-[0_12px_30px_rgba(0,0,0,0.3)] lg:w-[360px] lg:px-5 lg:py-4 lg:text-[15px]"
+                              >
+                                <span className="absolute -top-2 left-1/2 h-4 w-4 -translate-x-1/2 rotate-45 border-l border-t border-main-1/30 bg-[#101726]" />
+                                <span className="whitespace-pre-line">
+                                  {selectedPartQuestionGuideText}
+                                </span>
+                              </span>
+                            )}
+                          </span>
+                        )}
+                      </p>
+                    </div>
                     {parsedQuestion.codeSnippet &&
                       renderQuestionCodeBlock(
                         parsedQuestion.codeSnippet,
@@ -1108,26 +1410,77 @@ function ApplyPageContent() {
               <p className="text-[16px] font-medium text-white-1 lg:text-[22px]">
                 파일 업로드
               </p>
-              <label className="flex w-full cursor-pointer items-center justify-between rounded-[10px] border border-[#7E8698] bg-[#7E8698] px-3.5 py-3 text-[12px] text-[#D9DEEA] lg:px-4 lg:py-2 lg:text-[14px]">
-                <span className="truncate">
-                  {portfolioFileName || "포트폴리오 파일을 선택해 주세요."}
-                </span>
+              <label
+                className={`flex w-full items-center justify-between rounded-[10px] border border-[#7E8698] bg-[#7E8698] px-3.5 py-3 text-[12px] text-[#D9DEEA] lg:px-4 lg:py-2 lg:text-[14px] ${
+                  isPortfolioUploadDisabled
+                    ? "cursor-not-allowed opacity-70"
+                    : "cursor-pointer"
+                }`}
+              >
+                <span className="truncate">{portfolioFileSummaryText}</span>
                 <span className="ml-3 rounded-[5px] bg-white-1 border border-main-1 px-6 py-2 text-[11px] font-medium text-main-1 lg:text-[16px]">
-                  파일 찾기
+                  {portfolioUploadButtonText}
                 </span>
                 <input
                   type="file"
                   className="hidden"
                   onChange={onSelectPortfolioFile}
-                  disabled={!canEditApplication || isBusy}
+                  accept=".pdf,application/pdf"
+                  multiple
+                  disabled={isPortfolioUploadDisabled}
                 />
               </label>
+              <p className="text-[11px] text-gray-4 lg:text-[12px]">
+                {portfolioUploadGuideText}
+              </p>
+              {uploadedPortfolioFiles.length > 0 ? (
+                <ul className="mt-2 space-y-2 text-[11px] text-[#D9DEEA] lg:text-[12px]">
+                  {uploadedPortfolioFiles.map((file, index) => (
+                    <li
+                      key={file.fileId}
+                      className="flex items-center justify-between gap-2 rounded-[8px] bg-[#596074]/45 px-2.5 py-2"
+                    >
+                      <span className="min-w-0 flex-1 truncate">
+                        {index + 1}. {file.originalName}
+                      </span>
+                      <div className="shrink-0 space-x-1.5">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleReplacePortfolioFileClick(file.fileId)
+                          }
+                          disabled={!canEditApplication || isBusy}
+                          className="rounded-[4px] border border-main-1 px-2 py-1 text-[10px] font-medium text-main-1 disabled:cursor-not-allowed disabled:opacity-60 hover:bg-white-1 cursor-pointer lg:text-[11px]"
+                        >
+                          교체
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemovePortfolioFile(file.fileId)}
+                          disabled={!canEditApplication || isBusy}
+                          className="rounded-[4px] border border-[#FF8A8A] px-2 py-1 text-[10px] font-medium text-[#FF8A8A] disabled:cursor-not-allowed disabled:opacity-60 hover:bg-white-1 cursor-pointer lg:text-[11px]"
+                        >
+                          삭제
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              <input
+                ref={replaceFileInputRef}
+                type="file"
+                accept=".pdf,application/pdf"
+                className="hidden"
+                onChange={onReplacePortfolioFile}
+                disabled={!canEditApplication || isBusy}
+              />
             </div>
 
             <div className="space-y-2.5">
               <p className="text-left pl-[14px] text-[12px] lg:text-[14px] leading-[1.46] font-regular font-sans">
-                *포트폴리오 제출은 필수가 아니며, 자유롭게 제출해 주셔도 됩니다.
-                (최대 3개) <br />
+                *기획/디자인 파트를 제외한 타 파트의 경우, 포트폴리오 제출은
+                필수가 아니며, 자유롭게 제출해 주셔도 됩니다. (최대 3개) <br />
                 *제출 형식은 PDF 파일 또는 링크 형식만 받습니다. (1개 당 최대
                 50MB) <br />
                 *제출해 주신 포트폴리오는 모집 종료 후 안전하게 폐기됩니다.{" "}
@@ -1157,7 +1510,7 @@ function ApplyPageContent() {
                 disabled={isBusy || !canEditApplication}
                 className="px-[36px] py-[14px] lg:px-[73px] lg:py-[19px] text-[16px] lg:text-[24px] font-semibold cursor-pointer rounded-full bg-gray-5 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isSaving ? "저장 중..." : "지원서 저장하기"}
+                {isSaving ? "저장 중..." : "지원서 임시 저장하기"}
               </button>
               <button
                 type="button"
@@ -1202,3 +1555,4 @@ export default function ApplyPage() {
     </Suspense>
   );
 }
+

@@ -1,17 +1,17 @@
 import type { NextConfig } from "next";
 
-const isStaticExport = process.env.NEXT_STATIC_EXPORT === "true";
+const isProductionBuild = process.env.NODE_ENV === "production";
 
 const nextConfig: NextConfig = {
-  output: isStaticExport ? "export" : undefined,
-  trailingSlash: isStaticExport,
+  output: isProductionBuild ? "export" : undefined,
+  trailingSlash: isProductionBuild,
   images: {
     qualities: [75, 90, 100],
-    unoptimized: isStaticExport,
+    unoptimized: isProductionBuild,
   },
 };
 
-if (!isStaticExport) {
+if (!isProductionBuild) {
   nextConfig.rewrites = async () => {
     const backendBaseUrl = process.env.BACKEND_API_BASE_URL;
 

@@ -12,6 +12,13 @@ import type {
   UploadApplicationFileResponse,
 } from "./types";
 
+type GetApplicationsQuery = {
+  recruitmentId?: number;
+  page?: number;
+  size?: number;
+  sort?: string;
+};
+
 /**
  * 현재 진행 중인 모집 정보를 조회합니다.
  * @returns 진행 중 모집 정보, 없으면 null
@@ -49,9 +56,12 @@ export async function getDocumentQuestions(
  * 로그인 사용자의 지원서 목록을 조회합니다.
  * @returns 지원서 목록 응답
  */
-export async function getApplications(): Promise<ApplicationListResponse> {
-  const response =
-    await apiClient.get<ApplicationListResponse>("/applications");
+export async function getApplications(
+  query: GetApplicationsQuery = {},
+): Promise<ApplicationListResponse> {
+  const response = await apiClient.get<ApplicationListResponse>("/applications", {
+    params: query,
+  });
   return response.data;
 }
 

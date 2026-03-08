@@ -38,12 +38,12 @@ export const STAFF_MEMBERS: StaffMember[] = [
       "GDGoC SYU Team Member (2024~)",
     ],
     projects: [
-      "2024 멋쟁이사자처럼 대학연합 해커톤 '간지톤' 최우수상",
+      "2024 멋쟁이사자처럼 대학 연합해커톤 '간지톤' 최우수상",
       "2025 삼육대학교 SW프로젝트 경진대회 우수상",
       "삼육대학교 개교 119주년 천보축제 홈페이지 백엔드 개발",
     ],
     quote: "개발보다는 고양이발",
-    imageSrc: "/images/staff/구교승.png",
+    imageSrc: "/images/staff/1.png",
   },
   {
     teamLabel: "PM / DESIGN",
@@ -64,12 +64,12 @@ export const STAFF_MEMBERS: StaffMember[] = [
       "2025년 평균 학점 4.5",
     ],
     projects: [
-      "삼육대학교 개교 119주년 천보축제 홈페이지 백엔드 개발",
+      "삼육대학교 개교 119주년 천보축제 홈페이지 디자인",
       "2025 경기도 브랜드 홍보 콘텐츠 공모전 숏폼부분 장려상",
       "멋쟁이사자처럼 at SYU 14th 홈페이지 제작",
     ],
     quote: "우리 디자인 정상영업 합니다.",
-    imageSrc: "/images/staff/임나현.png",
+    imageSrc: "/images/staff/2.png",
   },
   {
     teamLabel: "PM / DESIGN",
@@ -96,7 +96,7 @@ export const STAFF_MEMBERS: StaffMember[] = [
     ],
     quote: "Design과 Death의 앞글자가 같은 건 우연일까요?",
     quoteMobile: "Design과 Death의\n앞글자가 같은 건 우연일까요?",
-    imageSrc: "/images/staff/윤혜원.png",
+    imageSrc: "/images/staff/3.png",
   },
   {
     teamLabel: "PM / DESIGN",
@@ -108,7 +108,6 @@ export const STAFF_MEMBERS: StaffMember[] = [
     previewCareer: [
       "멋쟁이사자처럼 14기 기획/디자인 운영진",
       "120주년 불암산 소책자 '제명호의 동물들' 편집팀장",
-      "학점 나쁘지 않음",
     ],
     career: [
       "멋쟁이사자처럼 14기 기획/디자인 운영진",
@@ -121,7 +120,7 @@ export const STAFF_MEMBERS: StaffMember[] = [
       "멋쟁이사자처럼 at SYU 14th 홈페이지 제작",
     ],
     quote: "살자, 제발",
-    imageSrc: "/images/staff/한우영.png",
+    imageSrc: "/images/staff/4.png",
   },
   {
     teamLabel: "FRONT-END",
@@ -143,7 +142,7 @@ export const STAFF_MEMBERS: StaffMember[] = [
       "2025 대학연합 해커톤 '간지톤' TOP6",
     ],
     quote: "롱패딩 보다 짧은건 int패딩",
-    imageSrc: "/images/staff/이영규.png",
+    imageSrc: "/images/staff/5.png",
   },
   {
     teamLabel: "FRONT-END",
@@ -172,7 +171,7 @@ export const STAFF_MEMBERS: StaffMember[] = [
       "멋쟁이사자처럼 at SYU 14th 홈페이지 제작",
     ],
     quote: "탐사, 이해, 수립, 연결",
-    imageSrc: "/images/staff/박정우.png",
+    imageSrc: "/images/staff/6.png",
   },
   {
     teamLabel: "FRONT-END",
@@ -202,7 +201,7 @@ export const STAFF_MEMBERS: StaffMember[] = [
       "1년 동안 2k Github contributions",
     ],
     quote: "빡세게 굴려드립니다 ^^",
-    imageSrc: "/images/staff/김성수.png",
+    imageSrc: "/images/staff/7.png",
   },
   {
     teamLabel: "BACK-END",
@@ -225,7 +224,7 @@ export const STAFF_MEMBERS: StaffMember[] = [
       "멋쟁이사자처럼 at SYU 14th 홈페이지 제작",
     ],
     quote: "서버는 200 OK, 건강은 500 Error",
-    imageSrc: "/images/staff/왕종휘.png",
+    imageSrc: "/images/staff/8.png",
   },
   {
     teamLabel: "BACK-END",
@@ -236,13 +235,14 @@ export const STAFF_MEMBERS: StaffMember[] = [
     contact: "9ay20n@syu-likelion.org",
     previewCareer: [
       "멋쟁이사자처럼 13기 아기사자",
-      "멋쟁이사자처럼 14시 중앙 운영단",
+      "멋쟁이사자처럼 14기 중앙운영단",
       "제64대 총학생회비상대책위원회 대외협력국 국장",
     ],
     career: [
       "멋쟁이사자처럼 13기 아기사자",
       "멋쟁이사자처럼 14기 백엔드 운영진",
-      "멋쟁이사자처럼 14시 중앙 운영단",
+      "멋쟁이사자처럼 14기 중앙운영단 운영팀",
+      "멋쟁이사자처럼 14기 중앙운영단 부의장",
       "제64대 총학생회비상대책위원회 대외협력국 국장",
       "직전학기 평균 평점 4.43",
     ],
@@ -253,7 +253,7 @@ export const STAFF_MEMBERS: StaffMember[] = [
       "2024 천보축전 기획 및 총장네컷 디자인",
     ],
     quote: "뒤(BACK)끝(END) 맡고 있습니다.",
-    imageSrc: "/images/staff/신가연.png",
+    imageSrc: "/images/staff/9.png",
   },
   {
     teamLabel: "BACK-END",
@@ -275,7 +275,7 @@ export const STAFF_MEMBERS: StaffMember[] = [
       "2025 멋쟁이사자처럼 해커톤 백엔드 개발",
     ],
     quote: "여긴 어디 나는 누구",
-    imageSrc: "/images/staff/이찬영.png",
+    imageSrc: "/images/staff/10.png",
   },
   {
     teamLabel: "AI / ML",
@@ -301,7 +301,7 @@ export const STAFF_MEMBERS: StaffMember[] = [
       "What I did: 오디오 전처리·세그먼트화, 커스텀 Dataset/Loader, 피처 설계/정규화 실험",
     ],
     quote: "안되면 거기까지",
-    imageSrc: "/images/staff/오현학.png",
+    imageSrc: "/images/staff/11.png",
   },
   {
     teamLabel: "AI / ML",
@@ -323,6 +323,6 @@ export const STAFF_MEMBERS: StaffMember[] = [
       "멋쟁이사자처럼 14기 부대표",
     ],
     quote: "운영만 합니다.",
-    imageSrc: "/images/staff/김지연.png",
+    imageSrc: "/images/staff/12.png",
   },
 ];

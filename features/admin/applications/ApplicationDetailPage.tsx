@@ -23,6 +23,11 @@ type ApplicationDetailPageProps = {
 };
 
 type DetailTab = "document" | "score" | "review";
+const DOCUMENT_QUESTION_MAX_SCORES = [10, 10, 10, 20, 20, 30] as const;
+const DEFAULT_DOCUMENT_QUESTION_MAX_SCORE = 30;
+
+const getDocumentQuestionMaxScore = (index: number) =>
+  DOCUMENT_QUESTION_MAX_SCORES[index] ?? DEFAULT_DOCUMENT_QUESTION_MAX_SCORE;
 
 function formatPart(value: string) {
   if (value === "FRONTEND") return "FRONTEND";
@@ -52,6 +57,13 @@ function formatDateTime(value: string) {
     hour12: false,
     timeZone: "Asia/Seoul",
   }).format(date);
+}
+
+function formatFileSize(size: number) {
+  if (!Number.isFinite(size) || size <= 0) return "-";
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function getTabLabel(tab: DetailTab) {
@@ -220,7 +232,9 @@ export default function ApplicationDetailPage({
   };
 
   const detailBody = (
-    <div className={`${embedded ? "" : "mt-6"} rounded-2xl bg-[#323640] p-6 lg:p-8`}>
+    <div
+      className={`${embedded ? "" : "mt-6"} rounded-2xl bg-[#323640] p-6 lg:p-8 print:rounded-none print:bg-transparent print:p-0 print:text-black`}
+    >
       <h2 className="text-[36px] font-bold lg:text-[44px]">{formatPart(detail?.applyPart ?? "-")}</h2>
 
       {detail && (
@@ -247,7 +261,7 @@ export default function ApplicationDetailPage({
         </>
       )}
 
-      <div className="mt-6 flex flex-wrap gap-2 border-b border-[#606673] pb-4">
+      <div className="mt-6 flex flex-wrap gap-2 border-b border-[#606673] pb-4 print:hidden">
         {(["document", "score", "review"] as const).map((tab) => (
           <button
             key={tab}
@@ -271,6 +285,66 @@ export default function ApplicationDetailPage({
 
       {!isLoading && detail && activeTab === "document" && (
         <div className="mt-8 space-y-8">
+          <article className="space-y-3">
+            <h3 className="text-lg font-semibold">포트폴리오</h3>
+            <div className="rounded-lg bg-[#404654] p-4 text-sm text-gray-2">
+              <dl className="space-y-3">
+                <div className="grid grid-cols-[90px_1fr] items-start gap-2">
+                  <dt className="text-gray-4">링크</dt>
+                  <dd className="min-w-0">
+                    {detail.portfolioUrl && detail.portfolioUrl.trim().length > 0 ? (
+                      <a
+                        href={detail.portfolioUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="break-all text-[#8fd3ff] underline underline-offset-2"
+                      >
+                        {detail.portfolioUrl}
+                      </a>
+                    ) : (
+                      <span className="text-gray-4">-</span>
+                    )}
+                  </dd>
+                </div>
+                <div className="grid grid-cols-[90px_1fr] items-start gap-2">
+                  <dt className="text-gray-4">첨부 파일</dt>
+                  <dd className="min-w-0">
+                    {detail.files.length > 0 ? (
+                      <ul className="space-y-2">
+                        {detail.files.map((file) => (
+                          <li key={file.fileId}>
+                            {file.url && file.url.trim().length > 0 ? (
+                              <a
+                                href={file.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex max-w-full items-center gap-2 text-[#8fd3ff] underline underline-offset-2"
+                              >
+                                <span className="truncate">{file.originalName}</span>
+                                <span className="shrink-0 text-xs text-gray-4">
+                                  ({formatFileSize(file.size)})
+                                </span>
+                              </a>
+                            ) : (
+                              <span className="inline-flex max-w-full items-center gap-2 text-gray-2">
+                                <span className="truncate">{file.originalName}</span>
+                                <span className="shrink-0 text-xs text-gray-4">
+                                  ({formatFileSize(file.size)})
+                                </span>
+                              </span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <span className="text-gray-4">-</span>
+                    )}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </article>
+
           {detail.answers.map((answer, index) => (
             <article key={answer.questionId} className="space-y-3">
               <h3 className="text-lg font-semibold">
@@ -287,37 +361,43 @@ export default function ApplicationDetailPage({
       {!isLoading && detail && activeTab === "score" && (
         <div className="mt-8">
           <div className="space-y-8">
-            {scoredQuestions.map((item, index) => (
-              <article key={item.questionId} className="space-y-3">
-                <h3 className="text-lg font-semibold">
-                  문항 {index + 1}. {item.content}
-                </h3>
-                <p className="whitespace-pre-wrap rounded-lg bg-[#404654] p-4 text-sm text-gray-2">
-                  {item.answer}
-                </p>
-                <div className="flex items-center gap-3">
-                  <label className="text-sm text-gray-3">문항 점수</label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={10}
-                    step={1}
-                    value={item.score}
-                    onChange={(event) => {
-                      const numeric = Number(event.target.value);
-                      const next = Number.isFinite(numeric)
-                        ? Math.max(0, Math.min(10, numeric))
-                        : 0;
-                      setScores((prev) => ({
-                        ...prev,
-                        [item.questionId]: next,
-                      }));
-                    }}
-                    className="h-9 w-24 rounded-md border border-[#666d7d] bg-[#505767] px-3 text-sm outline-none focus:border-main-1"
-                  />
-                </div>
-              </article>
-            ))}
+            {scoredQuestions.map((item, index) => {
+              const maxScore = getDocumentQuestionMaxScore(index);
+
+              return (
+                <article key={item.questionId} className="space-y-3">
+                  <h3 className="text-lg font-semibold">
+                    문항 {index + 1}. {item.content}
+                  </h3>
+                  <p className="whitespace-pre-wrap rounded-lg bg-[#404654] p-4 text-sm text-gray-2">
+                    {item.answer}
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm text-gray-3">
+                      문항 점수 (최대 {maxScore}점)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={maxScore}
+                      step={1}
+                      value={item.score}
+                      onChange={(event) => {
+                        const numeric = Number(event.target.value);
+                        const next = Number.isFinite(numeric)
+                          ? Math.max(0, Math.min(maxScore, numeric))
+                          : 0;
+                        setScores((prev) => ({
+                          ...prev,
+                          [item.questionId]: next,
+                        }));
+                      }}
+                      className="h-9 w-24 rounded-md border border-[#666d7d] bg-[#505767] px-3 text-sm outline-none focus:border-main-1"
+                    />
+                  </div>
+                </article>
+              );
+            })}
           </div>
 
           <div className="my-8 h-px bg-[#606673]" />
@@ -408,18 +488,18 @@ export default function ApplicationDetailPage({
         </div>
       )}
 
-      {scoreError && <p className="mt-4 text-sm text-[#ff9ea8]">{scoreError}</p>}
-      {saveMessage && <p className="mt-2 text-sm text-[#8fd3ff]">{saveMessage}</p>}
+      {scoreError && <p className="mt-4 text-sm text-[#ff9ea8] print:hidden">{scoreError}</p>}
+      {saveMessage && <p className="mt-2 text-sm text-[#8fd3ff] print:hidden">{saveMessage}</p>}
       {pendingDecisionMessage && (
-        <p className="mt-2 text-sm text-[#8fd3ff]">{pendingDecisionMessage}</p>
+        <p className="mt-2 text-sm text-[#8fd3ff] print:hidden">{pendingDecisionMessage}</p>
       )}
     </div>
   );
 
   if (embedded) {
     return (
-      <div className="rounded-2xl border border-[#3a3d45] bg-[#2d3037] p-4">
-        <div className="mb-3 flex items-center justify-between">
+      <div className="rounded-2xl border border-[#3a3d45] bg-[#2d3037] p-4 print:rounded-none print:border-0 print:bg-transparent print:p-0">
+        <div className="mb-3 flex items-center justify-between print:hidden">
           <h3 className="text-sm font-semibold text-gray-2">지원서 상세</h3>
           {onClose && (
             <button

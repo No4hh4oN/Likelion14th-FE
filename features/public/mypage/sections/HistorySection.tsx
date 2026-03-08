@@ -1,21 +1,32 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getDashboard, getMyApplicationHistory } from "../api";
+import { isFinalResultPhase } from "@/features/public/recruitmentPhase";
+import {
+  getDashboard,
+  getMyApplicationHistory,
+  getRecruitmentDetail,
+} from "../api";
 import type {
   ApplicationHistoryItem,
   DashboardItem,
-  MyPageUser,
+  RecruitmentDetailItem,
 } from "../types";
 import ActionButton from "../components/ActionButton";
 
 type HistorySectionProps = {
-  user: MyPageUser;
   onBack: () => void;
 };
 
-export default function HistorySection({ user, onBack }: HistorySectionProps) {
+type HistoryDisplayStage = "DOCUMENT" | "INTERVIEW";
+
+type HistoryDisplayRow = {
+  record: ApplicationHistoryItem;
+  stage: HistoryDisplayStage;
+};
+
+export default function HistorySection({ onBack }: HistorySectionProps) {
   const router = useRouter();
   const [historyItems, setHistoryItems] = useState<ApplicationHistoryItem[]>(
     [],
@@ -23,23 +34,20 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
   const [dashboardByRecruitment, setDashboardByRecruitment] = useState<
     Record<number, DashboardItem>
   >({});
+  const [recruitmentDetailById, setRecruitmentDetailById] = useState<
+    Record<number, RecruitmentDetailItem>
+  >({});
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     let isMounted = true;
 
-    if (user.role !== "게스트") {
-      setIsLoading(false);
-      return () => {
-        isMounted = false;
-      };
-    }
-
     const fetchHistory = async () => {
       setIsLoading(true);
       setErrorMessage("");
       setDashboardByRecruitment({});
+      setRecruitmentDetailById({});
 
       try {
         const response = await getMyApplicationHistory();
@@ -60,6 +68,13 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
           return;
         }
 
+        const detailResults = await Promise.allSettled(
+          recruitmentIds.map(async (recruitmentId) => ({
+            recruitmentId,
+            recruitmentDetail: await getRecruitmentDetail(recruitmentId),
+          })),
+        );
+
         const dashboardResults = await Promise.allSettled(
           recruitmentIds.map(async (recruitmentId) => ({
             recruitmentId,
@@ -72,6 +87,14 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
         }
 
         const nextDashboardByRecruitment: Record<number, DashboardItem> = {};
+        const nextRecruitmentDetailById: Record<number, RecruitmentDetailItem> =
+          {};
+        detailResults.forEach((result) => {
+          if (result.status === "fulfilled") {
+            nextRecruitmentDetailById[result.value.recruitmentId] =
+              result.value.recruitmentDetail;
+          }
+        });
         dashboardResults.forEach((result) => {
           if (result.status === "fulfilled") {
             nextDashboardByRecruitment[result.value.recruitmentId] =
@@ -80,6 +103,7 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
         });
 
         setDashboardByRecruitment(nextDashboardByRecruitment);
+        setRecruitmentDetailById(nextRecruitmentDetailById);
       } catch {
         if (!isMounted) {
           return;
@@ -100,7 +124,7 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
     return () => {
       isMounted = false;
     };
-  }, [user.role]);
+  }, []);
 
   const visibleRecords = useMemo(() => {
     return historyItems
@@ -136,48 +160,102 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
     )}:${getPart("minute")}`;
   };
 
-  const getActionVisibility = (record: ApplicationHistoryItem) => {
-    const dashboard = dashboardByRecruitment[record.recruitmentId];
+  const getDashboardForRecord = (record: ApplicationHistoryItem) =>
+    dashboardByRecruitment[record.recruitmentId];
+
+  const getRecruitmentDetailForRecord = (record: ApplicationHistoryItem) =>
+    recruitmentDetailById[record.recruitmentId];
+
+  const getNormalizedStatus = (record: ApplicationHistoryItem) => {
+    const dashboard = getDashboardForRecord(record);
+    return String(
+      dashboard?.myApplication.status ?? record.status,
+    ).toUpperCase();
+  };
+
+  const getInterviewReservation = (record: ApplicationHistoryItem) =>
+    getDashboardForRecord(record)?.interview?.myReservation;
+
+  const formatInterviewDateTime = (record: ApplicationHistoryItem) => {
+    const reservation = getInterviewReservation(record);
+    if (!reservation?.startAt) {
+      return "-";
+    }
+
+    return formatDateTime(reservation.startAt);
+  };
+
+  const displayRows = useMemo<HistoryDisplayRow[]>(() => {
+    return visibleRecords.flatMap((record) => {
+      const rows: HistoryDisplayRow[] = [{ record, stage: "DOCUMENT" }];
+      const reservation =
+        dashboardByRecruitment[record.recruitmentId]?.interview?.myReservation;
+
+      if (reservation?.startAt) {
+        rows.push({ record, stage: "INTERVIEW" });
+      }
+
+      return rows;
+    });
+  }, [visibleRecords, dashboardByRecruitment]);
+
+  const getActionVisibility = (
+    record: ApplicationHistoryItem,
+    stage: HistoryDisplayStage,
+  ) => {
+    const dashboard = getDashboardForRecord(record);
+    const recruitmentDetail = getRecruitmentDetailForRecord(record);
     const canEdit = dashboard?.myApplication.canEdit ?? record.canEdit;
-    const canSubmit = dashboard?.myApplication.canSubmit ?? record.canSubmit;
+    const normalizedStatus = getNormalizedStatus(record);
+    const hasFinalResult = normalizedStatus.startsWith("FINAL_");
+    const canShowResultByDashboard = dashboard?.documentResult.visible === true;
+    const docResultAt = Date.parse(recruitmentDetail?.docResultAt ?? "");
+    const finalResultAt = Date.parse(recruitmentDetail?.finalResultAt ?? "");
+    const serverTime = Date.parse(
+      recruitmentDetail?.serverTime ?? dashboard?.serverTime ?? "",
+    );
+    const hasReachedDocResultAt =
+      Number.isFinite(docResultAt) &&
+      Number.isFinite(serverTime) &&
+      serverTime >= docResultAt;
+    const hasReachedFinalResultAt =
+      Number.isFinite(finalResultAt) &&
+      Number.isFinite(serverTime) &&
+      serverTime >= finalResultAt;
+    const isRecruitmentInFinalResultPhase =
+      isFinalResultPhase(recruitmentDetail?.phaseType) ||
+      isFinalResultPhase(dashboard?.recruitment?.phaseType);
 
     return {
-      canShowEditButton: canEdit === true,
-      canShowResultButton: canEdit === false && canSubmit === false,
+      canShowEditButton: stage === "DOCUMENT" && canEdit === true,
+      canShowResultButton: stage === "INTERVIEW"
+        ? hasFinalResult ||
+          hasReachedFinalResultAt ||
+          isRecruitmentInFinalResultPhase
+        : canShowResultByDashboard || hasReachedDocResultAt || hasFinalResult,
     };
+  };
+
+  const getApplicationTypeLabel = (stage: HistoryDisplayStage) => {
+    if (stage === "INTERVIEW") {
+      return "면접";
+    }
+
+    return "서류";
   };
 
   const handleEditClick = (applicationId: number) => {
     router.push(`/14/apply?applicationId=${applicationId}`);
   };
 
-  const handleResultClick = (applicationId: number) => {
-    // TODO: 전형별 결과 확인 페이지 연결
-    console.log("결과 확인", applicationId);
-  };
-
-  if (user.role !== "게스트") {
-    return (
-      <section className="min-h-screen bg-background px-4 text-white-1 lg:px-6">
-        <div className="mx-auto w-full max-w-[960px] rounded-[8px] border border-white/10 bg-[#2E313A]/95 p-4 shadow-[0_16px_40px_rgba(0,0,0,0.28)] lg:p-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-[24px] font-bold lg:text-[30px]">
-              나의 지원 내역
-            </h1>
-            <ActionButton
-              text="돌아가기"
-              onClick={onBack}
-              className="text-[12px]"
-              hoverClassName="hover:bg-gray-5"
-            />
-          </div>
-          <p className="mt-4 text-[14px] text-white/75 lg:text-[16px]">
-            지원 내역은 게스트 등급에서만 확인할 수 있습니다.
-          </p>
-        </div>
-      </section>
+  const handleResultClick = (
+    applicationId: number,
+    recruitmentId: number,
+  ) => {
+    router.push(
+      `/14/result?applicationId=${applicationId}&recruitmentId=${recruitmentId}`,
     );
-  }
+  };
 
   return (
     <section className="min-h-screen bg-background px-4 text-white-1 lg:px-6">
@@ -267,29 +345,39 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
               ) : null}
 
               {!isLoading && !errorMessage
-                ? visibleRecords.map((record) => {
+                ? displayRows.map(({ record, stage }, index) => {
                     const { canShowEditButton, canShowResultButton } =
-                      getActionVisibility(record);
+                      getActionVisibility(record, stage);
+                    const isInterviewRecord = stage === "INTERVIEW";
 
                     return (
-                      <tr key={record.applicationId} className="text-white/85">
+                      <tr
+                        key={`${record.applicationId}-${stage}`}
+                        className="text-white/85"
+                      >
                         <td className="border-b border-white/10 px-3 py-3">
-                          {record.applicationId}
+                          {index + 1}
                         </td>
                         <td className="border-b border-white/10 px-3 py-3">
                           {record.generation}기
                         </td>
                         <td className="border-b border-white/10 px-3 py-3">
-                          서류
+                          {getApplicationTypeLabel(stage)}
                         </td>
                         <td className="border-b border-white/10 px-3 py-3">
-                          {formatDateTime(record.submittedAt)}
+                          {isInterviewRecord
+                            ? "-"
+                            : formatDateTime(record.submittedAt)}
                         </td>
                         <td className="border-b border-white/10 px-3 py-3">
-                          {formatDateTime(record.updatedAt)}
+                          {isInterviewRecord
+                            ? "-"
+                            : formatDateTime(record.updatedAt)}
                         </td>
                         <td className="border-b border-white/10 px-3 py-3">
-                          -
+                          {isInterviewRecord
+                            ? formatInterviewDateTime(record)
+                            : "-"}
                         </td>
                         <td className="border-b border-white/10 px-3 py-3">
                           {canShowEditButton ? (
@@ -310,7 +398,10 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
                             <ActionButton
                               text="결과 확인"
                               onClick={() =>
-                                handleResultClick(record.applicationId)
+                                handleResultClick(
+                                  record.applicationId,
+                                  record.recruitmentId,
+                                )
                               }
                               className="bg-main-1 px-5 py-2.25 text-[14px] leading-none"
                               hoverClassName="hover:bg-[#2289E6]"
@@ -330,3 +421,4 @@ export default function HistorySection({ user, onBack }: HistorySectionProps) {
     </section>
   );
 }
+

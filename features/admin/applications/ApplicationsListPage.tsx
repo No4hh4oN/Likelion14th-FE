@@ -216,12 +216,12 @@ export default function ApplicationsListPage() {
   };
 
   return (
-    <section className="bg-background px-4 py-10 text-white lg:px-8 lg:py-14">
+    <section className="bg-background px-4 py-10 text-white lg:px-8 lg:py-14 print:bg-white print:px-0 print:py-0 print:text-black">
       <div className="mx-auto max-w-[1200px]">
-        <h1 className="text-[34px] font-bold tracking-[-0.02em]">Applications</h1>
+        <h1 className="text-[34px] font-bold tracking-[-0.02em] print:hidden">Applications</h1>
 
         {!selectedApplicationId && (
-          <div className="mt-8 grid items-start gap-4 lg:grid-cols-[220px_1fr]">
+          <div className="mt-8 grid items-start gap-4 lg:grid-cols-[220px_1fr] print:hidden">
             <aside className="rounded-2xl border border-[#3a3d45] bg-[#26282d] p-4">
               <p className="text-xs font-semibold text-gray-4">목록</p>
               <div className="mt-4 space-y-2">
@@ -303,8 +303,8 @@ export default function ApplicationsListPage() {
         )}
 
         {selectedApplicationId && (
-          <div className="mt-8 grid items-start gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,7fr)]">
-            <div className="space-y-4 self-start">
+          <div className="mt-8 grid items-start gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,7fr)] print:mt-0 print:block">
+            <div className="space-y-4 self-start print:hidden">
               <aside className="rounded-2xl border border-[#3a3d45] bg-[#26282d] p-4">
                 <p className="text-xs font-semibold text-gray-4">목록</p>
                 <div className="mt-4 space-y-2">
@@ -384,7 +384,7 @@ export default function ApplicationsListPage() {
               </div>
             </div>
 
-            <div className="self-start">
+            <div className="self-start print:w-full">
               <ApplicationDetailPage
                 applicationId={selectedApplicationId}
                 embedded

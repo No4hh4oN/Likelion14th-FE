@@ -1,3 +1,5 @@
+import type { RecruitmentPhase } from "../recruitmentPhase";
+
 /**
  * 지원 파트 식별자 타입입니다.
  */
@@ -16,12 +18,7 @@ export type DocumentQuestionCategory =
 /**
  * 모집 진행 단계(enum) 타입입니다.
  */
-export type RecruitmentPhaseType =
-  | "DOC_OPEN"
-  | "DOC_CLOSED"
-  | "INTERVIEW_SELECT"
-  | "FINAL_RESULT"
-  | "CLOSED";
+export type RecruitmentPhaseType = RecruitmentPhase;
 
 /**
  * 지원서 상태(enum) 타입입니다.
@@ -93,6 +90,7 @@ export type SaveApplicationDraftRequest = {
   portfolioUrl: string;
   answers: ApplyAnswerPayload[];
   fileIds: number[];
+  submittedAt?: string;
 };
 
 /**
@@ -153,10 +151,14 @@ export type ApplicationDetailResponse = {
 export type ApplicationListItem = {
   applicationId: number;
   recruitmentId: number;
+  generation?: number;
   applyPart: ApplyPartKey | string;
   status: ApplicationStatus | string;
-  canEdit: boolean;
-  canSubmit: boolean;
+  submittedAt?: string;
+  updatedAt?: string;
+  portfolioUrl?: string;
+  canEdit?: boolean;
+  canSubmit?: boolean;
 };
 
 /**

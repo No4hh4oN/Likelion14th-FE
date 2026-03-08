@@ -16,6 +16,7 @@ const DEFAULT_MY_PAGE_USER: MyPageUser = {
   major: "-",
   generation: "학번 미등록",
   role: "게스트",
+  track: null,
   profileImageUrl: null,
 };
 
@@ -36,6 +37,23 @@ function mapRoleLevelToUserRole(
   }
 
   return fallbackRole;
+}
+
+function mapTrackToUserTrack(
+  track: string | undefined,
+  fallbackTrack: MyPageUser["track"],
+): MyPageUser["track"] {
+  if (
+    track === "FRONTEND" ||
+    track === "BACKEND" ||
+    track === "AI_ML" ||
+    track === "PM_DESIGN" ||
+    track === "ETC"
+  ) {
+    return track;
+  }
+
+  return fallbackTrack;
 }
 
 function toStudentNoGeneration(
@@ -73,6 +91,7 @@ function mapProfileToMyPageUser(profile: MyPageUserApiResponse): MyPageUser {
     major: profile.homepage.department || DEFAULT_MY_PAGE_USER.major,
     generation,
     role: mapRoleLevelToUserRole(activeRole?.level, DEFAULT_MY_PAGE_USER.role),
+    track: mapTrackToUserTrack(activeRole?.track, DEFAULT_MY_PAGE_USER.track),
     profileImageUrl: profile.homepage.profileImage?.url ?? null,
   };
 }
@@ -184,12 +203,7 @@ export default function MyPage() {
     }
 
     if (currentSection === "history") {
-      return (
-        <HistorySection
-          user={user}
-          onBack={() => setCurrentSection("profile")}
-        />
-      );
+      return <HistorySection onBack={() => setCurrentSection("profile")} />;
     }
 
     return (

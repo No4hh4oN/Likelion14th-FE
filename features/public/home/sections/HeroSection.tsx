@@ -1,6 +1,7 @@
 ﻿import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { isDocumentOpenPhase } from "../../recruitmentPhase";
 import { getActiveRecruitment } from "../api";
 import type { ActiveRecruitmentResponse } from "../types";
 
@@ -207,7 +208,45 @@ function calculateDday(endAt: string) {
   return remainDays - 1;
 }
 
+/**
+ * 남은 시간을 `hh:mm:ss` 형식으로 포맷합니다.
+ * @param diffMs 마감까지 남은 밀리초
+ * @returns `hh:mm:ss` 형식 문자열
+ */
+function formatRemainingTime(diffMs: number) {
+  const totalSeconds = Math.max(Math.floor(diffMs / 1000), 0);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return [hours, minutes, seconds]
+    .map((value) => String(value).padStart(2, "0"))
+    .join(":");
+}
+
+/**
+ * 남은 시간이 60분 이하인지 판단합니다.
+ * @param endAt 지원 마감 시각
+ * @returns 60분 이하이면서 아직 마감 전이면 true
+ */
+function isUrgentDeadline(endAt: string) {
+  const diffMs = parseKstDateTime(endAt) - Date.now();
+  return diffMs > 0 && diffMs <= 1000 * 60 * 60;
+}
+
 function formatDDayLabel(endAt: string) {
+  const now = Date.now();
+  const end = parseKstDateTime(endAt);
+  const diffMs = end - now;
+
+  if (diffMs <= 0) {
+    return "마감";
+  }
+
+  if (diffMs <= 1000 * 60 * 60 * 24) {
+    return formatRemainingTime(diffMs);
+  }
+
   const remainDays = calculateDday(endAt);
 
   if (remainDays > 0) {
@@ -226,6 +265,8 @@ function formatDDayLabel(endAt: string) {
  */
 export default function HeroSection() {
   const [ddayText, setDdayText] = useState("상태 확인 중");
+  const [activeEndAt, setActiveEndAt] = useState<string | null>(null);
+  const [isDeadlineUrgent, setIsDeadlineUrgent] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -239,14 +280,20 @@ export default function HeroSection() {
           return;
         }
 
-        if (response?.phaseType === "DOC_OPEN") {
+        if (isDocumentOpenPhase(response?.phaseType)) {
+          setActiveEndAt(response.endAt);
           setDdayText(formatDDayLabel(response.endAt));
+          setIsDeadlineUrgent(isUrgentDeadline(response.endAt));
           return;
         }
 
+        setActiveEndAt(null);
+        setIsDeadlineUrgent(false);
         setDdayText("비공개");
       } catch {
         if (isMounted) {
+          setActiveEndAt(null);
+          setIsDeadlineUrgent(false);
           setDdayText("상태 오류");
         }
       }
@@ -258,6 +305,21 @@ export default function HeroSection() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!activeEndAt) {
+      return;
+    }
+
+    const timerId = window.setInterval(() => {
+      setDdayText(formatDDayLabel(activeEndAt));
+      setIsDeadlineUrgent(isUrgentDeadline(activeEndAt));
+    }, 1000);
+
+    return () => {
+      window.clearInterval(timerId);
+    };
+  }, [activeEndAt]);
 
   return (
     <section className="relative overflow-hidden bg-background pb-20 pt-25 lg:pb-24 lg:pt-[100px]">
@@ -325,7 +387,13 @@ export default function HeroSection() {
             </Link>
             <p className="mt-[-9px] text-[16px] text-gray-3 font-normal lg:hidden">
               지원 마감까지{" "}
-              <span className="text-main-3 font-bold">{ddayText}</span>
+              <span
+                className={`font-bold ${
+                  isDeadlineUrgent ? "text-[#FF5A5A]" : "text-main-3"
+                }`}
+              >
+                {ddayText}
+              </span>
             </p>
           </div>
 
@@ -347,3 +415,4 @@ export default function HeroSection() {
     </section>
   );
 }
+

@@ -9,14 +9,15 @@ function formatPart(value: string) {
 }
 
 function formatEnrollment(value: string) {
-  const upper = value.toUpperCase();
+  const upper = value?.toUpperCase?.() ?? "";
   if (upper === "ENROLLED") return "재학";
   if (upper === "LEAVE") return "휴학";
   if (upper === "GRADUATED") return "졸업";
-  return value;
+  return value ?? "-";
 }
 
-function formatDateTime(value: string) {
+function formatDateTime(value?: string | null) {
+  if (!value) return "-";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
 
@@ -29,6 +30,14 @@ function formatDateTime(value: string) {
     hour12: false,
     timeZone: "Asia/Seoul",
   }).format(date);
+}
+
+function formatSubmittedAtByStatus(status?: string | null, submittedAt?: string | null) {
+  const normalizedStatus = status?.toUpperCase?.() ?? "";
+  if (normalizedStatus === "DRAFT") {
+    return "임시저장됨";
+  }
+  return formatDateTime(submittedAt);
 }
 
 type ApplicantTableProps = {
@@ -101,7 +110,9 @@ export default function ApplicantTable({
                     {item.grade}학년 {formatEnrollment(item.enrollment)}
                   </td>
                 )}
-                {!compact && <td>{formatDateTime(item.submittedAt)}</td>}
+                {!compact && (
+                  <td>{formatSubmittedAtByStatus(item.status, item.submittedAt)}</td>
+                )}
                 <td>
                   {typeof item.docAvgScore === "number"
                     ? item.docAvgScore.toFixed(1)

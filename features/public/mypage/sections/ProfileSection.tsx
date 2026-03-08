@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { MyPageSection, MyPageTab, MyPageUser, UserRole } from "../types";
 import ActionButton from "../components/ActionButton";
+import MyActivityTab from "./MyActivityTab";
 
 type ProfileSectionProps = {
   user: MyPageUser;
@@ -23,28 +24,14 @@ function getRoleChipClassName(role: UserRole) {
   return "border border-white/20 bg-white/10 text-white/80";
 }
 
-function getTabMessage(role: UserRole, tab: MyPageTab) {
-  if (tab === "내 정보") {
-    if (role === "운영진") {
-      return {
-        title: "운영진 계정 정보가 활성화되어 있습니다.",
-        description: "권한별 상세 설정은 로그인 연동 후 제공될 예정입니다.",
-      };
-    }
+function getGuestActivityMessage() {
+  return {
+    title: "기본 계정 정보만 확인할 수 있습니다.",
+    description: "아기사자 선발 후 추가 정보 메뉴가 열립니다.",
+  };
+}
 
-    if (role === "아기사자") {
-      return {
-        title: "아기사자 프로필 정보를 확인할 수 있습니다.",
-        description: "실제 프로필 데이터 연동 전까지는 목업 정보가 표시됩니다.",
-      };
-    }
-
-    return {
-      title: "기본 계정 정보만 확인할 수 있습니다.",
-      description: "아기사자 선발 후 추가 정보 메뉴가 열립니다.",
-    };
-  }
-
+function getTaskTabMessage(role: UserRole) {
   if (role === "운영진") {
     return {
       title: "운영진 전용 페이지 준비 중입니다.",
@@ -71,12 +58,21 @@ export default function ProfileSection({
   onLogout,
   isLoggingOut,
 }: ProfileSectionProps) {
-  const [activeTab, setActiveTab] = useState<MyPageTab>("과제");
-  const message = getTabMessage(user.role, activeTab);
+  const [activeTab, setActiveTab] = useState<MyPageTab>("내 활동");
+  const isGuest = user.role === "게스트";
+  const shouldShowActivityContent = activeTab === "내 활동" && !isGuest;
+  const message =
+    activeTab === "내 활동"
+      ? getGuestActivityMessage()
+      : getTaskTabMessage(user.role);
 
   return (
     <section className="min-h-screen bg-background px-4 text-white-1 lg:px-6">
-      <div className="relative mx-auto w-full max-w-[760px]">
+      <div
+        className={`relative mx-auto w-full ${
+          shouldShowActivityContent ? "max-w-[980px]" : "max-w-[760px]"
+        }`}
+      >
         <ActionButton
           text={isLoggingOut ? "로그아웃 중..." : "로그아웃"}
           onClick={onLogout}
@@ -140,7 +136,7 @@ export default function ProfileSection({
 
           <div className="mt-5 border-b border-white/15">
             <div className="flex">
-              {(["내 정보", "과제"] as const).map((tab) => (
+              {(["내 활동", "과제"] as const).map((tab) => (
                 <button
                   key={tab}
                   type="button"
@@ -158,14 +154,18 @@ export default function ProfileSection({
             </div>
           </div>
 
-          <div className="flex min-h-[150px] flex-col items-center justify-center px-2 text-center lg:min-h-[170px]">
-            <p className="text-[14px] font-semibold text-white lg:text-[16px]">
-              {message.title}
-            </p>
-            <p className="mt-1.5 text-[12px] text-white/35 lg:text-[13px]">
-              {message.description}
-            </p>
-          </div>
+          {shouldShowActivityContent ? <MyActivityTab user={user} /> : null}
+
+          {!shouldShowActivityContent ? (
+            <div className="flex min-h-[150px] flex-col items-center justify-center px-2 text-center lg:min-h-[170px]">
+              <p className="text-[14px] font-semibold text-white lg:text-[16px]">
+                {message.title}
+              </p>
+              <p className="mt-1.5 text-[12px] text-white/35 lg:text-[13px]">
+                {message.description}
+              </p>
+            </div>
+          ) : null}
         </div>
       </div>
     </section>
