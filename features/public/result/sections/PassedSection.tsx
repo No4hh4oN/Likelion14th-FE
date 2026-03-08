@@ -374,7 +374,9 @@ export default function PassedSection({
           return false;
         }
 
-        return targetWeekdays.includes(getWeekdayFromDayKey(toDayKey(slot.startAt)));
+        return targetWeekdays.includes(
+          getWeekdayFromDayKey(toDayKey(slot.startAt)),
+        );
       });
 
       return matchedSlot?.location?.trim() ?? fallbackLocation;
@@ -696,9 +698,11 @@ export default function PassedSection({
         </div>
 
         <div className="mt-26.5 lg:mt-49.25">
-          <h2 className="text-[26px] font-bold lg:text-[42px]">면접 장소</h2>
+          <h2 className="text-[26px] text-center font-bold lg:text-left lg:text-[42px]">
+            면접 장소
+          </h2>
           <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_1.05fr]">
-            <div className="relative w-[322px] h-[225px] overflow-hidden ml-auto rounded-[12px] bg-[#DEE3EC] lg:w-[563px] lg:h-[389px] ">
+            <div className="relative w-[322px] h-[225px] overflow-hidden mx-auto lg:ml-auto rounded-[12px] bg-[#DEE3EC] lg:w-[563px] lg:h-[389px] ">
               <Image
                 src={selectedLocationImage.src}
                 alt={selectedLocationImage.alt}

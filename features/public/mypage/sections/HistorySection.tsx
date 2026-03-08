@@ -1,7 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { isFinalResultPhase } from "@/features/public/recruitmentPhase";
 import {
   getDashboard,
   getMyApplicationHistory,
@@ -16,6 +17,13 @@ import ActionButton from "../components/ActionButton";
 
 type HistorySectionProps = {
   onBack: () => void;
+};
+
+type HistoryDisplayStage = "DOCUMENT" | "INTERVIEW";
+
+type HistoryDisplayRow = {
+  record: ApplicationHistoryItem;
+  stage: HistoryDisplayStage;
 };
 
 export default function HistorySection({ onBack }: HistorySectionProps) {
@@ -168,38 +176,33 @@ export default function HistorySection({ onBack }: HistorySectionProps) {
   const getInterviewReservation = (record: ApplicationHistoryItem) =>
     getDashboardForRecord(record)?.interview?.myReservation;
 
-  const hasInterviewReservation = (record: ApplicationHistoryItem) =>
-    Boolean(getInterviewReservation(record)?.startAt);
-
   const formatInterviewDateTime = (record: ApplicationHistoryItem) => {
     const reservation = getInterviewReservation(record);
     if (!reservation?.startAt) {
       return "-";
     }
 
-    const startText = formatDateTime(reservation.startAt);
-    if (!reservation.endAt) {
-      return startText;
-    }
-
-    const endText = formatDateTime(reservation.endAt);
-    if (startText === "-" || endText === "-") {
-      return startText;
-    }
-
-    const startDay = startText.split(" ")[0];
-    const endDay = endText.split(" ")[0];
-    const startTime = startText.split(" ")[1];
-    const endTime = endText.split(" ")[1];
-
-    if (startDay && endDay && startTime && endTime && startDay === endDay) {
-      return `${startDay} ${startTime}-${endTime}`;
-    }
-
-    return `${startText} ~ ${endText}`;
+    return formatDateTime(reservation.startAt);
   };
 
-  const getActionVisibility = (record: ApplicationHistoryItem) => {
+  const displayRows = useMemo<HistoryDisplayRow[]>(() => {
+    return visibleRecords.flatMap((record) => {
+      const rows: HistoryDisplayRow[] = [{ record, stage: "DOCUMENT" }];
+      const reservation =
+        dashboardByRecruitment[record.recruitmentId]?.interview?.myReservation;
+
+      if (reservation?.startAt) {
+        rows.push({ record, stage: "INTERVIEW" });
+      }
+
+      return rows;
+    });
+  }, [visibleRecords, dashboardByRecruitment]);
+
+  const getActionVisibility = (
+    record: ApplicationHistoryItem,
+    stage: HistoryDisplayStage,
+  ) => {
     const dashboard = getDashboardForRecord(record);
     const recruitmentDetail = getRecruitmentDetailForRecord(record);
     const canEdit = dashboard?.myApplication.canEdit ?? record.canEdit;
@@ -207,6 +210,7 @@ export default function HistorySection({ onBack }: HistorySectionProps) {
     const hasFinalResult = normalizedStatus.startsWith("FINAL_");
     const canShowResultByDashboard = dashboard?.documentResult.visible === true;
     const docResultAt = Date.parse(recruitmentDetail?.docResultAt ?? "");
+    const finalResultAt = Date.parse(recruitmentDetail?.finalResultAt ?? "");
     const serverTime = Date.parse(
       recruitmentDetail?.serverTime ?? dashboard?.serverTime ?? "",
     );
@@ -214,41 +218,43 @@ export default function HistorySection({ onBack }: HistorySectionProps) {
       Number.isFinite(docResultAt) &&
       Number.isFinite(serverTime) &&
       serverTime >= docResultAt;
-    const isInterview = hasInterviewReservation(record);
+    const hasReachedFinalResultAt =
+      Number.isFinite(finalResultAt) &&
+      Number.isFinite(serverTime) &&
+      serverTime >= finalResultAt;
+    const isRecruitmentInFinalResultPhase =
+      isFinalResultPhase(recruitmentDetail?.phaseType) ||
+      isFinalResultPhase(dashboard?.recruitment?.phaseType);
 
     return {
-      canShowEditButton: canEdit === true && !isInterview,
-      canShowResultButton:
-        canShowResultByDashboard || hasReachedDocResultAt || hasFinalResult,
+      canShowEditButton: stage === "DOCUMENT" && canEdit === true,
+      canShowResultButton: stage === "INTERVIEW"
+        ? hasFinalResult ||
+          hasReachedFinalResultAt ||
+          isRecruitmentInFinalResultPhase
+        : canShowResultByDashboard || hasReachedDocResultAt || hasFinalResult,
     };
   };
 
-  const getApplicationTypeLabel = (record: ApplicationHistoryItem) => {
-    if (hasInterviewReservation(record)) {
+  const getApplicationTypeLabel = (stage: HistoryDisplayStage) => {
+    if (stage === "INTERVIEW") {
       return "면접";
     }
 
-    const normalizedStatus = getNormalizedStatus(record);
-    if (
-      normalizedStatus.startsWith("DOC_") ||
-      normalizedStatus === "SUBMITTED"
-    ) {
-      return "서류";
-    }
-
-    if (normalizedStatus.startsWith("FINAL_")) {
-      return "면접";
-    }
-
-    return "-";
+    return "서류";
   };
 
   const handleEditClick = (applicationId: number) => {
     router.push(`/14/apply?applicationId=${applicationId}`);
   };
 
-  const handleResultClick = (applicationId: number) => {
-    router.push(`/14/result?applicationId=${applicationId}`);
+  const handleResultClick = (
+    applicationId: number,
+    recruitmentId: number,
+  ) => {
+    router.push(
+      `/14/result?applicationId=${applicationId}&recruitmentId=${recruitmentId}`,
+    );
   };
 
   return (
@@ -339,13 +345,16 @@ export default function HistorySection({ onBack }: HistorySectionProps) {
               ) : null}
 
               {!isLoading && !errorMessage
-                ? visibleRecords.map((record, index) => {
+                ? displayRows.map(({ record, stage }, index) => {
                     const { canShowEditButton, canShowResultButton } =
-                      getActionVisibility(record);
-                    const isInterviewRecord = hasInterviewReservation(record);
+                      getActionVisibility(record, stage);
+                    const isInterviewRecord = stage === "INTERVIEW";
 
                     return (
-                      <tr key={record.applicationId} className="text-white/85">
+                      <tr
+                        key={`${record.applicationId}-${stage}`}
+                        className="text-white/85"
+                      >
                         <td className="border-b border-white/10 px-3 py-3">
                           {index + 1}
                         </td>
@@ -353,7 +362,7 @@ export default function HistorySection({ onBack }: HistorySectionProps) {
                           {record.generation}기
                         </td>
                         <td className="border-b border-white/10 px-3 py-3">
-                          {getApplicationTypeLabel(record)}
+                          {getApplicationTypeLabel(stage)}
                         </td>
                         <td className="border-b border-white/10 px-3 py-3">
                           {isInterviewRecord
@@ -389,7 +398,10 @@ export default function HistorySection({ onBack }: HistorySectionProps) {
                             <ActionButton
                               text="결과 확인"
                               onClick={() =>
-                                handleResultClick(record.applicationId)
+                                handleResultClick(
+                                  record.applicationId,
+                                  record.recruitmentId,
+                                )
                               }
                               className="bg-main-1 px-5 py-2.25 text-[14px] leading-none"
                               hoverClassName="hover:bg-[#2289E6]"
@@ -409,3 +421,4 @@ export default function HistorySection({ onBack }: HistorySectionProps) {
     </section>
   );
 }
+

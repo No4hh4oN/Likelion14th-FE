@@ -123,6 +123,15 @@ export default function ResultEntryPage() {
     const parsed = Number(raw);
     return Number.isFinite(parsed) ? parsed : null;
   }, [searchParams]);
+  const requestedRecruitmentId = useMemo(() => {
+    const raw = searchParams.get("recruitmentId");
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : null;
+  }, [searchParams]);
 
   const [recruitmentInfo, setRecruitmentInfo] =
     useState<RecruitmentDetailResponse | null>(null);
@@ -138,10 +147,10 @@ export default function ResultEntryPage() {
       setLoadErrorMessage("");
 
       try {
-        let recruitmentId: number | null = null;
+        let recruitmentId: number | null = requestedRecruitmentId;
         let statusFromApplication: ResultStatus | null = null;
 
-        if (requestedApplicationId) {
+        if (!recruitmentId && requestedApplicationId) {
           const application = await getApplicationForResult(
             requestedApplicationId,
           );
@@ -201,12 +210,23 @@ export default function ResultEntryPage() {
     return () => {
       isMounted = false;
     };
-  }, [requestedApplicationId]);
+  }, [requestedApplicationId, requestedRecruitmentId]);
 
   const announcementMeta = getAnnouncementMeta(recruitmentInfo, status);
-  const checkHref = requestedApplicationId
-    ? `/14/result/check?applicationId=${requestedApplicationId}`
-    : "/14/result/check";
+  const checkHref = useMemo(() => {
+    const nextSearchParams = new URLSearchParams();
+
+    if (requestedApplicationId) {
+      nextSearchParams.set("applicationId", String(requestedApplicationId));
+    }
+
+    if (requestedRecruitmentId) {
+      nextSearchParams.set("recruitmentId", String(requestedRecruitmentId));
+    }
+
+    const queryString = nextSearchParams.toString();
+    return queryString ? `/14/result/check?${queryString}` : "/14/result/check";
+  }, [requestedApplicationId, requestedRecruitmentId]);
 
   return (
     <section className="relative min-h-screen overflow-hidden bg-background px-4 pt-10 lg:py-28 text-white lg:px-6">

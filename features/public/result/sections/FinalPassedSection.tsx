@@ -8,7 +8,7 @@ type FinalPassedSectionProps = {
 };
 
 const OT_INFO = {
-  dateTime: "2026년 3월 20일(금) 17시",
+  dateTime: "2026년 3월 27일(금) 17시 30분",
   location: "위치 나오면 수정",
   notes: [
     "오리엔테이션은 약 1시간 정도 소요될 예정입니다.",
@@ -208,7 +208,7 @@ export default function FinalPassedSection({
 
   return (
     <section className="min-h-screen bg-background px-4 pb-20 pt-12 text-white lg:px-6 lg:pt-16">
-      <div className="mx-auto w-full max-w-[1220px]">
+      <div className="mx-auto w-full max-w-[1220px] pt-9.25 lg:pt-36">
         <h1 className="text-center leading-[1.22]">
           <span className="block text-[42px] font-bold text-main-3 lg:text-[70px]">
             LIKELION at SYU 14th

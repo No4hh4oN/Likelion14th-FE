@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { getActiveRecruitment } from "@/features/public/home/api";
 import { getMyProfile } from "@/features/public/mypage/api";
+import { getRecruitmentPhaseLabel } from "@/features/public/recruitmentPhase";
 import {
   getApplicationForResult,
   getDashboardForResult,
@@ -30,6 +31,15 @@ export default function ResultStatusPage() {
   const searchParams = useSearchParams();
   const requestedApplicationId = useMemo(() => {
     const raw = searchParams.get("applicationId");
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : null;
+  }, [searchParams]);
+  const requestedRecruitmentId = useMemo(() => {
+    const raw = searchParams.get("recruitmentId");
     if (!raw) {
       return null;
     }
@@ -65,11 +75,13 @@ export default function ResultStatusPage() {
       setReserveSuccessMessage("");
 
       try {
-        let recruitmentId: number | null = null;
+        let recruitmentId: number | null = requestedRecruitmentId;
         let statusFromApplication: ResultStatus | null = null;
 
-        if (requestedApplicationId) {
-          const application = await getApplicationForResult(requestedApplicationId);
+        if (!recruitmentId && requestedApplicationId) {
+          const application = await getApplicationForResult(
+            requestedApplicationId,
+          );
           recruitmentId = application.recruitmentId;
           statusFromApplication = normalizeStatus(application.status);
         }
@@ -83,16 +95,18 @@ export default function ResultStatusPage() {
           throw new Error("NO_RECRUITMENT");
         }
 
-        const [nextRecruitmentInfo, nextDashboard, nextProfile] = await Promise.all([
-          getRecruitmentInfo(recruitmentId),
-          getDashboardForResult(recruitmentId),
-          getMyProfile().catch(() => null),
-        ]);
+        const [nextRecruitmentInfo, nextDashboard, nextProfile] =
+          await Promise.all([
+            getRecruitmentInfo(recruitmentId),
+            getDashboardForResult(recruitmentId),
+            getMyProfile().catch(() => null),
+          ]);
 
         const resolvedStatus = resolveResultStatus({
           dashboardStatus: nextDashboard.myApplication?.status,
           applicationStatus: statusFromApplication,
-          isDocumentResultVisible: nextDashboard.documentResult.visible === true,
+          isDocumentResultVisible:
+            nextDashboard.documentResult.visible === true,
           documentResult: nextDashboard.documentResult.result,
         });
 
@@ -123,7 +137,7 @@ export default function ResultStatusPage() {
         const maybeMessage =
           error instanceof Error && error.message === "NO_RECRUITMENT"
             ? "조회 가능한 모집 결과가 없습니다."
-            : "결과 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
+            : "결과 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 보시거나 운영진에게 문의 바랍니다.";
 
         setLoadErrorMessage(maybeMessage);
       } finally {
@@ -138,7 +152,7 @@ export default function ResultStatusPage() {
     return () => {
       isMounted = false;
     };
-  }, [requestedApplicationId]);
+  }, [requestedApplicationId, requestedRecruitmentId]);
 
   const reservation: InterviewReservation | null =
     dashboard?.interview?.myReservation ?? null;
@@ -147,7 +161,9 @@ export default function ResultStatusPage() {
       return null;
     }
 
-    const matchedSlot = slots.find((slot) => slot.slotId === reservation.slotId);
+    const matchedSlot = slots.find(
+      (slot) => slot.slotId === reservation.slotId,
+    );
     return matchedSlot?.location ?? reservation.location ?? null;
   }, [reservation, slots]);
   const hasDashboardApplication = dashboard?.myApplication != null;
@@ -168,7 +184,8 @@ export default function ResultStatusPage() {
 
     const nextDashboard =
       dashboardResult.status === "fulfilled" ? dashboardResult.value : null;
-    const nextSlots = slotsResult.status === "fulfilled" ? slotsResult.value : null;
+    const nextSlots =
+      slotsResult.status === "fulfilled" ? slotsResult.value : null;
 
     if (nextDashboard) {
       setDashboard(nextDashboard);
@@ -176,7 +193,8 @@ export default function ResultStatusPage() {
         resolveResultStatus({
           dashboardStatus: nextDashboard.myApplication?.status,
           applicationStatus: null,
-          isDocumentResultVisible: nextDashboard.documentResult.visible === true,
+          isDocumentResultVisible:
+            nextDashboard.documentResult.visible === true,
           documentResult: nextDashboard.documentResult.result,
         }),
       );
@@ -212,11 +230,13 @@ export default function ResultStatusPage() {
     setReserveSuccessMessage("");
 
     try {
-      const nextReservation = await reserveInterviewSlot(targetRecruitmentId, slotId);
-
-      const { nextDashboard, nextSlots } = await refreshInterviewState(
+      const nextReservation = await reserveInterviewSlot(
         targetRecruitmentId,
+        slotId,
       );
+
+      const { nextDashboard, nextSlots } =
+        await refreshInterviewState(targetRecruitmentId);
 
       if (nextReservation) {
         setDashboard((currentDashboard) =>
@@ -252,7 +272,8 @@ export default function ResultStatusPage() {
       }
 
       const hasReservationAfterSuccess =
-        nextDashboard?.interview?.myReservation != null || nextReservation != null;
+        nextDashboard?.interview?.myReservation != null ||
+        nextReservation != null;
 
       if (!hasReservationAfterSuccess) {
         setReserveSuccessMessage(
@@ -264,18 +285,20 @@ export default function ResultStatusPage() {
       setReserveSuccessMessage("면접 일정이 확정되었습니다.");
     } catch (error) {
       const errorInfo = getInterviewReservationErrorInfo(error);
-      const { nextDashboard, nextSlots } = await refreshInterviewState(
-        targetRecruitmentId,
-      );
+      const { nextDashboard, nextSlots } =
+        await refreshInterviewState(targetRecruitmentId);
       const latestReservation = nextDashboard?.interview?.myReservation ?? null;
 
       if (latestReservation) {
         setReserveErrorMessage("");
-        setReserveSuccessMessage("면접 일정이 이미 확정되어 예약 완료 상태로 반영했습니다.");
+        setReserveSuccessMessage(
+          "면접 일정이 이미 확정되어 예약 완료 상태로 반영했습니다.",
+        );
         return;
       }
 
-      const latestCanReserve = nextDashboard?.interview?.canReserve ?? canReserveInterview;
+      const latestCanReserve =
+        nextDashboard?.interview?.canReserve ?? canReserveInterview;
       const attemptedSlot =
         nextSlots?.find((slot) => slot.slotId === slotId) ??
         slots.find((slot) => slot.slotId === slotId) ??
@@ -288,7 +311,7 @@ export default function ResultStatusPage() {
             attemptedSlot.remainingCount <= 0));
 
       let nextErrorMessage =
-        "면접 시간 확정에 실패했습니다. 잠시 후 다시 시도해 주세요.";
+        "면접 시간 확정에 실패했습니다. 잠시 후 다시 시도해 보시거나 운영진에게 문의 바랍니다.";
 
       if (!latestCanReserve) {
         nextErrorMessage = "현재 면접 일정 선택 기간이 아닙니다.";
@@ -372,7 +395,8 @@ export default function ResultStatusPage() {
           </p>
           {recruitmentInfo?.phaseType && (
             <p className="mt-3 text-[14px] text-white/55 lg:text-[16px]">
-              현재 모집 단계: {recruitmentInfo.phaseType}
+              현재 모집 단계:{" "}
+              {getRecruitmentPhaseLabel(recruitmentInfo.phaseType)}
             </p>
           )}
         </div>
@@ -391,7 +415,10 @@ export default function ResultStatusPage() {
   if (status === "DOC_PASSED") {
     if (reservation) {
       return (
-        <ReservedSection reservation={reservation} location={reservationLocation} />
+        <ReservedSection
+          reservation={reservation}
+          location={reservationLocation}
+        />
       );
     }
 
@@ -419,7 +446,7 @@ export default function ResultStatusPage() {
           결과 정보를 확인할 수 없습니다
         </h2>
         <p className="mt-4 text-[18px] text-white/80 lg:text-[24px]">
-          잠시 후 다시 시도해 주세요.
+          잠시 후 다시 시도해 보시거나 운영진에게 문의 바랍니다.
         </p>
       </div>
     </section>

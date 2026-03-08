@@ -1,9 +1,10 @@
-"use client";
+﻿"use client";
 
 import {
   ChangeEvent,
   ReactNode,
   Suspense,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -11,6 +12,7 @@ import {
 } from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
+import { isDocumentOpenPhase } from "@/features/public/recruitmentPhase";
 import { getAccessToken } from "@/lib/axios";
 import {
   createApplicationDraft,
@@ -376,9 +378,23 @@ function ApplyPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedApplicationIdRaw = searchParams.get("applicationId");
-  const resultRedirectHref = requestedApplicationIdRaw
-    ? `/14/result?applicationId=${requestedApplicationIdRaw}`
-    : "/14/result";
+  const buildResultRedirectHref = useCallback(
+    (recruitmentId?: number | null) => {
+      const nextSearchParams = new URLSearchParams();
+
+      if (requestedApplicationIdRaw) {
+        nextSearchParams.set("applicationId", requestedApplicationIdRaw);
+      }
+
+      if (recruitmentId) {
+        nextSearchParams.set("recruitmentId", String(recruitmentId));
+      }
+
+      const queryString = nextSearchParams.toString();
+      return queryString ? `/14/result?${queryString}` : "/14/result";
+    },
+    [requestedApplicationIdRaw],
+  );
   /**
    * 공통 질문 답변 상태
    */
@@ -504,8 +520,8 @@ function ApplyPageContent() {
 
         setActiveRecruitment(recruitment);
 
-        if (recruitment.phaseType !== "DOC_OPEN") {
-          router.replace(resultRedirectHref);
+        if (!isDocumentOpenPhase(recruitment.phaseType)) {
+          router.replace(buildResultRedirectHref(recruitment.recruitmentId));
           return;
         }
 
@@ -520,7 +536,7 @@ function ApplyPageContent() {
           }
 
           if (now > end) {
-            router.replace(resultRedirectHref);
+            router.replace(buildResultRedirectHref(recruitment.recruitmentId));
             return;
           }
         }
@@ -709,7 +725,7 @@ function ApplyPageContent() {
     return () => {
       isMounted = false;
     };
-  }, [requestedApplicationIdRaw, resultRedirectHref, router, searchParams]);
+  }, [buildResultRedirectHref, requestedApplicationIdRaw, router]);
 
   useEffect(() => {
     setIsPartQuestionGuideOpen(false);
@@ -1539,3 +1555,4 @@ export default function ApplyPage() {
     </Suspense>
   );
 }
+
