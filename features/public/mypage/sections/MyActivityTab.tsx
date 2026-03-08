@@ -636,7 +636,7 @@ export default function MyActivityTab({ user }: MyActivityTabProps) {
 
       <section>
         <h3 className="text-[24px] font-bold text-white">
-          멋쟁이 사자처럼 일정
+          멋쟁이사자처럼 일정
         </h3>
         <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
           <div className="rounded-[8px] bg-[#4A4E5A] p-4">
