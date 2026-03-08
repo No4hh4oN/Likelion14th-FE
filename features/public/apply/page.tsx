@@ -375,6 +375,10 @@ function ApplyPageLoadingFallback() {
 function ApplyPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const requestedApplicationIdRaw = searchParams.get("applicationId");
+  const resultRedirectHref = requestedApplicationIdRaw
+    ? `/14/result?applicationId=${requestedApplicationIdRaw}`
+    : "/14/result";
   /**
    * 공통 질문 답변 상태
    */
@@ -501,7 +505,7 @@ function ApplyPageContent() {
         setActiveRecruitment(recruitment);
 
         if (recruitment.phaseType !== "DOC_OPEN") {
-          setPageStatus("closed");
+          router.replace(resultRedirectHref);
           return;
         }
 
@@ -510,8 +514,13 @@ function ApplyPageContent() {
         const now = Date.now();
 
         if (Number.isFinite(start) && Number.isFinite(end)) {
-          if (now < start || now > end) {
+          if (now < start) {
             setPageStatus("closed");
+            return;
+          }
+
+          if (now > end) {
+            router.replace(resultRedirectHref);
             return;
           }
         }
@@ -666,7 +675,6 @@ function ApplyPageContent() {
         setActionMessage("");
         setActionErrorMessage("");
 
-        const requestedApplicationIdRaw = searchParams.get("applicationId");
         const requestedApplicationId = Number(requestedApplicationIdRaw);
         const isEditRequestForSubmitted =
           !!requestedApplicationIdRaw &&
@@ -701,7 +709,7 @@ function ApplyPageContent() {
     return () => {
       isMounted = false;
     };
-  }, [router, searchParams]);
+  }, [requestedApplicationIdRaw, resultRedirectHref, router, searchParams]);
 
   useEffect(() => {
     setIsPartQuestionGuideOpen(false);
