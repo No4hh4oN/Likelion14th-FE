@@ -51,10 +51,39 @@ export async function getRecruitmentInfo(
 export async function getApplicationForResult(
   applicationId: number,
 ): Promise<ApplicationForResultResponse> {
-  const response = await apiClient.get<ApplicationForResultResponse>(
-    `/applications/${applicationId}`,
-  );
-  return response.data;
+  try {
+    const response = await apiClient.get<ApplicationForResultResponse>(
+      `/applications/${applicationId}`,
+    );
+    return response.data;
+  } catch (error) {
+    // Some backend states return 500 for the detail endpoint. Fall back to the
+    // caller's application list so result pages can still resolve recruitmentId.
+    const fallbackResponse = await apiClient.get<{
+      items?: Array<{
+        applicationId: number;
+        recruitmentId: number;
+        status: string;
+      }>;
+    }>("/applications", {
+      params: {
+        size: 100,
+      },
+    });
+    const matchedApplication = fallbackResponse.data.items?.find(
+      (item) => item.applicationId === applicationId,
+    );
+
+    if (matchedApplication) {
+      return {
+        applicationId: matchedApplication.applicationId,
+        recruitmentId: matchedApplication.recruitmentId,
+        status: matchedApplication.status,
+      };
+    }
+
+    throw error;
+  }
 }
 
 /**
