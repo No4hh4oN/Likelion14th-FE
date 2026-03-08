@@ -422,11 +422,12 @@ export default function ResultStatusPage() {
       );
     }
 
-    return (
-      <PassedSection
-        slots={slots}
-        reservation={reservation}
-        canReserve={canReserveInterview}
+      return (
+        <PassedSection
+          userName={userName}
+          slots={slots}
+          reservation={reservation}
+          canReserve={canReserveInterview}
         isReserving={isReserving}
         reserveErrorMessage={reserveErrorMessage}
         reserveSuccessMessage={reserveSuccessMessage}

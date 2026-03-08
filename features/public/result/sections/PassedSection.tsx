@@ -9,6 +9,7 @@ import type { InterviewReservation, InterviewSlot } from "../type";
  * 서류 합격 후 면접 일정을 선택하는 섹션에서 사용하는 props입니다.
  */
 type PassedSectionProps = {
+  userName?: string | null;
   slots: InterviewSlot[];
   reservation: InterviewReservation | null;
   canReserve: boolean;
@@ -220,6 +221,7 @@ const WEEKDAY_LABELS = ["월", "화", "수", "목", "금", "토", "일"] as cons
  * @returns 면접 시간 선택 섹션
  */
 export default function PassedSection({
+  userName,
   slots,
   reservation,
   canReserve,
@@ -311,6 +313,7 @@ export default function PassedSection({
     number | null
   >(null);
   const feedbackMessageRef = useRef<HTMLParagraphElement | null>(null);
+  const applicantName = userName?.trim() || "지원자";
 
   /**
    * 실제로 우측 시간 목록을 구성할 기준 날짜입니다.
@@ -507,7 +510,7 @@ export default function PassedSection({
         </div>
 
         <div className="mx-auto w-full rounded-[14px] bg-gray-7 px-6 py-7 text-center text-[14px] text-gray-3 lg:px-12 lg:py-9 lg:text-[24px]">
-          귀하께서는 멋쟁이사자처럼 삼육대학교 14기 아기사자 모집에{" "}
+          {applicantName}님께서는 멋쟁이사자처럼 삼육대학교 14기 아기사자 모집에{" "}
           <span className="text-main-1">1차 합격</span>하셨음을 안내드립니다.
           <br />
           <br className="block lg:hidden" />
