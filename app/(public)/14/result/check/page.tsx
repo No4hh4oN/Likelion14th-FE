@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import ResultEntryPage from "@/features/public/result/ResultEntryPage";
+import ResultStatusPage from "@/features/public/result/ResultStatusPage";
 
 export default function Page() {
   return (
@@ -12,7 +12,7 @@ export default function Page() {
         </section>
       }
     >
-      <ResultEntryPage />
+      <ResultStatusPage />
     </Suspense>
   );
 }
