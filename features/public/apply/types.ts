@@ -1,3 +1,5 @@
+import type { RecruitmentPhase } from "../recruitmentPhase";
+
 /**
  * 지원 파트 식별자 타입입니다.
  */
@@ -16,12 +18,7 @@ export type DocumentQuestionCategory =
 /**
  * 모집 진행 단계(enum) 타입입니다.
  */
-export type RecruitmentPhaseType =
-  | "DOC_OPEN"
-  | "DOC_CLOSED"
-  | "INTERVIEW_SELECT"
-  | "FINAL_RESULT"
-  | "CLOSED";
+export type RecruitmentPhaseType = RecruitmentPhase;
 
 /**
  * 지원서 상태(enum) 타입입니다.

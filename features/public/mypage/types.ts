@@ -1,3 +1,5 @@
+import type { RecruitmentPhase } from "../recruitmentPhase";
+
 export type UserRole = "게스트" | "아기사자" | "운영진";
 export type MyPageTab = "내 활동" | "과제";
 export type MyPageSection = "profile" | "edit" | "history";
@@ -66,11 +68,7 @@ export type ApplicationHistoryStatus =
   | "FINAL_FAILED"
   | "FINAL_PASSED";
 
-export type PhaseType =
-  | "DOC_OPEN"
-  | "DOC_CLOSED"
-  | "INTERVIEW_SELECT"
-  | "FINAL_RESULT";
+export type PhaseType = RecruitmentPhase;
 
 export type ApplyPart = "FRONTEND" | "BACKEND" | "AI_ML" | "PM_DESIGN";
 

@@ -1,11 +1,9 @@
+import type { RecruitmentPhase } from "../recruitmentPhase";
+
 /**
  * 모집 결과 페이지에서 사용하는 모집 단계(enum) 타입입니다.
  */
-export type PhaseType =
-  | "DOC_OPEN"
-  | "DOC_CLOSED"
-  | "INTERVIEW_SELECT"
-  | "FINAL_RESULT";
+export type PhaseType = RecruitmentPhase;
 
 /**
  * 지원 결과 페이지에서 해석하는 지원 상태(enum) 타입입니다.
