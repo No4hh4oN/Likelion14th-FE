@@ -26,6 +26,11 @@ import type {
   UpsertAdminMyInterviewScoreResponse,
   UpsertAdminMyDocumentScoreRequest,
   UpsertAdminMyDocumentScoreResponse,
+  AdminNoticeListQuery,
+  AdminNoticeListResponse,
+  AdminNoticeDetailResponse,
+  CreateAdminNoticeRequest,
+  UpsertAdminNoticeResponse,
 } from "./type";
 
 export async function getAdminApplications(
@@ -192,6 +197,93 @@ export async function getAdminUserDetail(
 ): Promise<AdminUserDetailResponse> {
   const response = await apiClient.get<AdminUserDetailResponse>(
     `/admin/users/${encodeURIComponent(loginId)}`,
+  );
+  return response.data;
+}
+
+export async function getAdminNotices(
+  query: AdminNoticeListQuery,
+): Promise<AdminNoticeListResponse> {
+  const response = await apiClient.get<AdminNoticeListResponse>("/notice", {
+    params: query,
+  });
+  return response.data;
+}
+
+export async function getAdminNoticeDetail(
+  noticeId: number,
+): Promise<AdminNoticeDetailResponse> {
+  const response = await apiClient.get<AdminNoticeDetailResponse>(
+    `/notice/${noticeId}`,
+  );
+  return response.data;
+}
+
+export async function createAdminNotice(
+  payload: CreateAdminNoticeRequest,
+): Promise<UpsertAdminNoticeResponse> {
+  const response = await apiClient.post<UpsertAdminNoticeResponse>(
+    "/notice",
+    payload,
+  );
+  return response.data;
+}
+
+export async function updateAdminNotice(
+  noticeId: number,
+  query: {
+    title: string;
+    content: string;
+    category?: string;
+    part?: string;
+  },
+  files: File[] = [],
+): Promise<UpsertAdminNoticeResponse> {
+  const formData = new FormData();
+  files.forEach((file) => {
+    formData.append("file", file);
+  });
+
+  const response = await apiClient.put<UpsertAdminNoticeResponse>(
+    `/notice/${noticeId}`,
+    formData,
+    { params: query },
+  );
+  return response.data;
+}
+
+export async function deleteAdminNotice(noticeId: number): Promise<string> {
+  const response = await apiClient.delete<string>(`/notice/${noticeId}`);
+  return response.data;
+}
+
+export async function restoreAdminNotice(noticeId: number): Promise<string> {
+  const response = await apiClient.post<string>(`/notice/${noticeId}/restore`);
+  return response.data;
+}
+
+export async function uploadAdminNoticeFiles(
+  noticeId: number,
+  files: File[],
+): Promise<string> {
+  const formData = new FormData();
+  files.forEach((file) => {
+    formData.append("files", file);
+  });
+
+  const response = await apiClient.post<string>(
+    `/notice/${noticeId}/files`,
+    formData,
+  );
+  return response.data;
+}
+
+export async function deleteAdminNoticeFile(
+  noticeId: number,
+  fileId: number,
+): Promise<string> {
+  const response = await apiClient.delete<string>(
+    `/notice/${noticeId}/files/${fileId}`,
   );
   return response.data;
 }
