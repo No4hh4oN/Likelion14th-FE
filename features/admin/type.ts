@@ -246,3 +246,71 @@ export type AdminRecruitmentListQuery = {
   size?: number;
   sort?: string;
 };
+
+export type AdminNoticeCategory = "NOTICE" | "SESSION_DATA" | string;
+export type AdminNoticePart =
+  | "FRONTEND"
+  | "BACKEND"
+  | "AI_ML"
+  | "PM_DESIGN"
+  | "ETC"
+  | string;
+
+export type AdminNoticeListItem = {
+  noticeId: number;
+  title: string;
+  category: AdminNoticeCategory;
+  part: AdminNoticePart;
+  createdAt: string;
+  fileCount: number;
+};
+
+export type AdminNoticeListResponse = {
+  noticeList: AdminNoticeListItem[];
+  totalPages: number;
+  totalElements: number;
+};
+
+export type AdminNoticeListQuery = {
+  page?: number;
+  size?: number;
+  category?: "NOTICE" | "SESSION_DATA";
+  part?: "FRONTEND" | "BACKEND" | "AI_ML" | "PM_DESIGN" | "ETC";
+};
+
+export type AdminNoticeFile = {
+  fileId: number;
+  originalFileName: string;
+  fileUrl: string;
+};
+
+export type AdminNotice = {
+  noticeId: number;
+  userId: number;
+  title: string;
+  content: string;
+  category: AdminNoticeCategory;
+  noticePart: AdminNoticePart;
+  status: "ACTIVE" | "INACTIVE" | string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AdminNoticeDetailResponse = {
+  notice: AdminNotice;
+  files: AdminNoticeFile[];
+};
+
+export type CreateAdminNoticeRequest = {
+  title: string;
+  content: string;
+  category: "NOTICE" | "SESSION_DATA";
+  part: "FRONTEND" | "BACKEND" | "AI_ML" | "PM_DESIGN" | "ETC";
+};
+
+export type UpsertAdminNoticeResponse = {
+  result: string;
+  noticeId: number;
+  createdAt?: string;
+  updatedAt?: string;
+};
