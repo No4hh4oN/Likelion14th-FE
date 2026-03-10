@@ -41,7 +41,13 @@ export type AdminApplicationListQuery = {
 
 export type AdminInterviewCandidateListQuery = {
   recruitmentId: number;
-  part?: AdminApplyPart;
+  page?: number;
+  size?: number;
+  sort?: string;
+};
+
+export type AdminDocumentPendingPassListQuery = {
+  recruitmentId: number;
   page?: number;
   size?: number;
   sort?: string;
@@ -78,8 +84,69 @@ export type AdminApplicationDetailResponse = {
   docAvgScore: number | null;
 };
 
-export type AdminInterviewCandidateListResponse = AdminApplicationListResponse;
-export type AdminInterviewCandidateDetailResponse = AdminApplicationDetailResponse;
+export type AdminInterviewCandidateListItem = {
+  applicationId: number;
+  name: string;
+  department: string;
+  studentNoPrefix: string;
+  grade: number;
+  enrollment: string;
+  applyPart: AdminApplyPart | string;
+  phone: string;
+  slotStartAt: string;
+  slotEndAt: string;
+  docAvgScore: number | null;
+};
+
+export type AdminInterviewCandidateListResponse = {
+  items: AdminInterviewCandidateListItem[];
+  page: {
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+  };
+};
+
+export type AdminInterviewCandidateDetailResponse = {
+  applicationId: number;
+  applicant: {
+    name: string;
+    department: string;
+    studentNo: string;
+    grade: number;
+    enrollment: string;
+    birthDate: string;
+    phone: string;
+    email: string;
+  };
+  applyPart: AdminApplyPart | string;
+  submittedAt: string;
+  answers: AdminApplicationAnswer[];
+  files: AdminApplicationFile[];
+  docAvgScore: number | null;
+  reservation: {
+    slotId: number;
+    startAt: string;
+    endAt: string;
+  } | null;
+};
+
+export type AdminDocumentPendingPassItem = {
+  applicationId: number;
+  docAvgScore: number | null;
+  applyPart: AdminApplyPart | string;
+};
+
+export type AdminDocumentPendingPassListResponse = {
+  items: AdminDocumentPendingPassItem[];
+  page: {
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+  };
+};
 
 export type AdminDocumentScoreItem = {
   questionId: number;

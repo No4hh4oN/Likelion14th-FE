@@ -50,22 +50,22 @@ export default function ApplicantFilters({
   onStatusChange,
   onApply,
 }: ApplicantFiltersProps) {
-  const showExtendedFilters = Boolean(
-    !compact && onPartChange && onStatusChange && part && status,
-  );
+  const showPartFilter = Boolean(onPartChange && part);
+  const showStatusFilter = Boolean(onStatusChange && status);
+  const desktopGridClass = compact
+    ? showPartFilter && showStatusFilter
+      ? "lg:grid-cols-[1fr_170px_170px_auto]"
+      : showPartFilter || showStatusFilter
+        ? "lg:grid-cols-[1fr_170px_auto]"
+        : "lg:grid-cols-[1fr_auto]"
+    : showPartFilter && showStatusFilter
+      ? "lg:grid-cols-[1fr_220px_220px_auto]"
+      : showPartFilter || showStatusFilter
+        ? "lg:grid-cols-[1fr_220px_auto]"
+        : "lg:grid-cols-[1fr_auto]";
 
   return (
-    <div
-      className={`grid gap-2 ${
-        showExtendedFilters
-          ? compact
-            ? "lg:grid-cols-[1fr_170px_170px_auto]"
-            : "lg:grid-cols-[1fr_220px_220px_auto]"
-          : compact
-            ? "lg:grid-cols-[1fr_auto]"
-            : "lg:grid-cols-[1fr_auto]"
-      }`}
-    >
+    <div className={`grid gap-2 ${desktopGridClass}`}>
       <select
         value={selectedRecruitmentId}
         onChange={(event) => onRecruitmentChange(event.target.value)}
@@ -86,7 +86,7 @@ export default function ApplicantFilters({
           ))}
       </select>
 
-      {showExtendedFilters && (
+      {showPartFilter && (
         <select
           value={part}
           onChange={(event) => onPartChange?.(event.target.value as "ALL" | AdminApplyPart)}
@@ -102,7 +102,7 @@ export default function ApplicantFilters({
         </select>
       )}
 
-      {showExtendedFilters && (
+      {showStatusFilter && (
         <select
           value={status}
           onChange={(event) =>
