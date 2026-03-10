@@ -1,21 +1,30 @@
-﻿"use client";
+"use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getAdminInterviewCandidates, getRecruitments } from "../api";
-import type {
-  AdminApplicationListResponse,
-  AdminRecruitmentListItem,
-} from "../type";
+import {
+  getApplicantManagementViewMeta,
+  getFixedStatusForView,
+  getInterviewsListView,
+} from "../applicantManagement";
+import { getAdminApplications, getAdminInterviewCandidates, getRecruitments } from "../api";
+import ApplicantFilters from "../components/ApplicantFilters";
+import ApplicantManagementNav from "../components/ApplicantManagementNav";
 import ApplicantPagination from "../components/ApplicantPagination";
 import ApplicantTable from "../components/ApplicantTable";
+import InterviewCandidateTable from "../components/InterviewCandidateTable";
+import type {
+  AdminApplicationListResponse,
+  AdminApplyPart,
+  AdminInterviewCandidateListResponse,
+  AdminRecruitmentListItem,
+} from "../type";
 import InterviewCandidateDetailPage from "./InterviewCandidateDetailPage";
 
 const PAGE_SIZE = 12;
 const PAGE_BUTTON_LIMIT = 10;
 
-const EMPTY_PAGE: AdminApplicationListResponse = {
+const EMPTY_APPLICATION_PAGE: AdminApplicationListResponse = {
   items: [],
   page: {
     page: 0,
@@ -25,17 +34,51 @@ const EMPTY_PAGE: AdminApplicationListResponse = {
   },
 };
 
+const EMPTY_CANDIDATE_PAGE: AdminInterviewCandidateListResponse = {
+  items: [],
+  page: {
+    page: 0,
+    size: PAGE_SIZE,
+    totalElements: 0,
+    totalPages: 0,
+  },
+};
+
+function parsePartParam(value: string | null) {
+  if (
+    value === "ALL" ||
+    value === "FRONTEND" ||
+    value === "BACKEND" ||
+    value === "AI_ML" ||
+    value === "PM_DESIGN"
+  ) {
+    return value;
+  }
+
+  return "ALL";
+}
+
 export default function InterviewCandidatesListPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const activeView = useMemo(
+    () => getInterviewsListView(searchParams.get("view")),
+    [searchParams],
+  );
+  const viewMeta = getApplicantManagementViewMeta(activeView);
   const [recruitments, setRecruitments] = useState<AdminRecruitmentListItem[]>([]);
   const [isRecruitmentsLoading, setIsRecruitmentsLoading] = useState(false);
   const [selectedRecruitmentId, setSelectedRecruitmentId] = useState("");
   const [recruitmentId, setRecruitmentId] = useState<number | null>(null);
+  const [part, setPart] = useState<"ALL" | AdminApplyPart>("ALL");
   const [page, setPage] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [result, setResult] = useState<AdminApplicationListResponse>(EMPTY_PAGE);
+  const [candidateResult, setCandidateResult] =
+    useState<AdminInterviewCandidateListResponse>(EMPTY_CANDIDATE_PAGE);
+  const [applicationResult, setApplicationResult] =
+    useState<AdminApplicationListResponse>(EMPTY_APPLICATION_PAGE);
+  const [reloadToken, setReloadToken] = useState(0);
 
   const selectedApplicationId = useMemo(() => {
     const parsed = Number(searchParams.get("applicationId"));
@@ -43,12 +86,31 @@ export default function InterviewCandidatesListPage() {
     return parsed;
   }, [searchParams]);
 
+  const selectedRecruitment = useMemo(
+    () =>
+      recruitments.find((item) => item.recruitmentId === recruitmentId) ?? null,
+    [recruitmentId, recruitments],
+  );
+  const isInterviewEvaluating =
+    selectedRecruitment?.phaseType === "INTERVIEW_EVALUATING";
+  const showPartFilter = activeView === "FINAL_PASSED";
+  const resolvedPart = showPartFilter && part !== "ALL" ? part : undefined;
+  const currentPageInfo =
+    activeView === "INTERVIEW_CANDIDATES"
+      ? candidateResult.page
+      : applicationResult.page;
+  const currentTotalElements = currentPageInfo.totalElements;
+
   useEffect(() => {
     const pageParam = Number(searchParams.get("page"));
 
     if (Number.isInteger(pageParam) && pageParam >= 0) {
       setPage(pageParam);
+    } else {
+      setPage(0);
     }
+
+    setPart(parsePartParam(searchParams.get("part")));
   }, [searchParams]);
 
   useEffect(() => {
@@ -103,18 +165,46 @@ export default function InterviewCandidatesListPage() {
     const load = async () => {
       setIsLoading(true);
       setError("");
+
       try {
-        const response = await getAdminInterviewCandidates({
+        if (activeView === "INTERVIEW_CANDIDATES") {
+          const response = await getAdminInterviewCandidates({
+            recruitmentId,
+            page,
+            size: PAGE_SIZE,
+          });
+          if (!mounted) return;
+          setCandidateResult(response);
+          setApplicationResult(EMPTY_APPLICATION_PAGE);
+          return;
+        }
+
+        if (activeView === "FINAL_PENDING") {
+          if (!mounted) return;
+          setCandidateResult(EMPTY_CANDIDATE_PAGE);
+          setApplicationResult(EMPTY_APPLICATION_PAGE);
+          return;
+        }
+
+        const response = await getAdminApplications({
           recruitmentId,
+          part: resolvedPart,
+          status: getFixedStatusForView(activeView),
           page,
           size: PAGE_SIZE,
         });
         if (!mounted) return;
-        setResult(response);
+        setApplicationResult(response);
+        setCandidateResult(EMPTY_CANDIDATE_PAGE);
       } catch {
         if (!mounted) return;
-        setError("합격자 목록을 불러오지 못했습니다.");
-        setResult(EMPTY_PAGE);
+        setError(
+          activeView === "FINAL_PASSED"
+            ? "최종 합격자 목록을 불러오지 못했습니다."
+            : "서류 합격자 목록을 불러오지 못했습니다.",
+        );
+        setCandidateResult(EMPTY_CANDIDATE_PAGE);
+        setApplicationResult(EMPTY_APPLICATION_PAGE);
       } finally {
         if (!mounted) return;
         setIsLoading(false);
@@ -125,23 +215,55 @@ export default function InterviewCandidatesListPage() {
     return () => {
       mounted = false;
     };
-  }, [recruitmentId, page]);
+  }, [activeView, page, recruitmentId, reloadToken, resolvedPart]);
 
-  const updateQuery = (next: {
-    recruitmentId?: number;
+  const buildListHref = (next: {
+    recruitmentId?: number | null;
     page?: number;
+    part?: "ALL" | AdminApplyPart;
     applicationId?: number | null;
   }) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (next.recruitmentId) params.set("recruitmentId", String(next.recruitmentId));
-    if (typeof next.page === "number") params.set("page", String(next.page));
-    params.delete("part");
+    const params = new URLSearchParams();
+    const nextRecruitmentId =
+      next.recruitmentId !== undefined ? next.recruitmentId : recruitmentId;
+    const nextPage = typeof next.page === "number" ? next.page : page;
+    const nextPart = next.part ?? part;
+
+    if (activeView === "FINAL_PENDING") {
+      params.set("view", "final-pending");
+    }
+
+    if (activeView === "FINAL_PASSED") {
+      params.set("view", "final-passed");
+    }
+
+    if (nextRecruitmentId) {
+      params.set("recruitmentId", String(nextRecruitmentId));
+    }
+
+    if (nextPage > 0) {
+      params.set("page", String(nextPage));
+    }
+
+    if (showPartFilter && nextPart !== "ALL") {
+      params.set("part", nextPart);
+    }
+
     if (typeof next.applicationId === "number") {
       params.set("applicationId", String(next.applicationId));
-    } else if (next.applicationId === null) {
-      params.delete("applicationId");
     }
-    router.push(`/admin/interviews/candidates?${params.toString()}`, { scroll: false });
+
+    const query = params.toString();
+    return `${viewMeta.path}${query ? `?${query}` : ""}`;
+  };
+
+  const updateQuery = (next: {
+    recruitmentId?: number | null;
+    page?: number;
+    part?: "ALL" | AdminApplyPart;
+    applicationId?: number | null;
+  }) => {
+    router.push(buildListHref(next), { scroll: false });
   };
 
   const handleApplyRecruitmentId = () => {
@@ -150,210 +272,172 @@ export default function InterviewCandidatesListPage() {
       setError("모집을 선택해 주세요.");
       return;
     }
+
     setPage(0);
     setError("");
     setRecruitmentId(parsed);
+    updateQuery({
+      recruitmentId: parsed,
+      page: 0,
+      part,
+      applicationId: null,
+    });
   };
 
   const handleSelectApplication = (applicationId: number) => {
     updateQuery({
-      recruitmentId: recruitmentId ?? undefined,
-      page: result.page.page,
+      recruitmentId,
+      page: currentPageInfo.page,
+      part,
       applicationId,
     });
   };
 
   const handleCloseViewer = () => {
     updateQuery({
-      recruitmentId: recruitmentId ?? undefined,
-      page: result.page.page,
+      recruitmentId,
+      page: currentPageInfo.page,
+      part,
       applicationId: null,
     });
   };
 
+  const renderTable = (compact: boolean) => {
+    if (activeView === "INTERVIEW_CANDIDATES") {
+      return (
+        <InterviewCandidateTable
+          result={candidateResult}
+          isLoading={isLoading}
+          hasRecruitmentId={Boolean(recruitmentId)}
+          selectedApplicationId={compact ? selectedApplicationId : null}
+          compact={compact}
+          onSelectApplication={handleSelectApplication}
+        />
+      );
+    }
+
+    if (activeView === "FINAL_PENDING") {
+      return (
+        <div className="mt-4 rounded-xl border border-[#4a4f5b] bg-[#2d3037] px-4 py-12 text-center text-sm text-gray-4">
+          API 명세에는 최종 예비 합격자 목록 조회 엔드포인트가 아직 없습니다.
+          <br />
+          면접 평가는 진행할 수 있지만, 예비 합격자 집계 목록은 백엔드 조회 API가
+          추가되어야 연결할 수 있습니다.
+        </div>
+      );
+    }
+
+    return (
+      <ApplicantTable
+        result={applicationResult}
+        isLoading={isLoading}
+        hasRecruitmentId={Boolean(recruitmentId)}
+        selectedApplicationId={compact ? selectedApplicationId : null}
+        compact={compact}
+        onSelectApplication={handleSelectApplication}
+      />
+    );
+  };
+
+  const renderListCard = (compact: boolean) => (
+    <div className="rounded-2xl border border-[#3a3d45] bg-[#2d3037] p-4 lg:p-6">
+      <ApplicantFilters
+        recruitments={recruitments}
+        selectedRecruitmentId={selectedRecruitmentId}
+        isRecruitmentsLoading={isRecruitmentsLoading}
+        compact={compact}
+        part={showPartFilter ? part : undefined}
+        onRecruitmentChange={setSelectedRecruitmentId}
+        onPartChange={
+          showPartFilter
+            ? (nextPart) => {
+                setPart(nextPart);
+                setPage(0);
+              }
+            : undefined
+        }
+        onApply={handleApplyRecruitmentId}
+      />
+
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-gray-3">{viewMeta.label}</p>
+        <p className="text-xs text-gray-4">
+          총 {currentTotalElements.toLocaleString("ko-KR")}명
+        </p>
+      </div>
+
+      {activeView === "FINAL_PENDING" &&
+        selectedRecruitment &&
+        !isInterviewEvaluating && (
+          <p className="mt-3 text-sm text-gray-4">
+            현재 모집 단계는 `{selectedRecruitment.phaseType}`입니다. 최종 예비 합격
+            집계는 `INTERVIEW_EVALUATING` 단계에서 진행하는 흐름으로 맞추는 것이
+            안전합니다.
+          </p>
+        )}
+
+      {activeView === "INTERVIEW_CANDIDATES" &&
+        selectedRecruitment &&
+        selectedRecruitment.phaseType === "INTERVIEW_SELECT" && (
+          <p className="mt-3 text-sm text-gray-4">
+            현재 모집 단계는 `INTERVIEW_SELECT`입니다. 면접 평가는
+            `INTERVIEW_EVALUATING` 단계부터 입력하는 흐름을 권장합니다.
+          </p>
+        )}
+
+      {error && <p className="mt-3 text-sm text-[#ff9ea8]">{error}</p>}
+      {!recruitmentId && !error && (
+        <p className="mt-3 text-sm text-gray-4">모집을 선택해 주세요.</p>
+      )}
+
+      {renderTable(compact)}
+
+      {activeView !== "FINAL_PENDING" && (
+        <ApplicantPagination
+          page={currentPageInfo.page}
+          totalPages={currentPageInfo.totalPages}
+          isLoading={isLoading}
+          disabled={!recruitmentId}
+          pageButtonLimit={PAGE_BUTTON_LIMIT}
+          onChangePage={(nextPage) => {
+            setPage(nextPage);
+            updateQuery({
+              recruitmentId,
+              page: nextPage,
+              part,
+              applicationId: compact ? selectedApplicationId : null,
+            });
+          }}
+        />
+      )}
+    </div>
+  );
+
   return (
     <section className="bg-background px-4 py-10 text-white lg:px-8 lg:py-14">
       <div className="mx-auto max-w-[1200px]">
-        <h1 className="text-[34px] font-bold tracking-[-0.02em]">Interview Candidates</h1>
+        <h1 className="text-[34px] font-bold tracking-[-0.02em]">{viewMeta.pageTitle}</h1>
 
         {!selectedApplicationId && (
           <div className="mt-8 grid items-start gap-4 lg:grid-cols-[220px_1fr]">
-            <aside className="rounded-2xl border border-[#3a3d45] bg-[#26282d] p-4">
-              <p className="text-xs font-semibold text-gray-4">목록</p>
-              <div className="mt-4 space-y-2">
-                <Link
-                  href="/admin/applications"
-                  className="block rounded-lg px-3 py-2 text-left text-[17px] text-gray-4"
-                >
-                  1차 지원자 목록
-                </Link>
-                <Link
-                  href="/admin/interviews/candidates"
-                  className="block rounded-lg border-l-2 border-main-1 bg-[#2f323a] px-3 py-2 text-left text-[17px] text-white"
-                >
-                  1차 합격자 목록
-                </Link>
-              </div>
-            </aside>
-
-            <div className="rounded-2xl border border-[#3a3d45] bg-[#2d3037] p-4 lg:p-6">
-              <div className="grid gap-2 lg:grid-cols-[1fr_auto]">
-                <select
-                  value={selectedRecruitmentId}
-                  onChange={(event) => setSelectedRecruitmentId(event.target.value)}
-                  disabled={isRecruitmentsLoading || recruitments.length === 0}
-                  className="h-11 rounded-lg border border-[#535968] bg-[#3a3f4d] px-3 text-sm text-white outline-none focus:border-main-1 disabled:opacity-60"
-                >
-                  {isRecruitmentsLoading && <option value="">모집 목록 불러오는 중...</option>}
-                  {!isRecruitmentsLoading && recruitments.length === 0 && (
-                    <option value="">모집 목록 없음</option>
-                  )}
-                  {!isRecruitmentsLoading &&
-                    recruitments.map((item) => (
-                      <option key={item.recruitmentId} value={item.recruitmentId}>
-                        {`[${item.generation}기] ${item.title} (#${item.recruitmentId})`}
-                      </option>
-                    ))}
-                </select>
-
-                <button
-                  type="button"
-                  onClick={handleApplyRecruitmentId}
-                  disabled={!selectedRecruitmentId}
-                  className="h-11 rounded-lg bg-main-1 px-5 text-sm font-semibold disabled:opacity-60"
-                >
-                  조회
-                </button>
-              </div>
-
-              <div className="mt-5 flex items-center justify-between">
-                <p className="text-sm text-gray-3">1차 합격자 목록</p>
-                <p className="text-xs text-gray-4">
-                  총 {result.page.totalElements.toLocaleString("ko-KR")}명
-                </p>
-              </div>
-
-              {error && <p className="mt-3 text-sm text-[#ff9ea8]">{error}</p>}
-              {!recruitmentId && !error && (
-                <p className="mt-3 text-sm text-gray-4">모집을 선택해 주세요.</p>
-              )}
-
-              <ApplicantTable
-                result={result}
-                isLoading={isLoading}
-                hasRecruitmentId={Boolean(recruitmentId)}
-                selectedApplicationId={null}
-                compact={false}
-                onSelectApplication={handleSelectApplication}
-              />
-
-              <ApplicantPagination
-                page={result.page.page}
-                totalPages={result.page.totalPages}
-                isLoading={isLoading}
-                disabled={!recruitmentId}
-                pageButtonLimit={PAGE_BUTTON_LIMIT}
-                onChangePage={(nextPage) => {
-                  setPage(nextPage);
-                  updateQuery({
-                    recruitmentId: recruitmentId ?? undefined,
-                    page: nextPage,
-                    applicationId: null,
-                  });
-                }}
-              />
-            </div>
+            <ApplicantManagementNav
+              activeView={activeView}
+              recruitmentId={recruitmentId}
+              part={showPartFilter ? part : null}
+            />
+            {renderListCard(false)}
           </div>
         )}
 
         {selectedApplicationId && (
           <div className="mt-8 grid items-start gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,7fr)]">
             <div className="space-y-4 self-start">
-              <aside className="rounded-2xl border border-[#3a3d45] bg-[#26282d] p-4">
-                <p className="text-xs font-semibold text-gray-4">목록</p>
-                <div className="mt-4 space-y-2">
-                  <Link
-                    href="/admin/applications"
-                    className="block rounded-lg px-3 py-2 text-left text-[17px] text-gray-4"
-                  >
-                    1차 지원자 목록
-                  </Link>
-                  <Link
-                    href="/admin/interviews/candidates"
-                    className="block rounded-lg border-l-2 border-main-1 bg-[#2f323a] px-3 py-2 text-left text-[17px] text-white"
-                  >
-                    1차 합격자 목록
-                  </Link>
-                </div>
-              </aside>
-
-              <div className="rounded-2xl border border-[#3a3d45] bg-[#2d3037] p-4 lg:p-6">
-                <div className="grid gap-2 lg:grid-cols-[1fr_auto]">
-                  <select
-                    value={selectedRecruitmentId}
-                    onChange={(event) => setSelectedRecruitmentId(event.target.value)}
-                    disabled={isRecruitmentsLoading || recruitments.length === 0}
-                    className="h-11 rounded-lg border border-[#535968] bg-[#3a3f4d] px-3 text-sm text-white outline-none focus:border-main-1 disabled:opacity-60"
-                  >
-                    {isRecruitmentsLoading && <option value="">모집 목록 불러오는 중...</option>}
-                    {!isRecruitmentsLoading && recruitments.length === 0 && (
-                      <option value="">모집 목록 없음</option>
-                    )}
-                    {!isRecruitmentsLoading &&
-                      recruitments.map((item) => (
-                        <option key={item.recruitmentId} value={item.recruitmentId}>
-                          {`[${item.generation}기] ${item.title} (#${item.recruitmentId})`}
-                        </option>
-                      ))}
-                  </select>
-
-                  <button
-                    type="button"
-                    onClick={handleApplyRecruitmentId}
-                    disabled={!selectedRecruitmentId}
-                    className="h-11 rounded-lg bg-main-1 px-5 text-sm font-semibold disabled:opacity-60"
-                  >
-                    조회
-                  </button>
-                </div>
-
-                <div className="mt-5 flex items-center justify-between">
-                  <p className="text-sm text-gray-3">1차 합격자 목록</p>
-                  <p className="text-xs text-gray-4">
-                    총 {result.page.totalElements.toLocaleString("ko-KR")}명
-                  </p>
-                </div>
-
-                {error && <p className="mt-3 text-sm text-[#ff9ea8]">{error}</p>}
-                {!recruitmentId && !error && (
-                  <p className="mt-3 text-sm text-gray-4">모집을 선택해 주세요.</p>
-                )}
-
-                <ApplicantTable
-                  result={result}
-                  isLoading={isLoading}
-                  hasRecruitmentId={Boolean(recruitmentId)}
-                  selectedApplicationId={selectedApplicationId}
-                  compact
-                  onSelectApplication={handleSelectApplication}
-                />
-
-                <ApplicantPagination
-                  page={result.page.page}
-                  totalPages={result.page.totalPages}
-                  isLoading={isLoading}
-                  disabled={!recruitmentId}
-                  pageButtonLimit={PAGE_BUTTON_LIMIT}
-                  onChangePage={(nextPage) => {
-                    setPage(nextPage);
-                    updateQuery({
-                      recruitmentId: recruitmentId ?? undefined,
-                      page: nextPage,
-                      applicationId: selectedApplicationId,
-                    });
-                  }}
-                />
-              </div>
+              <ApplicantManagementNav
+                activeView={activeView}
+                recruitmentId={recruitmentId}
+                part={showPartFilter ? part : null}
+              />
+              {renderListCard(true)}
             </div>
 
             <div className="self-start">
@@ -361,6 +445,9 @@ export default function InterviewCandidatesListPage() {
                 applicationId={selectedApplicationId}
                 embedded
                 onClose={handleCloseViewer}
+                onDecisionUpdated={() => setReloadToken((prev) => prev + 1)}
+                recruitmentId={recruitmentId}
+                recruitmentPhase={selectedRecruitment?.phaseType}
               />
             </div>
           </div>

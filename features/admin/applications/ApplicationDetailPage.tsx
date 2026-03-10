@@ -1,8 +1,13 @@
 "use client";
 
+import { getMyInfo } from "@/features/public/api";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import {
+  getApplicationsListView,
+  type ExtendedAdminApplicationStatus,
+} from "../applicantManagement";
 import {
   getAdminApplicationDetail,
   getAdminDocumentScoresDetail,
@@ -10,19 +15,24 @@ import {
   postAdminDocumentPendingDecision,
   upsertMyAdminDocumentScores,
 } from "../api";
+import ApplicantManagementNav from "../components/ApplicantManagementNav";
+import { canManageApplicantDecisions } from "../permissions";
 import type {
   AdminApplicationDetailResponse,
+  AdminApplyPart,
   AdminDocumentScoresDetailResponse,
 } from "../type";
-import { getMyInfo } from "@/features/public/api";
 
 type ApplicationDetailPageProps = {
   applicationId: number;
   embedded?: boolean;
   onClose?: () => void;
+  onStatusUpdated?: () => void;
+  recruitmentPhase?: string | null;
 };
 
 type DetailTab = "document" | "score" | "review";
+
 const DOCUMENT_QUESTION_MAX_SCORES = [10, 10, 10, 20, 20, 30] as const;
 const DEFAULT_DOCUMENT_QUESTION_MAX_SCORE = 30;
 
@@ -76,10 +86,16 @@ export default function ApplicationDetailPage({
   applicationId,
   embedded = false,
   onClose,
+  onStatusUpdated,
+  recruitmentPhase,
 }: ApplicationDetailPageProps) {
   const searchParams = useSearchParams();
   const listQuery = searchParams.toString();
   const listHref = `/admin/applications${listQuery ? `?${listQuery}` : ""}`;
+  const activeView = useMemo(
+    () => getApplicationsListView(searchParams.get("view")),
+    [searchParams],
+  );
 
   const [activeTab, setActiveTab] = useState<DetailTab>("document");
   const [isLoading, setIsLoading] = useState(true);
@@ -97,6 +113,8 @@ export default function ApplicationDetailPage({
   const [pendingDecisionMessage, setPendingDecisionMessage] = useState("");
   const [documentScoreDetail, setDocumentScoreDetail] =
     useState<AdminDocumentScoresDetailResponse | null>(null);
+  const canManageDocumentPendingDecision =
+    isAdmin && (recruitmentPhase ? recruitmentPhase === "DOC_EVALUATING" : true);
 
   useEffect(() => {
     let mounted = true;
@@ -123,15 +141,7 @@ export default function ApplicationDetailPage({
         if (!mounted) return;
 
         if (meResult.status === "fulfilled") {
-          const hasAdminRole =
-            meResult.value.sso.ssoRole === "ADMIN" ||
-            meResult.value.roles.some(
-              (role) =>
-                role.level === "ADMIN" ||
-                role.position === "PRESIDENT" ||
-                role.position === "VICE_PRESIDENT",
-            );
-          setIsAdmin(hasAdminRole);
+          setIsAdmin(canManageApplicantDecisions(meResult.value));
         } else {
           setIsAdmin(false);
         }
@@ -147,7 +157,7 @@ export default function ApplicationDetailPage({
           setScores({});
           setComment("");
           setScoreError(
-            "내 점수 정보를 불러오지 못했습니다. 점수 매기기 탭 저장 시 다시 시도됩니다.",
+            "내 점수 정보를 불러오지 못했습니다. 점수 매기기 탭에서 다시 시도해 주세요.",
           );
         }
 
@@ -155,9 +165,7 @@ export default function ApplicationDetailPage({
           setDocumentScoreDetail(scoreDetailResult.value);
         } else {
           setDocumentScoreDetail(null);
-          setScoreError(
-            "운영진 점수 현황을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.",
-          );
+          setScoreError("운영진 점수 현황을 불러오지 못했습니다.");
         }
       } catch {
         if (!mounted) return;
@@ -169,7 +177,6 @@ export default function ApplicationDetailPage({
     };
 
     void load();
-
     return () => {
       mounted = false;
     };
@@ -224,6 +231,7 @@ export default function ApplicationDetailPage({
           ? "서류 합격 예정으로 처리했습니다."
           : "서류 불합격 예정으로 처리했습니다.",
       );
+      onStatusUpdated?.();
     } catch {
       setScoreError("합격/불합격 예정 처리에 실패했습니다.");
     } finally {
@@ -235,7 +243,9 @@ export default function ApplicationDetailPage({
     <div
       className={`${embedded ? "" : "mt-6"} rounded-2xl bg-[#323640] p-6 lg:p-8 print:rounded-none print:bg-transparent print:p-0 print:text-black`}
     >
-      <h2 className="text-[36px] font-bold lg:text-[44px]">{formatPart(detail?.applyPart ?? "-")}</h2>
+      <h2 className="text-[36px] font-bold lg:text-[44px]">
+        {formatPart(detail?.applyPart ?? "-")}
+      </h2>
 
       {detail && (
         <>
@@ -254,7 +264,7 @@ export default function ApplicationDetailPage({
 
           {documentScoreDetail && (
             <p className="mt-4 text-sm text-gray-4">
-              평가 {documentScoreDetail.reviewCount}명, 평균 점수{" "}
+              평균 {documentScoreDetail.reviewCount}명 평균 점수{" "}
               {documentScoreDetail.average.toFixed(2)}
             </p>
           )}
@@ -278,7 +288,7 @@ export default function ApplicationDetailPage({
         ))}
       </div>
 
-      {isLoading && <p className="mt-6 text-sm text-gray-3">로딩 중...</p>}
+      {isLoading && <p className="mt-6 text-sm text-gray-3">로딩 중입니다.</p>}
       {!isLoading && detailError && (
         <p className="mt-6 text-sm text-[#ff9ea8]">{detailError}</p>
       )}
@@ -431,7 +441,7 @@ export default function ApplicationDetailPage({
           {documentScoreDetail ? (
             <>
               <div className="rounded-lg bg-[#404654] px-4 py-3 text-sm text-gray-2">
-                리뷰어 수: {documentScoreDetail.reviewCount}명, 평균:{" "}
+                리뷰어 {documentScoreDetail.reviewCount}명 평균:{" "}
                 {documentScoreDetail.average.toFixed(2)}
               </div>
 
@@ -461,7 +471,7 @@ export default function ApplicationDetailPage({
                   </article>
                 ))}
 
-              {isAdmin && (
+              {canManageDocumentPendingDecision && (
                 <div className="mt-4 flex flex-wrap items-center gap-3">
                   <button
                     type="button"
@@ -480,6 +490,12 @@ export default function ApplicationDetailPage({
                     서류 불합격 예정
                   </button>
                 </div>
+              )}
+              {isAdmin && recruitmentPhase && recruitmentPhase !== "DOC_EVALUATING" && (
+                <p className="text-sm text-gray-4">
+                  현재 모집 단계는 `{recruitmentPhase}`입니다. 서류 예비 합격 처리는
+                  `DOC_EVALUATING` 단계에서만 가능합니다.
+                </p>
               )}
             </>
           ) : (
@@ -520,23 +536,17 @@ export default function ApplicationDetailPage({
     <section className="bg-background px-4 py-10 text-white lg:px-8 lg:py-14">
       <div className="mx-auto max-w-[1200px]">
         <div className="grid gap-4 lg:grid-cols-[220px_1fr]">
-          <aside className="rounded-2xl border border-[#3a3d45] bg-[#26282d] p-4">
-            <p className="text-xs font-semibold text-gray-4">목록</p>
-            <div className="mt-4 space-y-2">
-              <Link
-                href="/admin/applications"
-                className="block rounded-lg border-l-2 border-main-1 bg-[#2f323a] px-3 py-2 text-left text-[17px] text-white"
-              >
-                서류 지원서 목록
-              </Link>
-              <Link
-                href="/admin/interviews/candidates"
-                className="block rounded-lg px-3 py-2 text-left text-[17px] text-gray-4"
-              >
-                서류 합격자 목록
-              </Link>
-            </div>
-          </aside>
+          <ApplicantManagementNav
+            activeView={activeView}
+            recruitmentId={detail?.recruitmentId}
+            part={searchParams.get("part") as "ALL" | AdminApplyPart | null}
+            status={
+              searchParams.get("status") as
+                | "ALL"
+                | ExtendedAdminApplicationStatus
+                | null
+            }
+          />
 
           <div className="rounded-2xl border border-[#3a3d45] bg-[#2d3037] p-4 lg:p-6">
             <div className="flex justify-end">
