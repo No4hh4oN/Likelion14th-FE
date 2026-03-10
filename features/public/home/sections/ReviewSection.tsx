@@ -71,7 +71,7 @@ function ReviewCards({ summary }: ReviewSummary) {
       {summary.map((item) => (
         <div
           key={item.title}
-          className="relative flex flex-1 basis-0 min-w-0 flex-col gap-1.75 lg:gap-4 border-gray-2 border-2 rounded-[10px] lg:rounded-[30px] py-5.75 lg:py-10.75 px-3.75 lg:px-8.75"
+          className="relative flex flex-1 basis-0 min-w-0 flex-col gap-1.75 lg:gap-4 border-gray-2 border-2 rounded-[10px] lg:rounded-[30px] py-5.75 lg:py-10.75 px-3.75 lg:px-8.75 transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(0,0,0,0.1)] hover:border-main-1 bg-white"
         >
           <div className="flex flex-col lg:flex-row gap-1.75 lg:gap-2.75 w-full items-center">
             <Image

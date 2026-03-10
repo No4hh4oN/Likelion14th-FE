@@ -144,11 +144,11 @@ export default function GallerySection() {
 
                 {/* 이미지 카드 */}
                 <div className="mb-2.5 lg:mb-8 -mt-2 relative">
-                  <div className="relative w-61.75 h-36.75 lg:w-139.25 lg:h-83 rounded-[10px] lg:rounded-[20px] border-5 lg:border-13 border-main-1 overflow-hidden">
+                  <div className="group relative w-61.75 h-36.75 lg:w-139.25 lg:h-83 rounded-[10px] lg:rounded-[20px] border-5 lg:border-13 border-main-1 overflow-hidden">
                     <img
                       src={item.image}
                       alt={item.title}
-                      className="w-full h-full object-cover object-[50%_100%]"
+                      className="w-full h-full object-cover object-[50%_100%] transition-transform duration-500 group-hover:scale-110"
                     />
                     {/* 그라데이션 오버레이 */}
                     <div className="absolute w-full h-3/5 lg:h-4/5 bottom-0 bg-linear-to-t from-[#0071C8] via-transparent to-transparent" />
