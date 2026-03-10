@@ -1,13 +1,14 @@
 import type { NextConfig } from "next";
 
 const isProductionBuild = process.env.NODE_ENV === "production";
+const isStaticExportBuild = isProductionBuild && process.env.NEXT_EXPORT === "true";
 
 const nextConfig: NextConfig = {
-  output: isProductionBuild ? "export" : undefined,
-  trailingSlash: isProductionBuild,
+  output: isStaticExportBuild ? "export" : undefined,
+  trailingSlash: isStaticExportBuild,
   images: {
     qualities: [75, 90, 100],
-    unoptimized: isProductionBuild,
+    unoptimized: isStaticExportBuild,
   },
 };
 
