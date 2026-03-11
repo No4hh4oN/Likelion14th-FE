@@ -28,7 +28,6 @@ type ApplicationDetailPageProps = {
   embedded?: boolean;
   onClose?: () => void;
   onStatusUpdated?: () => void;
-  recruitmentPhase?: string | null;
 };
 
 type DetailTab = "document" | "score" | "review";
@@ -87,7 +86,6 @@ export default function ApplicationDetailPage({
   embedded = false,
   onClose,
   onStatusUpdated,
-  recruitmentPhase,
 }: ApplicationDetailPageProps) {
   const searchParams = useSearchParams();
   const listQuery = searchParams.toString();
@@ -113,8 +111,7 @@ export default function ApplicationDetailPage({
   const [pendingDecisionMessage, setPendingDecisionMessage] = useState("");
   const [documentScoreDetail, setDocumentScoreDetail] =
     useState<AdminDocumentScoresDetailResponse | null>(null);
-  const canManageDocumentPendingDecision =
-    isAdmin && (recruitmentPhase ? recruitmentPhase === "DOC_EVALUATING" : true);
+  const canManageDocumentPendingDecision = isAdmin;
 
   useEffect(() => {
     let mounted = true;
@@ -228,12 +225,12 @@ export default function ApplicationDetailPage({
       });
       setPendingDecisionMessage(
         decision === "PASS"
-          ? "서류 합격 예정으로 처리했습니다."
-          : "서류 불합격 예정으로 처리했습니다.",
+          ? "서류 예비 합격으로 처리했습니다."
+          : "서류 예비 합격을 취소했습니다.",
       );
       onStatusUpdated?.();
     } catch {
-      setScoreError("합격/불합격 예정 처리에 실패했습니다.");
+      setScoreError("서류 예비 합격 처리에 실패했습니다.");
     } finally {
       setIsPendingDecisionLoading(false);
     }
@@ -479,7 +476,7 @@ export default function ApplicationDetailPage({
                     disabled={isPendingDecisionLoading}
                     className="rounded-lg bg-[#1f9d55] px-6 py-2.5 text-sm font-semibold disabled:opacity-60"
                   >
-                    서류 합격 예정
+                    서류 예비 합격
                   </button>
                   <button
                     type="button"
@@ -487,15 +484,9 @@ export default function ApplicationDetailPage({
                     disabled={isPendingDecisionLoading}
                     className="rounded-lg bg-[#cc3a3a] px-6 py-2.5 text-sm font-semibold disabled:opacity-60"
                   >
-                    서류 불합격 예정
+                    서류 예비 합격 취소
                   </button>
                 </div>
-              )}
-              {isAdmin && recruitmentPhase && recruitmentPhase !== "DOC_EVALUATING" && (
-                <p className="text-sm text-gray-4">
-                  현재 모집 단계는 `{recruitmentPhase}`입니다. 서류 예비 합격 처리는
-                  `DOC_EVALUATING` 단계에서만 가능합니다.
-                </p>
               )}
             </>
           ) : (

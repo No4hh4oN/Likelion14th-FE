@@ -538,7 +538,6 @@ export default function ApplicationsListPage() {
                 embedded
                 onClose={handleCloseViewer}
                 onStatusUpdated={() => setReloadToken((prev) => prev + 1)}
-                recruitmentPhase={selectedRecruitment?.phaseType}
               />
             </div>
           </div>
