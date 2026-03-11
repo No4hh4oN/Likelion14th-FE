@@ -1,4 +1,8 @@
-﻿import BabyLionsProjectDetailPage from "@/features/admin/babyLions/BabyLionsProjectDetailPage";
+import BabyLionsProjectDetailPage from "@/features/admin/babyLions/BabyLionsProjectDetailPage";
+
+export function generateStaticParams() {
+  return [{ projectId: "1" }];
+}
 
 type AdminBabyLionsProjectDetailRouteProps = {
   params: Promise<{ projectId: string }>;
@@ -16,4 +20,3 @@ export default async function AdminBabyLionsProjectDetailPage(
 
   return <BabyLionsProjectDetailPage projectId={projectId} />;
 }
-
