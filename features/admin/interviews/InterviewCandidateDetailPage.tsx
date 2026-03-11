@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { getInterviewsListView } from "../applicantManagement";
 import {
+  getAdminDocumentScoresDetail,
   getAdminInterviewCandidateDetail,
   getAdminInterviewScoreDetail,
   getMyAdminInterviewScore,
@@ -16,6 +17,7 @@ import ApplicantManagementNav from "../components/ApplicantManagementNav";
 import { canManageApplicantDecisions } from "../permissions";
 import type {
   AdminApplyPart,
+  AdminDocumentScoresDetailResponse,
   AdminInterviewCandidateDetailResponse,
 } from "../type";
 
@@ -25,7 +27,6 @@ type InterviewCandidateDetailPageProps = {
   onClose?: () => void;
   onDecisionUpdated?: () => void;
   recruitmentId?: number | null;
-  recruitmentPhase?: string | null;
 };
 
 function formatPart(value: string) {
@@ -71,7 +72,6 @@ export default function InterviewCandidateDetailPage({
   onClose,
   onDecisionUpdated,
   recruitmentId,
-  recruitmentPhase,
 }: InterviewCandidateDetailPageProps) {
   const searchParams = useSearchParams();
   const listQuery = searchParams.toString();
@@ -86,9 +86,7 @@ export default function InterviewCandidateDetailPage({
     (Number.isInteger(searchRecruitmentId) && searchRecruitmentId > 0
       ? searchRecruitmentId
       : null);
-  const canManageFinalPendingDecision =
-    effectiveRecruitmentId !== null &&
-    (recruitmentPhase ? recruitmentPhase === "INTERVIEW_EVALUATING" : true);
+  const canManageFinalPendingDecision = effectiveRecruitmentId !== null;
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -102,6 +100,8 @@ export default function InterviewCandidateDetailPage({
   const [comment, setComment] = useState("");
   const [average, setAverage] = useState<number | null>(null);
   const [reviewCount, setReviewCount] = useState<number | null>(null);
+  const [documentScoreDetail, setDocumentScoreDetail] =
+    useState<AdminDocumentScoresDetailResponse | null>(null);
   const [canManageDecisions, setCanManageDecisions] = useState(false);
   const [isPendingDecisionLoading, setIsPendingDecisionLoading] = useState(false);
 
@@ -119,11 +119,12 @@ export default function InterviewCandidateDetailPage({
         if (!mounted) return;
         setDetail(detailResponse);
 
-        const [meResult, myScoreResult, scoreDetailResult] =
+        const [meResult, myScoreResult, scoreDetailResult, documentScoreResult] =
           await Promise.allSettled([
             getMyInfo(),
             getMyAdminInterviewScore(applicationId),
             getAdminInterviewScoreDetail(applicationId),
+            getAdminDocumentScoresDetail(applicationId),
           ]);
 
         if (!mounted) return;
@@ -148,6 +149,12 @@ export default function InterviewCandidateDetailPage({
         } else {
           setAverage(null);
           setReviewCount(null);
+        }
+
+        if (documentScoreResult.status === "fulfilled") {
+          setDocumentScoreDetail(documentScoreResult.value);
+        } else {
+          setDocumentScoreDetail(null);
         }
       } catch {
         if (!mounted) return;
@@ -208,27 +215,35 @@ export default function InterviewCandidateDetailPage({
       });
       setDecisionMessage(
         decision === "PASS"
-          ? "최종 합격 예정으로 처리했습니다."
-          : "최종 불합격 예정으로 처리했습니다.",
+          ? "최종 예비 합격으로 처리했습니다."
+          : "최종 예비 합격을 취소했습니다.",
       );
       onDecisionUpdated?.();
     } catch {
-      setError("최종 합격 예정 처리에 실패했습니다.");
+      setError("최종 예비 합격 처리에 실패했습니다.");
     } finally {
       setIsPendingDecisionLoading(false);
     }
   };
 
   const detailBody = (
-    <div className={`${embedded ? "" : "mt-6"} rounded-2xl bg-[#323640] p-6 lg:p-8`}>
+    <div
+      className={`${embedded ? "" : "mt-6"} rounded-2xl bg-[#323640] p-6 lg:p-8 print:rounded-none print:bg-transparent print:p-0 print:text-black`}
+    >
       {isLoading && <p className="text-sm text-gray-3">로딩 중입니다.</p>}
       {!isLoading && error && <p className="text-sm text-[#ff9ea8]">{error}</p>}
 
       {!isLoading && detail && (
         <>
-          <h2 className="text-[36px] font-bold lg:text-[44px]">
-            {formatPart(detail.applyPart)}
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-4 print:text-gray-600">
+            Interview Candidate
+          </p>
+          <h2 className="mt-2 text-[36px] font-bold lg:text-[44px]">
+            {detail.applicant.name}
           </h2>
+          <p className="mt-2 text-lg text-gray-3 print:text-gray-700">
+            {formatPart(detail.applyPart)}
+          </p>
 
           <dl className="mt-6 grid grid-cols-[110px_1fr] gap-y-2 text-sm text-gray-3 lg:max-w-[620px]">
             <dt className="font-semibold text-gray-2">이름</dt>
@@ -313,9 +328,55 @@ export default function InterviewCandidateDetailPage({
             ))}
           </div>
 
-          <div className="my-8 h-px bg-[#606673]" />
+          {documentScoreDetail && (
+            <>
+              <div className="my-8 h-px bg-[#606673] print:bg-black/20" />
 
-          <div className="mb-8 flex items-center gap-3">
+              <section className="space-y-5">
+                <div>
+                  <h3 className="text-[22px] font-semibold">서류 평가 요약</h3>
+                  <p className="mt-2 text-sm text-gray-4 print:text-gray-700">
+                    리뷰어 {documentScoreDetail.reviewCount}명, 평균 점수{" "}
+                    {documentScoreDetail.average.toFixed(2)}
+                  </p>
+                </div>
+
+                {documentScoreDetail.canViewOthersScores &&
+                  documentScoreDetail.reviews.map((review, idx) => (
+                    <article
+                      key={`${review.reviewer.name}-${idx}`}
+                      className="rounded-xl border border-[#4a5162] bg-[#3a404d] p-4 print:border-black/20 print:bg-transparent"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-sm font-semibold">
+                          {review.reviewer.name} ({review.reviewer.part})
+                        </p>
+                        <p className="text-xs text-gray-4 print:text-gray-700">
+                          총점 {review.total}
+                        </p>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {review.scores.map((scoreItem) => (
+                          <span
+                            key={scoreItem.questionId}
+                            className="rounded-md bg-[#4f5668] px-2 py-1 text-xs print:border print:border-black/20 print:bg-transparent"
+                          >
+                            Q{scoreItem.questionId}: {scoreItem.score}
+                          </span>
+                        ))}
+                      </div>
+                      <p className="mt-3 whitespace-pre-wrap rounded-md bg-[#454c5a] p-3 text-sm text-gray-2 print:border print:border-black/20 print:bg-transparent print:text-black">
+                        {review.comment || "-"}
+                      </p>
+                    </article>
+                  ))}
+              </section>
+            </>
+          )}
+
+          <div className="my-8 h-px bg-[#606673] print:hidden" />
+
+          <div className="mb-8 flex items-center gap-3 print:hidden">
             <label className="text-sm text-gray-3">면접 점수</label>
             <input
               type="number"
@@ -330,7 +391,7 @@ export default function InterviewCandidateDetailPage({
             />
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-3 print:hidden">
             <h3 className="text-[22px] font-semibold">총평 코멘트</h3>
             <textarea
               value={comment}
@@ -341,7 +402,7 @@ export default function InterviewCandidateDetailPage({
             />
           </div>
 
-          <div className="mt-8 flex justify-center">
+          <div className="mt-8 flex justify-center print:hidden">
             <button
               type="button"
               onClick={handleSave}
@@ -355,14 +416,14 @@ export default function InterviewCandidateDetailPage({
           {canManageDecisions &&
             activeView !== "FINAL_PASSED" &&
             canManageFinalPendingDecision && (
-              <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <div className="mt-6 flex flex-wrap justify-center gap-3 print:hidden">
                 <button
                   type="button"
                   onClick={() => handlePendingDecision("PASS")}
                   disabled={isPendingDecisionLoading}
                   className="rounded-lg bg-[#1f9d55] px-6 py-2.5 text-sm font-semibold disabled:opacity-60"
                 >
-                  최종 합격 예정
+                  최종 예비 합격
                 </button>
                 <button
                   type="button"
@@ -370,18 +431,9 @@ export default function InterviewCandidateDetailPage({
                   disabled={isPendingDecisionLoading}
                   className="rounded-lg bg-[#cc3a3a] px-6 py-2.5 text-sm font-semibold disabled:opacity-60"
                 >
-                  최종 불합격 예정
+                  최종 예비 합격 취소
                 </button>
               </div>
-            )}
-
-          {canManageDecisions &&
-            recruitmentPhase &&
-            recruitmentPhase !== "INTERVIEW_EVALUATING" && (
-              <p className="mt-4 text-sm text-gray-4">
-                현재 모집 단계는 `{recruitmentPhase}`입니다. 최종 예비 합격 처리는
-                `INTERVIEW_EVALUATING` 단계에서만 가능합니다.
-              </p>
             )}
 
           {canManageDecisions && !effectiveRecruitmentId && (
@@ -391,10 +443,14 @@ export default function InterviewCandidateDetailPage({
           )}
 
           {saveMessage && (
-            <p className="mt-3 text-center text-sm text-[#8fd3ff]">{saveMessage}</p>
+            <p className="mt-3 text-center text-sm text-[#8fd3ff] print:hidden">
+              {saveMessage}
+            </p>
           )}
           {decisionMessage && (
-            <p className="mt-3 text-center text-sm text-[#8fd3ff]">{decisionMessage}</p>
+            <p className="mt-3 text-center text-sm text-[#8fd3ff] print:hidden">
+              {decisionMessage}
+            </p>
           )}
         </>
       )}
@@ -403,8 +459,8 @@ export default function InterviewCandidateDetailPage({
 
   if (embedded) {
     return (
-      <div className="rounded-2xl border border-[#3a3d45] bg-[#2d3037] p-4">
-        <div className="mb-3 flex items-center justify-between">
+      <div className="rounded-2xl border border-[#3a3d45] bg-[#2d3037] p-4 print:rounded-none print:border-0 print:bg-transparent print:p-0">
+        <div className="mb-3 flex items-center justify-between print:hidden">
           <h3 className="text-sm font-semibold text-gray-2">지원자 상세</h3>
           {onClose && (
             <button
@@ -422,17 +478,19 @@ export default function InterviewCandidateDetailPage({
   }
 
   return (
-    <section className="bg-background px-4 py-10 text-white lg:px-8 lg:py-14">
+    <section className="bg-background px-4 py-10 text-white lg:px-8 lg:py-14 print:bg-white print:px-0 print:py-0 print:text-black">
       <div className="mx-auto max-w-[1200px]">
-        <div className="grid gap-4 lg:grid-cols-[220px_1fr]">
-          <ApplicantManagementNav
-            activeView={activeView}
-            recruitmentId={effectiveRecruitmentId}
-            part={searchParams.get("part") as "ALL" | AdminApplyPart | null}
-          />
+        <div className="grid gap-4 lg:grid-cols-[220px_1fr] print:block">
+          <div className="print:hidden">
+            <ApplicantManagementNav
+              activeView={activeView}
+              recruitmentId={effectiveRecruitmentId}
+              part={searchParams.get("part") as "ALL" | AdminApplyPart | null}
+            />
+          </div>
 
-          <div className="rounded-2xl border border-[#3a3d45] bg-[#2d3037] p-4 lg:p-6">
-            <div className="flex justify-end">
+          <div className="rounded-2xl border border-[#3a3d45] bg-[#2d3037] p-4 lg:p-6 print:w-full print:rounded-none print:border-0 print:bg-transparent print:p-0">
+            <div className="flex justify-end print:hidden">
               <Link
                 href={listHref}
                 className="rounded-lg bg-main-1 px-6 py-3 text-sm font-semibold"

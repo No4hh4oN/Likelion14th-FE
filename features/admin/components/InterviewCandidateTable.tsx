@@ -57,7 +57,7 @@ export default function InterviewCandidateTable({
   compact = false,
   onSelectApplication,
 }: InterviewCandidateTableProps) {
-  const columnCount = compact ? 4 : 7;
+  const columnCount = compact ? 5 : 8;
 
   return (
     <div className="mt-4 overflow-hidden rounded-xl border border-[#4a4f5b]">
@@ -65,6 +65,7 @@ export default function InterviewCandidateTable({
         <thead className="bg-[#343843] text-gray-2">
           <tr className="[&>th]:px-2 [&>th]:py-3">
             {!compact && <th className="w-[70px]">No.</th>}
+            <th className={compact ? "w-[110px]" : "w-[120px]"}>이름</th>
             {!compact && <th>학과</th>}
             <th className="w-[110px]">학번</th>
             <th className="w-[140px]">파트</th>
@@ -102,6 +103,7 @@ export default function InterviewCandidateTable({
                 }`}
               >
                 {!compact && <td>{result.page.page * result.page.size + index + 1}</td>}
+                <td className="truncate px-3 text-left">{item.name}</td>
                 {!compact && <td className="truncate px-3 text-left">{item.department}</td>}
                 <td>{item.studentNoPrefix}</td>
                 <td>{formatPart(item.applyPart)}</td>
