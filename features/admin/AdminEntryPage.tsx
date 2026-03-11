@@ -137,9 +137,13 @@ export default function AdminEntryPage() {
                           {item.description}
                         </p>
                       </Link>
-                      <div className="mt-8 inline-flex h-10 items-center justify-center rounded-full bg-[#4a5162] px-4 text-sm font-semibold text-white">
+                      <Link
+                        href={item.href}
+                        onClick={(event) => handleCardClick(event, index)}
+                        className="mt-8 inline-flex h-10 items-center justify-center rounded-full bg-[#4a5162] px-4 text-sm font-semibold text-white"
+                      >
                         바로가기
-                      </div>
+                      </Link>
                     </article>
                   </div>
                 ))}
