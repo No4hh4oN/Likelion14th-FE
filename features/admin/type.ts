@@ -53,6 +53,13 @@ export type AdminDocumentPendingPassListQuery = {
   sort?: string;
 };
 
+export type AdminFinalPendingPassListQuery = {
+  recruitmentId: number;
+  page?: number;
+  size?: number;
+  sort?: string;
+};
+
 export type AdminApplicationAnswer = {
   questionId: number;
   content: string;
@@ -140,6 +147,22 @@ export type AdminDocumentPendingPassItem = {
 
 export type AdminDocumentPendingPassListResponse = {
   items: AdminDocumentPendingPassItem[];
+  page: {
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+  };
+};
+
+export type AdminFinalPendingPassItem = {
+  applicationId: number;
+  interviewAvgScore: number | null;
+  applyPart: AdminApplyPart | string;
+};
+
+export type AdminFinalPendingPassListResponse = {
+  items: AdminFinalPendingPassItem[];
   page: {
     page: number;
     size: number;

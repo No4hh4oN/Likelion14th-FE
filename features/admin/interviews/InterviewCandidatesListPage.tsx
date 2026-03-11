@@ -1,5 +1,6 @@
 "use client";
 
+import { getMyInfo } from "@/features/public/api";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -7,15 +8,24 @@ import {
   getFixedStatusForView,
   getInterviewsListView,
 } from "../applicantManagement";
-import { getAdminApplications, getAdminInterviewCandidates, getRecruitments } from "../api";
+import {
+  getAdminApplications,
+  getAdminFinalPendingPasses,
+  getAdminInterviewCandidates,
+  getRecruitments,
+  postAdminFinalFinalize,
+} from "../api";
 import ApplicantFilters from "../components/ApplicantFilters";
 import ApplicantManagementNav from "../components/ApplicantManagementNav";
 import ApplicantPagination from "../components/ApplicantPagination";
 import ApplicantTable from "../components/ApplicantTable";
+import FinalPendingPassTable from "../components/FinalPendingPassTable";
 import InterviewCandidateTable from "../components/InterviewCandidateTable";
+import { canManageApplicantDecisions } from "../permissions";
 import type {
   AdminApplicationListResponse,
   AdminApplyPart,
+  AdminFinalPendingPassListResponse,
   AdminInterviewCandidateListResponse,
   AdminRecruitmentListItem,
 } from "../type";
@@ -35,6 +45,16 @@ const EMPTY_APPLICATION_PAGE: AdminApplicationListResponse = {
 };
 
 const EMPTY_CANDIDATE_PAGE: AdminInterviewCandidateListResponse = {
+  items: [],
+  page: {
+    page: 0,
+    size: PAGE_SIZE,
+    totalElements: 0,
+    totalPages: 0,
+  },
+};
+
+const EMPTY_FINAL_PENDING_PAGE: AdminFinalPendingPassListResponse = {
   items: [],
   page: {
     page: 0,
@@ -78,7 +98,13 @@ export default function InterviewCandidatesListPage() {
     useState<AdminInterviewCandidateListResponse>(EMPTY_CANDIDATE_PAGE);
   const [applicationResult, setApplicationResult] =
     useState<AdminApplicationListResponse>(EMPTY_APPLICATION_PAGE);
+  const [finalPendingResult, setFinalPendingResult] =
+    useState<AdminFinalPendingPassListResponse>(EMPTY_FINAL_PENDING_PAGE);
   const [reloadToken, setReloadToken] = useState(0);
+  const [canManageDecisions, setCanManageDecisions] = useState(false);
+  const [isFinalizeLoading, setIsFinalizeLoading] = useState(false);
+  const [actionError, setActionError] = useState("");
+  const [actionMessage, setActionMessage] = useState("");
 
   const selectedApplicationId = useMemo(() => {
     const parsed = Number(searchParams.get("applicationId"));
@@ -98,7 +124,9 @@ export default function InterviewCandidatesListPage() {
   const currentPageInfo =
     activeView === "INTERVIEW_CANDIDATES"
       ? candidateResult.page
-      : applicationResult.page;
+      : activeView === "FINAL_PENDING"
+        ? finalPendingResult.page
+        : applicationResult.page;
   const currentTotalElements = currentPageInfo.totalElements;
 
   useEffect(() => {
@@ -112,6 +140,26 @@ export default function InterviewCandidatesListPage() {
 
     setPart(parsePartParam(searchParams.get("part")));
   }, [searchParams]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadPermissions = async () => {
+      try {
+        const profile = await getMyInfo();
+        if (!mounted) return;
+        setCanManageDecisions(canManageApplicantDecisions(profile));
+      } catch {
+        if (!mounted) return;
+        setCanManageDecisions(false);
+      }
+    };
+
+    void loadPermissions();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -176,11 +224,18 @@ export default function InterviewCandidatesListPage() {
           if (!mounted) return;
           setCandidateResult(response);
           setApplicationResult(EMPTY_APPLICATION_PAGE);
+          setFinalPendingResult(EMPTY_FINAL_PENDING_PAGE);
           return;
         }
 
         if (activeView === "FINAL_PENDING") {
+          const response = await getAdminFinalPendingPasses({
+            recruitmentId,
+            page,
+            size: PAGE_SIZE,
+          });
           if (!mounted) return;
+          setFinalPendingResult(response);
           setCandidateResult(EMPTY_CANDIDATE_PAGE);
           setApplicationResult(EMPTY_APPLICATION_PAGE);
           return;
@@ -196,15 +251,19 @@ export default function InterviewCandidatesListPage() {
         if (!mounted) return;
         setApplicationResult(response);
         setCandidateResult(EMPTY_CANDIDATE_PAGE);
+        setFinalPendingResult(EMPTY_FINAL_PENDING_PAGE);
       } catch {
         if (!mounted) return;
         setError(
-          activeView === "FINAL_PASSED"
-            ? "최종 합격자 목록을 불러오지 못했습니다."
-            : "서류 합격자 목록을 불러오지 못했습니다.",
+          activeView === "FINAL_PENDING"
+            ? "최종 예비 합격자 목록을 불러오지 못했습니다."
+            : activeView === "FINAL_PASSED"
+              ? "최종 합격자 목록을 불러오지 못했습니다."
+              : "서류 합격자 목록을 불러오지 못했습니다.",
         );
         setCandidateResult(EMPTY_CANDIDATE_PAGE);
         setApplicationResult(EMPTY_APPLICATION_PAGE);
+        setFinalPendingResult(EMPTY_FINAL_PENDING_PAGE);
       } finally {
         if (!mounted) return;
         setIsLoading(false);
@@ -275,6 +334,8 @@ export default function InterviewCandidatesListPage() {
 
     setPage(0);
     setError("");
+    setActionError("");
+    setActionMessage("");
     setRecruitmentId(parsed);
     updateQuery({
       recruitmentId: parsed,
@@ -302,6 +363,40 @@ export default function InterviewCandidatesListPage() {
     });
   };
 
+  const handleFinalizeResults = async () => {
+    if (
+      !recruitmentId ||
+      !canManageDecisions ||
+      !isInterviewEvaluating ||
+      isFinalizeLoading
+    ) {
+      return;
+    }
+
+    setIsFinalizeLoading(true);
+    setActionError("");
+    setActionMessage("");
+
+    try {
+      const response = await postAdminFinalFinalize({ recruitmentId });
+      setActionMessage(
+        `최종 합격 일괄 처리를 완료했습니다. ${response.finalizedCount}명을 확정했습니다.`,
+      );
+      setPage(0);
+      setReloadToken((prev) => prev + 1);
+      updateQuery({
+        recruitmentId,
+        page: 0,
+        part,
+        applicationId: null,
+      });
+    } catch {
+      setActionError("최종 합격 일괄 처리에 실패했습니다.");
+    } finally {
+      setIsFinalizeLoading(false);
+    }
+  };
+
   const renderTable = (compact: boolean) => {
     if (activeView === "INTERVIEW_CANDIDATES") {
       return (
@@ -318,12 +413,14 @@ export default function InterviewCandidatesListPage() {
 
     if (activeView === "FINAL_PENDING") {
       return (
-        <div className="mt-4 rounded-xl border border-[#4a4f5b] bg-[#2d3037] px-4 py-12 text-center text-sm text-gray-4">
-          API 명세에는 최종 예비 합격자 목록 조회 엔드포인트가 아직 없습니다.
-          <br />
-          면접 평가는 진행할 수 있지만, 예비 합격자 집계 목록은 백엔드 조회 API가
-          추가되어야 연결할 수 있습니다.
-        </div>
+        <FinalPendingPassTable
+          result={finalPendingResult}
+          isLoading={isLoading}
+          hasRecruitmentId={Boolean(recruitmentId)}
+          selectedApplicationId={compact ? selectedApplicationId : null}
+          compact={compact}
+          onSelectApplication={handleSelectApplication}
+        />
       );
     }
 
@@ -361,18 +458,29 @@ export default function InterviewCandidatesListPage() {
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-gray-3">{viewMeta.label}</p>
-        <p className="text-xs text-gray-4">
-          총 {currentTotalElements.toLocaleString("ko-KR")}명
-        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          {activeView === "FINAL_PENDING" && canManageDecisions && (
+            <button
+              type="button"
+              onClick={handleFinalizeResults}
+              disabled={!recruitmentId || !isInterviewEvaluating || isFinalizeLoading}
+              className="rounded-lg bg-main-1 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60"
+            >
+              {isFinalizeLoading ? "처리 중.." : "최종 합격 일괄 처리"}
+            </button>
+          )}
+          <p className="text-xs text-gray-4">
+            총 {currentTotalElements.toLocaleString("ko-KR")}명
+          </p>
+        </div>
       </div>
 
       {activeView === "FINAL_PENDING" &&
         selectedRecruitment &&
         !isInterviewEvaluating && (
           <p className="mt-3 text-sm text-gray-4">
-            현재 모집 단계는 `{selectedRecruitment.phaseType}`입니다. 최종 예비 합격
-            집계는 `INTERVIEW_EVALUATING` 단계에서 진행하는 흐름으로 맞추는 것이
-            안전합니다.
+            현재 모집 단계는 `{selectedRecruitment.phaseType}`입니다. 최종 합격
+            확정은 `INTERVIEW_EVALUATING` 단계에서만 진행할 수 있습니다.
           </p>
         )}
 
@@ -386,40 +494,42 @@ export default function InterviewCandidatesListPage() {
         )}
 
       {error && <p className="mt-3 text-sm text-[#ff9ea8]">{error}</p>}
+      {actionError && <p className="mt-3 text-sm text-[#ff9ea8]">{actionError}</p>}
+      {actionMessage && <p className="mt-3 text-sm text-[#8fd3ff]">{actionMessage}</p>}
       {!recruitmentId && !error && (
         <p className="mt-3 text-sm text-gray-4">모집을 선택해 주세요.</p>
       )}
 
       {renderTable(compact)}
 
-      {activeView !== "FINAL_PENDING" && (
-        <ApplicantPagination
-          page={currentPageInfo.page}
-          totalPages={currentPageInfo.totalPages}
-          isLoading={isLoading}
-          disabled={!recruitmentId}
-          pageButtonLimit={PAGE_BUTTON_LIMIT}
-          onChangePage={(nextPage) => {
-            setPage(nextPage);
-            updateQuery({
-              recruitmentId,
-              page: nextPage,
-              part,
-              applicationId: compact ? selectedApplicationId : null,
-            });
-          }}
-        />
-      )}
+      <ApplicantPagination
+        page={currentPageInfo.page}
+        totalPages={currentPageInfo.totalPages}
+        isLoading={isLoading}
+        disabled={!recruitmentId}
+        pageButtonLimit={PAGE_BUTTON_LIMIT}
+        onChangePage={(nextPage) => {
+          setPage(nextPage);
+          updateQuery({
+            recruitmentId,
+            page: nextPage,
+            part,
+            applicationId: compact ? selectedApplicationId : null,
+          });
+        }}
+      />
     </div>
   );
 
   return (
-    <section className="bg-background px-4 py-10 text-white lg:px-8 lg:py-14">
+    <section className="bg-background px-4 py-10 text-white lg:px-8 lg:py-14 print:bg-white print:px-0 print:py-0 print:text-black">
       <div className="mx-auto max-w-[1200px]">
-        <h1 className="text-[34px] font-bold tracking-[-0.02em]">{viewMeta.pageTitle}</h1>
+        <h1 className="text-[34px] font-bold tracking-[-0.02em] print:hidden">
+          {viewMeta.pageTitle}
+        </h1>
 
         {!selectedApplicationId && (
-          <div className="mt-8 grid items-start gap-4 lg:grid-cols-[220px_1fr]">
+          <div className="mt-8 grid items-start gap-4 lg:grid-cols-[220px_1fr] print:hidden">
             <ApplicantManagementNav
               activeView={activeView}
               recruitmentId={recruitmentId}
@@ -430,8 +540,8 @@ export default function InterviewCandidatesListPage() {
         )}
 
         {selectedApplicationId && (
-          <div className="mt-8 grid items-start gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,7fr)]">
-            <div className="space-y-4 self-start">
+          <div className="mt-8 grid items-start gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,7fr)] print:mt-0 print:block">
+            <div className="space-y-4 self-start print:hidden">
               <ApplicantManagementNav
                 activeView={activeView}
                 recruitmentId={recruitmentId}
@@ -440,14 +550,13 @@ export default function InterviewCandidatesListPage() {
               {renderListCard(true)}
             </div>
 
-            <div className="self-start">
+            <div className="self-start print:w-full">
               <InterviewCandidateDetailPage
                 applicationId={selectedApplicationId}
                 embedded
                 onClose={handleCloseViewer}
                 onDecisionUpdated={() => setReloadToken((prev) => prev + 1)}
                 recruitmentId={recruitmentId}
-                recruitmentPhase={selectedRecruitment?.phaseType}
               />
             </div>
           </div>

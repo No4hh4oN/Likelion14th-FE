@@ -7,6 +7,8 @@ import type {
   AdminDocumentPendingPassListResponse,
   AdminDocumentFinalizeRequest,
   AdminDocumentFinalizeResponse,
+  AdminFinalPendingPassListQuery,
+  AdminFinalPendingPassListResponse,
   AdminFinalFinalizeRequest,
   AdminFinalFinalizeResponse,
   AdminFinalPendingDecisionRequest,
@@ -63,6 +65,19 @@ export async function getAdminDocumentPendingPasses(
 ): Promise<AdminDocumentPendingPassListResponse> {
   const response = await apiClient.get<AdminDocumentPendingPassListResponse>(
     "/admin/document/pending-pass",
+    {
+      params: query,
+    },
+  );
+
+  return response.data;
+}
+
+export async function getAdminFinalPendingPasses(
+  query: AdminFinalPendingPassListQuery,
+): Promise<AdminFinalPendingPassListResponse> {
+  const response = await apiClient.get<AdminFinalPendingPassListResponse>(
+    "/admin/final/pending-pass",
     {
       params: query,
     },
