@@ -39,7 +39,7 @@ export default function ApplicantManagementNav({
                 part,
                 status,
               })}
-              className={`block rounded-lg px-3 py-2 text-left text-[17px] transition-colors ${
+              className={`block rounded-lg px-1 py-2 text-left text-[17px] transition-colors ${
                 isActive
                   ? "border-l-2 border-main-1 bg-[#2f323a] text-white"
                   : "text-gray-4"

@@ -418,7 +418,7 @@ export default function ApplicationsListPage() {
   };
 
   const renderListCard = (compact: boolean) => (
-    <div className="rounded-2xl border border-[#3a3d45] bg-[#2d3037] p-4 lg:p-6">
+    <div className="min-w-0 rounded-2xl border border-[#3a3d45] bg-[#2d3037] p-4 lg:p-6">
       <ApplicantFilters
         recruitments={recruitments}
         selectedRecruitmentId={selectedRecruitmentId}
@@ -522,7 +522,7 @@ export default function ApplicationsListPage() {
 
         {selectedApplicationId && (
           <div className="mt-8 grid items-start gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,7fr)] print:mt-0 print:block">
-            <div className="space-y-4 self-start print:hidden">
+            <div className="min-w-0 space-y-4 self-start print:hidden">
               <ApplicantManagementNav
                 activeView={activeView}
                 recruitmentId={recruitmentId}
@@ -532,7 +532,7 @@ export default function ApplicationsListPage() {
               {renderListCard(true)}
             </div>
 
-            <div className="self-start print:w-full">
+            <div className="min-w-0 self-start print:w-full">
               <ApplicationDetailPage
                 applicationId={selectedApplicationId}
                 embedded

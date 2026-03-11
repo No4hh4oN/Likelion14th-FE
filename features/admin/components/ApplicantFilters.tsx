@@ -53,11 +53,7 @@ export default function ApplicantFilters({
   const showPartFilter = Boolean(onPartChange && part);
   const showStatusFilter = Boolean(onStatusChange && status);
   const desktopGridClass = compact
-    ? showPartFilter && showStatusFilter
-      ? "lg:grid-cols-[1fr_170px_170px_auto]"
-      : showPartFilter || showStatusFilter
-        ? "lg:grid-cols-[1fr_170px_auto]"
-        : "lg:grid-cols-[1fr_auto]"
+    ? "grid-cols-1"
     : showPartFilter && showStatusFilter
       ? "lg:grid-cols-[1fr_220px_220px_auto]"
       : showPartFilter || showStatusFilter
@@ -65,12 +61,12 @@ export default function ApplicantFilters({
         : "lg:grid-cols-[1fr_auto]";
 
   return (
-    <div className={`grid gap-2 ${desktopGridClass}`}>
+    <div className={`min-w-0 grid gap-2 ${desktopGridClass}`}>
       <select
         value={selectedRecruitmentId}
         onChange={(event) => onRecruitmentChange(event.target.value)}
         disabled={isRecruitmentsLoading || recruitments.length === 0}
-        className={`rounded-lg border border-[#535968] bg-[#3a3f4d] px-3 text-white outline-none focus:border-main-1 disabled:opacity-60 ${
+        className={`min-w-0 w-full rounded-lg border border-[#535968] bg-[#3a3f4d] px-3 text-white outline-none focus:border-main-1 disabled:opacity-60 ${
           compact ? "h-10 text-xs" : "h-11 text-sm"
         }`}
       >
@@ -90,7 +86,7 @@ export default function ApplicantFilters({
         <select
           value={part}
           onChange={(event) => onPartChange?.(event.target.value as "ALL" | AdminApplyPart)}
-          className={`rounded-lg border border-[#535968] bg-[#3a3f4d] px-3 text-white outline-none focus:border-main-1 ${
+          className={`min-w-0 w-full rounded-lg border border-[#535968] bg-[#3a3f4d] px-3 text-white outline-none focus:border-main-1 ${
             compact ? "h-10 text-xs" : "h-11 text-sm"
           }`}
         >
@@ -108,7 +104,7 @@ export default function ApplicantFilters({
           onChange={(event) =>
             onStatusChange?.(event.target.value as "ALL" | AdminApplicationStatus)
           }
-          className={`rounded-lg border border-[#535968] bg-[#3a3f4d] px-3 text-white outline-none focus:border-main-1 ${
+          className={`min-w-0 w-full rounded-lg border border-[#535968] bg-[#3a3f4d] px-3 text-white outline-none focus:border-main-1 ${
             compact ? "h-10 text-xs" : "h-11 text-sm"
           }`}
         >
@@ -125,7 +121,7 @@ export default function ApplicantFilters({
         onClick={onApply}
         disabled={!selectedRecruitmentId}
         className={`rounded-lg bg-main-1 font-semibold disabled:opacity-60 ${
-          compact ? "h-10 px-4 text-xs" : "h-11 px-5 text-sm"
+          compact ? "h-10 w-full px-4 text-xs" : "h-11 px-5 text-sm"
         }`}
       >
         조회
