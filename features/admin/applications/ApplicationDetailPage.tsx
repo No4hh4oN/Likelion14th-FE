@@ -21,6 +21,7 @@ import type {
   AdminApplicationDetailResponse,
   AdminApplyPart,
   AdminDocumentScoresDetailResponse,
+  AdminEvaluationFilter,
 } from "../type";
 
 type ApplicationDetailPageProps = {
@@ -81,6 +82,10 @@ function getTabLabel(tab: DetailTab) {
   return "점수 현황";
 }
 
+function isDraftApplicationStatus(value?: string | null) {
+  return (value?.toUpperCase?.() ?? "") === "DRAFT";
+}
+
 export default function ApplicationDetailPage({
   applicationId,
   embedded = false,
@@ -127,21 +132,30 @@ export default function ApplicationDetailPage({
         const detailResponse = await getAdminApplicationDetail(applicationId);
         if (!mounted) return;
         setDetail(detailResponse);
-
-        const [meResult, myScoreResult, scoreDetailResult] =
-          await Promise.allSettled([
-            getMyInfo(),
-            getMyAdminDocumentScores(applicationId),
-            getAdminDocumentScoresDetail(applicationId),
-          ]);
+        const isDraft = isDraftApplicationStatus(detailResponse.status);
+        const meResult = await Promise.allSettled([getMyInfo()]);
 
         if (!mounted) return;
 
-        if (meResult.status === "fulfilled") {
-          setIsAdmin(canManageApplicantDecisions(meResult.value));
+        if (meResult[0]?.status === "fulfilled") {
+          setIsAdmin(canManageApplicantDecisions(meResult[0].value));
         } else {
           setIsAdmin(false);
         }
+
+        if (isDraft) {
+          setScores({});
+          setComment("");
+          setDocumentScoreDetail(null);
+          return;
+        }
+
+        const [myScoreResult, scoreDetailResult] = await Promise.allSettled([
+          getMyAdminDocumentScores(applicationId),
+          getAdminDocumentScoresDetail(applicationId),
+        ]);
+
+        if (!mounted) return;
 
         if (myScoreResult.status === "fulfilled") {
           setScores(
@@ -188,9 +202,10 @@ export default function ApplicationDetailPage({
       score: scores[answer.questionId] ?? 0,
     }));
   }, [detail, scores]);
+  const isDraftApplication = isDraftApplicationStatus(detail?.status);
 
   const handleSave = async () => {
-    if (!detail || isSaving) return;
+    if (!detail || isSaving || isDraftApplication) return;
     setIsSaving(true);
     setSaveMessage("");
     setScoreError("");
@@ -212,7 +227,7 @@ export default function ApplicationDetailPage({
   };
 
   const handlePendingDecision = async (decision: "PASS" | "FAIL") => {
-    if (!detail || !isAdmin || isPendingDecisionLoading) return;
+    if (!detail || !isAdmin || isPendingDecisionLoading || isDraftApplication) return;
     setIsPendingDecisionLoading(true);
     setPendingDecisionMessage("");
     setScoreError("");
@@ -274,11 +289,12 @@ export default function ApplicationDetailPage({
             key={tab}
             type="button"
             onClick={() => setActiveTab(tab)}
+            disabled={isDraftApplication && tab !== "document"}
             className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
               activeTab === tab
                 ? "bg-main-1 text-white"
                 : "bg-[#454c5a] text-gray-2 hover:bg-[#565f70]"
-            }`}
+            } ${isDraftApplication && tab !== "document" ? "cursor-not-allowed opacity-50 hover:bg-[#454c5a]" : ""}`}
           >
             {getTabLabel(tab)}
           </button>
@@ -367,6 +383,12 @@ export default function ApplicationDetailPage({
 
       {!isLoading && detail && activeTab === "score" && (
         <div className="mt-8">
+          {isDraftApplication && (
+            <p className="mb-6 rounded-lg border border-[#5d6473] bg-[#404654] px-4 py-3 text-sm text-gray-2">
+              임시저장 지원서는 점수를 매길 수 없습니다. 제출 완료 후 평가를 진행해
+              주세요.
+            </p>
+          )}
           <div className="space-y-8">
             {scoredQuestions.map((item, index) => {
               const maxScore = getDocumentQuestionMaxScore(index);
@@ -389,6 +411,7 @@ export default function ApplicationDetailPage({
                       max={maxScore}
                       step={1}
                       value={item.score}
+                      disabled={isDraftApplication}
                       onChange={(event) => {
                         const numeric = Number(event.target.value);
                         const next = Number.isFinite(numeric)
@@ -416,6 +439,7 @@ export default function ApplicationDetailPage({
               onChange={(event) => setComment(event.target.value)}
               rows={5}
               placeholder="코멘트를 입력해 주세요."
+              disabled={isDraftApplication}
               className="w-full resize-none rounded-xl border border-[#62697A] bg-[#4C5262] p-4 text-sm text-white placeholder:text-gray-4 outline-none focus:border-main-1"
             />
           </div>
@@ -424,7 +448,7 @@ export default function ApplicationDetailPage({
             <button
               type="button"
               onClick={handleSave}
-              disabled={isSaving}
+              disabled={isSaving || isDraftApplication}
               className="rounded-lg bg-main-1 px-10 py-3 text-sm font-semibold disabled:opacity-60"
             >
               {isSaving ? "저장 중..." : "점수 저장"}
@@ -435,7 +459,12 @@ export default function ApplicationDetailPage({
 
       {!isLoading && detail && activeTab === "review" && (
         <div className="mt-8 space-y-5">
-          {documentScoreDetail ? (
+          {isDraftApplication && (
+            <p className="rounded-lg border border-[#5d6473] bg-[#404654] px-4 py-3 text-sm text-gray-2">
+              임시저장 지원서는 평가 내역을 조회할 수 없습니다.
+            </p>
+          )}
+          {!isDraftApplication && documentScoreDetail ? (
             <>
               <div className="rounded-lg bg-[#404654] px-4 py-3 text-sm text-gray-2">
                 리뷰어 {documentScoreDetail.reviewCount}명 평균:{" "}
@@ -468,7 +497,7 @@ export default function ApplicationDetailPage({
                   </article>
                 ))}
 
-              {canManageDocumentPendingDecision && (
+              {canManageDocumentPendingDecision && !isDraftApplication && (
                 <div className="mt-4 flex flex-wrap items-center gap-3">
                   <button
                     type="button"
@@ -489,9 +518,9 @@ export default function ApplicationDetailPage({
                 </div>
               )}
             </>
-          ) : (
+          ) : !isDraftApplication ? (
             <p className="text-sm text-gray-3">점수 상세 정보를 불러오지 못했습니다.</p>
-          )}
+          ) : null}
         </div>
       )}
 
@@ -536,6 +565,9 @@ export default function ApplicationDetailPage({
                 | "ALL"
                 | ExtendedAdminApplicationStatus
                 | null
+            }
+            evaluationFilter={
+              searchParams.get("evaluation") as AdminEvaluationFilter | null
             }
           />
 

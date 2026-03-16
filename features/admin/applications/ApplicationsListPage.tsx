@@ -11,6 +11,7 @@ import {
 import {
   getAdminApplications,
   getAdminDocumentPendingPasses,
+  getMyAdminDocumentScores,
   getRecruitments,
   postAdminDocumentFinalize,
 } from "../api";
@@ -25,6 +26,7 @@ import type {
   AdminApplicationStatus,
   AdminApplyPart,
   AdminDocumentPendingPassListResponse,
+  AdminEvaluationFilter,
   AdminRecruitmentListItem,
 } from "../type";
 import ApplicationDetailPage from "./ApplicationDetailPage";
@@ -82,6 +84,14 @@ function parseStatusParam(value: string | null) {
   return "ALL";
 }
 
+function parseEvaluationFilterParam(value: string | null): AdminEvaluationFilter {
+  if (value === "NOT_REVIEWED" || value === "REVIEWED") {
+    return value;
+  }
+
+  return "ALL";
+}
+
 export default function ApplicationsListPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -96,6 +106,8 @@ export default function ApplicationsListPage() {
   const [recruitmentId, setRecruitmentId] = useState<number | null>(null);
   const [part, setPart] = useState<"ALL" | AdminApplyPart>("ALL");
   const [status, setStatus] = useState<"ALL" | AdminApplicationStatus>("ALL");
+  const [evaluationFilter, setEvaluationFilter] =
+    useState<AdminEvaluationFilter>("ALL");
   const [page, setPage] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -108,6 +120,11 @@ export default function ApplicationsListPage() {
   const [isFinalizeLoading, setIsFinalizeLoading] = useState(false);
   const [actionError, setActionError] = useState("");
   const [actionMessage, setActionMessage] = useState("");
+  const [evaluationStatusMap, setEvaluationStatusMap] = useState<Record<number, boolean>>(
+    {},
+  );
+  const [isEvaluationStatusLoading, setIsEvaluationStatusLoading] = useState(false);
+  const [evaluationError, setEvaluationError] = useState("");
 
   const selectedApplicationId = useMemo(() => {
     const parsed = Number(searchParams.get("applicationId"));
@@ -123,6 +140,9 @@ export default function ApplicationsListPage() {
   const isDocEvaluating = selectedRecruitment?.phaseType === "DOC_EVALUATING";
   const showPartFilter = activeView === "DOCUMENT_APPLICANTS";
   const showStatusFilter = activeView === "DOCUMENT_APPLICANTS";
+  const showEvaluationFilter = activeView === "DOCUMENT_APPLICANTS";
+  const isEvaluationFilteringActive =
+    showEvaluationFilter && evaluationFilter !== "ALL";
   const resolvedPart = showPartFilter && part !== "ALL" ? part : undefined;
   const resolvedStatus = useMemo<ExtendedAdminApplicationStatus | undefined>(
     () => (status === "ALL" ? undefined : status),
@@ -143,6 +163,7 @@ export default function ApplicationsListPage() {
 
     setPart(parsePartParam(searchParams.get("part")));
     setStatus(parseStatusParam(searchParams.get("status")));
+    setEvaluationFilter(parseEvaluationFilterParam(searchParams.get("evaluation")));
   }, [searchParams]);
 
   useEffect(() => {
@@ -263,11 +284,129 @@ export default function ApplicationsListPage() {
     };
   }, [activeView, page, recruitmentId, reloadToken, resolvedPart, resolvedStatus]);
 
+  useEffect(() => {
+    if (
+      activeView !== "DOCUMENT_APPLICANTS" ||
+      !showEvaluationFilter ||
+      !isEvaluationFilteringActive
+    ) {
+      setIsEvaluationStatusLoading(false);
+      setEvaluationError("");
+      return;
+    }
+
+    if (applicationResult.items.length === 0) {
+      setEvaluationStatusMap({});
+      setIsEvaluationStatusLoading(false);
+      setEvaluationError("");
+      return;
+    }
+
+    let mounted = true;
+
+    const loadEvaluationStatuses = async () => {
+      setIsEvaluationStatusLoading(true);
+      setEvaluationError("");
+
+      const results = await Promise.allSettled(
+        applicationResult.items.map(async (item) => {
+          const normalizedStatus = item.status?.toUpperCase?.() ?? "";
+
+          if (normalizedStatus === "DRAFT") {
+            return { applicationId: item.applicationId, exists: false };
+          }
+
+          const response = await getMyAdminDocumentScores(item.applicationId);
+          return { applicationId: item.applicationId, exists: response.exists };
+        }),
+      );
+
+      if (!mounted) return;
+
+      const nextMap: Record<number, boolean> = {};
+      let hasFailure = false;
+
+      results.forEach((result, index) => {
+        const fallbackId = applicationResult.items[index]?.applicationId;
+
+        if (result.status === "fulfilled") {
+          nextMap[result.value.applicationId] = result.value.exists;
+          return;
+        }
+
+        if (typeof fallbackId === "number") {
+          nextMap[fallbackId] = false;
+        }
+        hasFailure = true;
+      });
+
+      setEvaluationStatusMap(nextMap);
+      setEvaluationError(
+        hasFailure
+          ? "일부 지원자의 내 평가 상태를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요."
+          : "",
+      );
+      setIsEvaluationStatusLoading(false);
+    };
+
+    void loadEvaluationStatuses();
+    return () => {
+      mounted = false;
+    };
+  }, [
+    activeView,
+    applicationResult.items,
+    isEvaluationFilteringActive,
+    showEvaluationFilter,
+  ]);
+
+  const displayedApplicationResult = useMemo<AdminApplicationListResponse>(() => {
+    if (!isEvaluationFilteringActive) {
+      return applicationResult;
+    }
+
+    return {
+      ...applicationResult,
+      items: applicationResult.items.filter((item) => {
+        const hasReviewed = evaluationStatusMap[item.applicationId] === true;
+        return evaluationFilter === "REVIEWED" ? hasReviewed : !hasReviewed;
+      }),
+    };
+  }, [
+    applicationResult,
+    evaluationFilter,
+    evaluationStatusMap,
+    isEvaluationFilteringActive,
+  ]);
+  const hasEvaluationStatusesForCurrentItems = useMemo(() => {
+    if (!isEvaluationFilteringActive) {
+      return true;
+    }
+
+    return applicationResult.items.every((item) => {
+      const normalizedStatus = item.status?.toUpperCase?.() ?? "";
+
+      if (normalizedStatus === "DRAFT") {
+        return true;
+      }
+
+      return Object.prototype.hasOwnProperty.call(
+        evaluationStatusMap,
+        item.applicationId,
+      );
+    });
+  }, [applicationResult.items, evaluationStatusMap, isEvaluationFilteringActive]);
+  const isTableLoading =
+    isLoading ||
+    isEvaluationStatusLoading ||
+    (isEvaluationFilteringActive && !hasEvaluationStatusesForCurrentItems);
+
   const buildListHref = (next: {
     recruitmentId?: number | null;
     page?: number;
     part?: "ALL" | AdminApplyPart;
     status?: "ALL" | AdminApplicationStatus;
+    evaluationFilter?: AdminEvaluationFilter;
     applicationId?: number | null;
   }) => {
     const params = new URLSearchParams();
@@ -276,6 +415,7 @@ export default function ApplicationsListPage() {
     const nextPage = typeof next.page === "number" ? next.page : page;
     const nextPart = next.part ?? part;
     const nextStatus = next.status ?? status;
+    const nextEvaluationFilter = next.evaluationFilter ?? evaluationFilter;
 
     if (activeView === "DOCUMENT_PENDING") {
       params.set("view", "document-pending");
@@ -297,6 +437,10 @@ export default function ApplicationsListPage() {
       params.set("status", nextStatus);
     }
 
+    if (nextEvaluationFilter !== "ALL") {
+      params.set("evaluation", nextEvaluationFilter);
+    }
+
     if (typeof next.applicationId === "number") {
       params.set("applicationId", String(next.applicationId));
     }
@@ -310,6 +454,7 @@ export default function ApplicationsListPage() {
     page?: number;
     part?: "ALL" | AdminApplyPart;
     status?: "ALL" | AdminApplicationStatus;
+    evaluationFilter?: AdminEvaluationFilter;
     applicationId?: number | null;
   }) => {
     router.push(buildListHref(next), { scroll: false });
@@ -332,6 +477,7 @@ export default function ApplicationsListPage() {
       page: 0,
       part,
       status,
+      evaluationFilter,
       applicationId: null,
     });
   };
@@ -342,6 +488,7 @@ export default function ApplicationsListPage() {
       page: currentPageInfo.page,
       part,
       status,
+      evaluationFilter,
       applicationId,
     });
   };
@@ -352,6 +499,7 @@ export default function ApplicationsListPage() {
       page: currentPageInfo.page,
       part,
       status,
+      evaluationFilter,
       applicationId: null,
     });
   };
@@ -382,6 +530,7 @@ export default function ApplicationsListPage() {
         page: 0,
         part,
         status,
+        evaluationFilter,
         applicationId: null,
       });
     } catch {
@@ -407,8 +556,8 @@ export default function ApplicationsListPage() {
 
     return (
       <ApplicantTable
-        result={applicationResult}
-        isLoading={isLoading}
+        result={displayedApplicationResult}
+        isLoading={isTableLoading}
         hasRecruitmentId={Boolean(recruitmentId)}
         selectedApplicationId={compact ? selectedApplicationId : null}
         compact={compact}
@@ -426,6 +575,7 @@ export default function ApplicationsListPage() {
         compact={compact}
         part={showPartFilter ? part : undefined}
         status={showStatusFilter ? status : undefined}
+        evaluationFilter={showEvaluationFilter ? evaluationFilter : undefined}
         onRecruitmentChange={setSelectedRecruitmentId}
         onPartChange={
           showPartFilter
@@ -440,6 +590,22 @@ export default function ApplicationsListPage() {
             ? (nextStatus) => {
                 setStatus(nextStatus);
                 setPage(0);
+              }
+            : undefined
+        }
+        onEvaluationFilterChange={
+          showEvaluationFilter
+            ? (nextEvaluationFilter) => {
+                setEvaluationFilter(nextEvaluationFilter);
+                setPage(0);
+                updateQuery({
+                  recruitmentId,
+                  page: 0,
+                  part,
+                  status,
+                  evaluationFilter: nextEvaluationFilter,
+                  applicationId: compact ? selectedApplicationId : null,
+                });
               }
             : undefined
         }
@@ -473,6 +639,17 @@ export default function ApplicationsListPage() {
       )}
 
       {error && <p className="mt-3 text-sm text-[#ff9ea8]">{error}</p>}
+      {activeView === "DOCUMENT_APPLICANTS" && status === "SUBMITTED" && (
+        <p className="mt-3 text-xs text-gray-4">
+          서류 합격/불합격 처리가 아직 되지 않은 제출 완료 지원자만 보고 있습니다.
+        </p>
+      )}
+      {showEvaluationFilter && (
+        <p className="mt-3 text-xs text-gray-4">
+          내 평가 상태 필터는 현재 불러온 페이지 기준으로 적용됩니다.
+        </p>
+      )}
+      {evaluationError && <p className="mt-2 text-sm text-[#ff9ea8]">{evaluationError}</p>}
       {actionError && <p className="mt-3 text-sm text-[#ff9ea8]">{actionError}</p>}
       {actionMessage && <p className="mt-3 text-sm text-[#8fd3ff]">{actionMessage}</p>}
       {!recruitmentId && !error && (
@@ -484,7 +661,7 @@ export default function ApplicationsListPage() {
       <ApplicantPagination
         page={currentPageInfo.page}
         totalPages={currentPageInfo.totalPages}
-        isLoading={isLoading}
+        isLoading={isTableLoading}
         disabled={!recruitmentId}
         pageButtonLimit={PAGE_BUTTON_LIMIT}
         onChangePage={(nextPage) => {
@@ -494,6 +671,7 @@ export default function ApplicationsListPage() {
             page: nextPage,
             part,
             status,
+            evaluationFilter,
             applicationId: compact ? selectedApplicationId : null,
           });
         }}
@@ -515,6 +693,7 @@ export default function ApplicationsListPage() {
               recruitmentId={recruitmentId}
               part={showPartFilter ? part : null}
               status={showStatusFilter ? status : null}
+              evaluationFilter={showEvaluationFilter ? evaluationFilter : null}
             />
             {renderListCard(false)}
           </div>
@@ -528,6 +707,7 @@ export default function ApplicationsListPage() {
                 recruitmentId={recruitmentId}
                 part={showPartFilter ? part : null}
                 status={showStatusFilter ? status : null}
+                evaluationFilter={showEvaluationFilter ? evaluationFilter : null}
               />
               {renderListCard(true)}
             </div>

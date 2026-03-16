@@ -188,7 +188,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="fixed top-0 w-full bg-[#262529] z-40">
+      <header className="fixed top-0 z-40 w-full bg-[#262529] print:hidden">
         <div className="mx-auto flex h-16 w-full max-w-[1168px] items-center justify-between px-4">
           <Link href="/" className="flex items-center">
             <Image
@@ -245,11 +245,13 @@ export default function Header() {
         </div>
       </header>
 
-      <Sidebar
-        isOpen={isMenuOpen}
-        onClose={() => setIsMenuOpen(false)}
-        authSection={authSection}
-      />
+      <div className="print:hidden">
+        <Sidebar
+          isOpen={isMenuOpen}
+          onClose={() => setIsMenuOpen(false)}
+          authSection={authSection}
+        />
+      </div>
     </>
   );
 }

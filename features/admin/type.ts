@@ -8,6 +8,8 @@ export type AdminApplicationStatus =
   | "FINAL_PASSED"
   | "FINAL_FAILED";
 
+export type AdminEvaluationFilter = "ALL" | "NOT_REVIEWED" | "REVIEWED";
+
 export type AdminApplicationListItem = {
   applicationId: number;
   applyPart: AdminApplyPart | string;
@@ -100,8 +102,8 @@ export type AdminInterviewCandidateListItem = {
   enrollment: string;
   applyPart: AdminApplyPart | string;
   phone: string;
-  slotStartAt: string;
-  slotEndAt: string;
+  slotStartAt: string | null;
+  slotEndAt: string | null;
   docAvgScore: number | null;
 };
 
@@ -117,6 +119,8 @@ export type AdminInterviewCandidateListResponse = {
 
 export type AdminInterviewCandidateDetailResponse = {
   applicationId: number;
+  portfolioUrl?: string | null;
+  portfolioLink?: string | null;
   applicant: {
     name: string;
     department: string;

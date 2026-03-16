@@ -12,6 +12,7 @@ import {
   getAdminApplications,
   getAdminFinalPendingPasses,
   getAdminInterviewCandidates,
+  getMyAdminInterviewScore,
   getRecruitments,
   postAdminFinalFinalize,
 } from "../api";
@@ -25,6 +26,7 @@ import { canManageApplicantDecisions } from "../permissions";
 import type {
   AdminApplicationListResponse,
   AdminApplyPart,
+  AdminEvaluationFilter,
   AdminFinalPendingPassListResponse,
   AdminInterviewCandidateListResponse,
   AdminRecruitmentListItem,
@@ -78,6 +80,14 @@ function parsePartParam(value: string | null) {
   return "ALL";
 }
 
+function parseEvaluationFilterParam(value: string | null): AdminEvaluationFilter {
+  if (value === "NOT_REVIEWED" || value === "REVIEWED") {
+    return value;
+  }
+
+  return "ALL";
+}
+
 export default function InterviewCandidatesListPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -91,6 +101,8 @@ export default function InterviewCandidatesListPage() {
   const [selectedRecruitmentId, setSelectedRecruitmentId] = useState("");
   const [recruitmentId, setRecruitmentId] = useState<number | null>(null);
   const [part, setPart] = useState<"ALL" | AdminApplyPart>("ALL");
+  const [evaluationFilter, setEvaluationFilter] =
+    useState<AdminEvaluationFilter>("ALL");
   const [page, setPage] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -105,6 +117,11 @@ export default function InterviewCandidatesListPage() {
   const [isFinalizeLoading, setIsFinalizeLoading] = useState(false);
   const [actionError, setActionError] = useState("");
   const [actionMessage, setActionMessage] = useState("");
+  const [evaluationStatusMap, setEvaluationStatusMap] = useState<Record<number, boolean>>(
+    {},
+  );
+  const [isEvaluationStatusLoading, setIsEvaluationStatusLoading] = useState(false);
+  const [evaluationError, setEvaluationError] = useState("");
 
   const selectedApplicationId = useMemo(() => {
     const parsed = Number(searchParams.get("applicationId"));
@@ -120,6 +137,9 @@ export default function InterviewCandidatesListPage() {
   const isInterviewEvaluating =
     selectedRecruitment?.phaseType === "INTERVIEW_EVALUATING";
   const showPartFilter = activeView === "FINAL_PASSED";
+  const showEvaluationFilter = activeView === "INTERVIEW_CANDIDATES";
+  const isEvaluationFilteringActive =
+    showEvaluationFilter && evaluationFilter !== "ALL";
   const resolvedPart = showPartFilter && part !== "ALL" ? part : undefined;
   const currentPageInfo =
     activeView === "INTERVIEW_CANDIDATES"
@@ -139,6 +159,7 @@ export default function InterviewCandidatesListPage() {
     }
 
     setPart(parsePartParam(searchParams.get("part")));
+    setEvaluationFilter(parseEvaluationFilterParam(searchParams.get("evaluation")));
   }, [searchParams]);
 
   useEffect(() => {
@@ -276,10 +297,113 @@ export default function InterviewCandidatesListPage() {
     };
   }, [activeView, page, recruitmentId, reloadToken, resolvedPart]);
 
+  useEffect(() => {
+    if (
+      activeView !== "INTERVIEW_CANDIDATES" ||
+      !showEvaluationFilter ||
+      !isEvaluationFilteringActive
+    ) {
+      setIsEvaluationStatusLoading(false);
+      setEvaluationError("");
+      return;
+    }
+
+    if (candidateResult.items.length === 0) {
+      setEvaluationStatusMap({});
+      setIsEvaluationStatusLoading(false);
+      setEvaluationError("");
+      return;
+    }
+
+    let mounted = true;
+
+    const loadEvaluationStatuses = async () => {
+      setIsEvaluationStatusLoading(true);
+      setEvaluationError("");
+
+      const results = await Promise.allSettled(
+        candidateResult.items.map(async (item) => {
+          const response = await getMyAdminInterviewScore(item.applicationId);
+          return { applicationId: item.applicationId, exists: response.exists };
+        }),
+      );
+
+      if (!mounted) return;
+
+      const nextMap: Record<number, boolean> = {};
+      let hasFailure = false;
+
+      results.forEach((result, index) => {
+        const fallbackId = candidateResult.items[index]?.applicationId;
+
+        if (result.status === "fulfilled") {
+          nextMap[result.value.applicationId] = result.value.exists;
+          return;
+        }
+
+        if (typeof fallbackId === "number") {
+          nextMap[fallbackId] = false;
+        }
+        hasFailure = true;
+      });
+
+      setEvaluationStatusMap(nextMap);
+      setEvaluationError(
+        hasFailure
+          ? "일부 지원자의 내 평가 상태를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요."
+          : "",
+      );
+      setIsEvaluationStatusLoading(false);
+    };
+
+    void loadEvaluationStatuses();
+    return () => {
+      mounted = false;
+    };
+  }, [
+    activeView,
+    candidateResult.items,
+    isEvaluationFilteringActive,
+    showEvaluationFilter,
+  ]);
+
+  const displayedCandidateResult = useMemo<AdminInterviewCandidateListResponse>(() => {
+    if (!isEvaluationFilteringActive) {
+      return candidateResult;
+    }
+
+    return {
+      ...candidateResult,
+      items: candidateResult.items.filter((item) => {
+        const hasReviewed = evaluationStatusMap[item.applicationId] === true;
+        return evaluationFilter === "REVIEWED" ? hasReviewed : !hasReviewed;
+      }),
+    };
+  }, [
+    candidateResult,
+    evaluationFilter,
+    evaluationStatusMap,
+    isEvaluationFilteringActive,
+  ]);
+  const hasEvaluationStatusesForCurrentItems = useMemo(() => {
+    if (!isEvaluationFilteringActive) {
+      return true;
+    }
+
+    return candidateResult.items.every((item) =>
+      Object.prototype.hasOwnProperty.call(evaluationStatusMap, item.applicationId),
+    );
+  }, [candidateResult.items, evaluationStatusMap, isEvaluationFilteringActive]);
+  const isTableLoading =
+    isLoading ||
+    isEvaluationStatusLoading ||
+    (isEvaluationFilteringActive && !hasEvaluationStatusesForCurrentItems);
+
   const buildListHref = (next: {
     recruitmentId?: number | null;
     page?: number;
     part?: "ALL" | AdminApplyPart;
+    evaluationFilter?: AdminEvaluationFilter;
     applicationId?: number | null;
   }) => {
     const params = new URLSearchParams();
@@ -287,6 +411,7 @@ export default function InterviewCandidatesListPage() {
       next.recruitmentId !== undefined ? next.recruitmentId : recruitmentId;
     const nextPage = typeof next.page === "number" ? next.page : page;
     const nextPart = next.part ?? part;
+    const nextEvaluationFilter = next.evaluationFilter ?? evaluationFilter;
 
     if (activeView === "FINAL_PENDING") {
       params.set("view", "final-pending");
@@ -308,6 +433,10 @@ export default function InterviewCandidatesListPage() {
       params.set("part", nextPart);
     }
 
+    if (nextEvaluationFilter !== "ALL") {
+      params.set("evaluation", nextEvaluationFilter);
+    }
+
     if (typeof next.applicationId === "number") {
       params.set("applicationId", String(next.applicationId));
     }
@@ -320,6 +449,7 @@ export default function InterviewCandidatesListPage() {
     recruitmentId?: number | null;
     page?: number;
     part?: "ALL" | AdminApplyPart;
+    evaluationFilter?: AdminEvaluationFilter;
     applicationId?: number | null;
   }) => {
     router.push(buildListHref(next), { scroll: false });
@@ -341,6 +471,7 @@ export default function InterviewCandidatesListPage() {
       recruitmentId: parsed,
       page: 0,
       part,
+      evaluationFilter,
       applicationId: null,
     });
   };
@@ -350,6 +481,7 @@ export default function InterviewCandidatesListPage() {
       recruitmentId,
       page: currentPageInfo.page,
       part,
+      evaluationFilter,
       applicationId,
     });
   };
@@ -359,6 +491,7 @@ export default function InterviewCandidatesListPage() {
       recruitmentId,
       page: currentPageInfo.page,
       part,
+      evaluationFilter,
       applicationId: null,
     });
   };
@@ -388,6 +521,7 @@ export default function InterviewCandidatesListPage() {
         recruitmentId,
         page: 0,
         part,
+        evaluationFilter,
         applicationId: null,
       });
     } catch {
@@ -401,8 +535,8 @@ export default function InterviewCandidatesListPage() {
     if (activeView === "INTERVIEW_CANDIDATES") {
       return (
         <InterviewCandidateTable
-          result={candidateResult}
-          isLoading={isLoading}
+          result={displayedCandidateResult}
+          isLoading={isTableLoading}
           hasRecruitmentId={Boolean(recruitmentId)}
           selectedApplicationId={compact ? selectedApplicationId : null}
           compact={compact}
@@ -444,12 +578,28 @@ export default function InterviewCandidatesListPage() {
         isRecruitmentsLoading={isRecruitmentsLoading}
         compact={compact}
         part={showPartFilter ? part : undefined}
+        evaluationFilter={showEvaluationFilter ? evaluationFilter : undefined}
         onRecruitmentChange={setSelectedRecruitmentId}
         onPartChange={
           showPartFilter
             ? (nextPart) => {
                 setPart(nextPart);
                 setPage(0);
+              }
+            : undefined
+        }
+        onEvaluationFilterChange={
+          showEvaluationFilter
+            ? (nextEvaluationFilter) => {
+                setEvaluationFilter(nextEvaluationFilter);
+                setPage(0);
+                updateQuery({
+                  recruitmentId,
+                  page: 0,
+                  part,
+                  evaluationFilter: nextEvaluationFilter,
+                  applicationId: compact ? selectedApplicationId : null,
+                });
               }
             : undefined
         }
@@ -494,6 +644,12 @@ export default function InterviewCandidatesListPage() {
         )}
 
       {error && <p className="mt-3 text-sm text-[#ff9ea8]">{error}</p>}
+      {showEvaluationFilter && (
+        <p className="mt-3 text-xs text-gray-4">
+          내 평가 상태 필터는 현재 불러온 페이지 기준으로 적용됩니다.
+        </p>
+      )}
+      {evaluationError && <p className="mt-2 text-sm text-[#ff9ea8]">{evaluationError}</p>}
       {actionError && <p className="mt-3 text-sm text-[#ff9ea8]">{actionError}</p>}
       {actionMessage && <p className="mt-3 text-sm text-[#8fd3ff]">{actionMessage}</p>}
       {!recruitmentId && !error && (
@@ -505,7 +661,7 @@ export default function InterviewCandidatesListPage() {
       <ApplicantPagination
         page={currentPageInfo.page}
         totalPages={currentPageInfo.totalPages}
-        isLoading={isLoading}
+        isLoading={isTableLoading}
         disabled={!recruitmentId}
         pageButtonLimit={PAGE_BUTTON_LIMIT}
         onChangePage={(nextPage) => {
@@ -514,6 +670,7 @@ export default function InterviewCandidatesListPage() {
             recruitmentId,
             page: nextPage,
             part,
+            evaluationFilter,
             applicationId: compact ? selectedApplicationId : null,
           });
         }}
@@ -534,6 +691,7 @@ export default function InterviewCandidatesListPage() {
               activeView={activeView}
               recruitmentId={recruitmentId}
               part={showPartFilter ? part : null}
+              evaluationFilter={showEvaluationFilter ? evaluationFilter : null}
             />
             {renderListCard(false)}
           </div>
@@ -546,6 +704,7 @@ export default function InterviewCandidatesListPage() {
                 activeView={activeView}
                 recruitmentId={recruitmentId}
                 part={showPartFilter ? part : null}
+                evaluationFilter={showEvaluationFilter ? evaluationFilter : null}
               />
               {renderListCard(true)}
             </div>

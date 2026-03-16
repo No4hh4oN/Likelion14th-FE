@@ -8,13 +8,14 @@ import {
   type AdminApplicantListView,
   type ExtendedAdminApplicationStatus,
 } from "../applicantManagement";
-import type { AdminApplyPart } from "../type";
+import type { AdminApplyPart, AdminEvaluationFilter } from "../type";
 
 type ApplicantManagementNavProps = {
   activeView: AdminApplicantListView;
   recruitmentId?: number | null;
   part?: "ALL" | AdminApplyPart | null;
   status?: "ALL" | ExtendedAdminApplicationStatus | null;
+  evaluationFilter?: AdminEvaluationFilter | null;
 };
 
 export default function ApplicantManagementNav({
@@ -22,6 +23,7 @@ export default function ApplicantManagementNav({
   recruitmentId,
   part,
   status,
+  evaluationFilter,
 }: ApplicantManagementNavProps) {
   return (
     <aside className="rounded-2xl border border-[#3a3d45] bg-[#26282d] p-4">
@@ -38,6 +40,7 @@ export default function ApplicantManagementNav({
                 recruitmentId,
                 part,
                 status,
+                evaluationFilter,
               })}
               className={`block rounded-lg px-1 py-2 text-left text-[17px] transition-colors ${
                 isActive

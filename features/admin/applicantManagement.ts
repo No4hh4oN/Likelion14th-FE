@@ -1,4 +1,8 @@
-import type { AdminApplicationStatus, AdminApplyPart } from "./type";
+import type {
+  AdminApplicationStatus,
+  AdminApplyPart,
+  AdminEvaluationFilter,
+} from "./type";
 
 export type ExtendedAdminApplicationStatus = AdminApplicationStatus;
 
@@ -98,6 +102,7 @@ export function buildApplicantManagementHref(
     recruitmentId?: number | null;
     part?: "ALL" | AdminApplyPart | null;
     status?: "ALL" | ExtendedAdminApplicationStatus | null;
+    evaluationFilter?: AdminEvaluationFilter | null;
   } = {},
 ) {
   const meta = getApplicantManagementViewMeta(view);
@@ -121,6 +126,10 @@ export function buildApplicantManagementHref(
 
   if (view === "DOCUMENT_APPLICANTS" && options.status && options.status !== "ALL") {
     params.set("status", options.status);
+  }
+
+  if (options.evaluationFilter && options.evaluationFilter !== "ALL") {
+    params.set("evaluation", options.evaluationFilter);
   }
 
   const query = params.toString();
