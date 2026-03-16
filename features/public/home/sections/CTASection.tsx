@@ -29,7 +29,7 @@ export default function CTASection() {
           </p>
           <Link
             href="/14/faq"
-            className="mt-10.25 lg:mt-11.5 cursor-pointer rounded-[100px] px-8.5 py-3.75 lg:px-19.75 lg:py-7.5 font-bold bg-main-1 text-white-1 text-[28px] lg:text-[36px]"
+            className="mt-10.25 lg:mt-11.5 cursor-pointer rounded-[100px] px-8.5 py-3.75 lg:px-19.75 lg:py-7.5 font-bold bg-main-1 text-white-1 text-[28px] lg:text-[36px] transition-all duration-300 hover:scale-105 hover:-translate-y-1 hover:shadow-[0_0_20px_#0b7de2]"
           >
             14기 지원하기
           </Link>

@@ -3,8 +3,12 @@ import type {
   AdminApplicationDetailResponse,
   AdminApplicationListQuery,
   AdminApplicationListResponse,
+  AdminDocumentPendingPassListQuery,
+  AdminDocumentPendingPassListResponse,
   AdminDocumentFinalizeRequest,
   AdminDocumentFinalizeResponse,
+  AdminFinalPendingPassListQuery,
+  AdminFinalPendingPassListResponse,
   AdminFinalFinalizeRequest,
   AdminFinalFinalizeResponse,
   AdminFinalPendingDecisionRequest,
@@ -51,6 +55,32 @@ export async function getAdminApplicationDetail(
 ): Promise<AdminApplicationDetailResponse> {
   const response = await apiClient.get<AdminApplicationDetailResponse>(
     `/admin/applications/${applicationId}`,
+  );
+
+  return response.data;
+}
+
+export async function getAdminDocumentPendingPasses(
+  query: AdminDocumentPendingPassListQuery,
+): Promise<AdminDocumentPendingPassListResponse> {
+  const response = await apiClient.get<AdminDocumentPendingPassListResponse>(
+    "/admin/document/pending-pass",
+    {
+      params: query,
+    },
+  );
+
+  return response.data;
+}
+
+export async function getAdminFinalPendingPasses(
+  query: AdminFinalPendingPassListQuery,
+): Promise<AdminFinalPendingPassListResponse> {
+  const response = await apiClient.get<AdminFinalPendingPassListResponse>(
+    "/admin/final/pending-pass",
+    {
+      params: query,
+    },
   );
 
   return response.data;

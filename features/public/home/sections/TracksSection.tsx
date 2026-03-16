@@ -1,4 +1,6 @@
-﻿import Image from "next/image";
+﻿"use client";
+import Image from "next/image";
+import { useEffect, useRef } from "react";
 
 const tracks = [
   {
@@ -177,6 +179,45 @@ const TRACK_BADGES: Record<number, TrackBadge[]> = {
 };
 
 export default function TracksSection() {
+  const animatedRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const targets = entry.target.querySelectorAll(".reveal-item");
+            targets.forEach((target) => {
+              target.classList.remove(
+                "opacity-0",
+                "translate-y-5",
+                "translate-x-10",
+                "-translate-x-10",
+              );
+            });
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.2 },
+    );
+
+    const currentRefs = animatedRefs.current;
+    currentRefs.forEach((ref) => {
+      if (ref) {
+        observer.observe(ref);
+      }
+    });
+
+    return () => {
+      currentRefs.forEach((ref) => {
+        if (ref) {
+          observer.unobserve(ref);
+        }
+      });
+    };
+  }, []);
+
   return (
     <section className="pt-[119px] pb-[68px] lg:pt-65.75 lg:pb-101 overflow-hidden bg-background text-[#141621]">
       <div className="w-[min(1120px,92%)] mx-auto">
@@ -189,12 +230,17 @@ export default function TracksSection() {
           {tracks.map((track, i) => (
             <div
               key={track.title}
+              ref={(el) => {
+                if (el) animatedRefs.current[i] = el;
+              }}
               className={`flex flex-col items-center lg:flex-row lg:justify-between ${
                 i % 2 === 1 ? "lg:flex-row-reverse" : ""
               }`}
             >
               <div
-                className={`relative flex shrink-0 items-center justify-center mb-3 lg:mb-0 ${TRACK_IMAGE_SIZE_CLASS} ${
+                className={`reveal-item opacity-0 transition-all duration-1000 ease-out ${
+                  i % 2 === 1 ? "translate-x-10" : "-translate-x-10"
+                } relative flex shrink-0 items-center justify-center mb-3 lg:mb-0 ${TRACK_IMAGE_SIZE_CLASS} ${
                   i === 2 ? "-rotate-[11.5deg]" : ""
                 }`}
               >
@@ -238,7 +284,7 @@ export default function TracksSection() {
 
               {/* 카드 + PART */}
               <div
-                className={`flex w-full max-w-155 flex-col gap-1 items-end lg:gap-3 ${
+                className={`reveal-item flex w-full max-w-155 flex-col gap-1 items-end lg:gap-3 transform opacity-0 translate-y-5 transition-all duration-700 ease-out ${
                   i % 2 === 0 ? "lg:items-end" : "lg:items-start"
                 }`}
               >

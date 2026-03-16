@@ -123,3 +123,36 @@ html {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* 위로 부드럽게 등장하는 애니메이션 */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+/* 말풍선 등 작은 요소를 위한 부드러운 통통 튀기 애니메이션 */
+@keyframes bounce-gentle {
+  0%,
+  100% {
+    transform: translateY(-8%);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: none;
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+.animate-bounce-gentle {
+  animation: bounce-gentle 2.5s infinite;
+}

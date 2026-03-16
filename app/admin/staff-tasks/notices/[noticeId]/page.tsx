@@ -1,5 +1,9 @@
 import NoticeDetailPage from "@/features/admin/staffTasks/NoticeDetailPage";
 
+export function generateStaticParams() {
+  return [{ noticeId: "1" }];
+}
+
 type AdminStaffNoticeDetailPageProps = {
   params: Promise<{ noticeId: string }>;
 };
@@ -16,4 +20,3 @@ export default async function AdminStaffNoticeDetailPage(
 
   return <NoticeDetailPage noticeId={noticeId} />;
 }
-

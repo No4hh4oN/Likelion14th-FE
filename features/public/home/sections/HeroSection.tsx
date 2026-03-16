@@ -332,10 +332,9 @@ export default function HeroSection() {
         <SparkleLayer />
       </div>
 
-      {/* FIXME: 공식 폰트 받아서 수정 */}
       <div className="relative z-20 mx-auto flex w-full max-w-[1220px] flex-col items-center px-4 text-white-1">
         {/* 모바일버전 제목 탭 */}
-        <div className="text-center leading-none lg:hidden">
+        <div className="text-center leading-none lg:hidden animate-fade-in-up">
           <p className="text-[38px] font-extrabold tracking-[0.03em]">
             LIKELION
           </p>
@@ -346,12 +345,21 @@ export default function HeroSection() {
 
         <div className="relative h-[550px] w-[340px] lg:h-[760px] lg:w-[980px]">
           {/* 데스크탑버전 제목 탭 */}
-          <div className="pointer-events-none absolute inset-0 hidden lg:block">
+          <div
+            className="pointer-events-none absolute inset-0 hidden lg:block animate-fade-in-up"
+            style={{ animationDelay: "0.2s" }}
+          >
             <p className="absolute left-[-24px] top-[-24px] z-10 text-[112px] font-extrabold tracking-[0.03em] text-white">
               LIKELION
             </p>
+          </div>
+
+          <div
+            className="pointer-events-none absolute inset-0 z-40 hidden lg:block animate-fade-in-up"
+            style={{ animationDelay: "0.2s" }}
+          >
             <p
-              className="absolute left-[56%] top-[80px] z-40 whitespace-nowrap text-[68px] font-extrabold tracking-[-0.02em] text-white"
+              className="absolute left-[56%] top-[80px] whitespace-nowrap text-[68px] font-extrabold tracking-[-0.02em] text-white"
               style={{ textShadow: "0 2px 8px rgba(8, 16, 42, 0.82)" }}
             >
               at SYU 14th
@@ -381,10 +389,11 @@ export default function HeroSection() {
 
             <Link
               href="/14/faq"
-              className="rounded-full bg-main-3 z-30 px-7 py-3.5 text-[24px] font-bold text-white transition-transform duration-300 cursor-pointer hover:translate-y-[-3px] lg:px-[72px] lg:py-4 lg:text-[36px]"
+              className="rounded-full bg-main-3 z-30 px-7 py-3.5 text-[24px] font-bold text-white transition-all duration-300 cursor-pointer hover:translate-y-[-3px] hover:scale-105 hover:shadow-[0_0_20px_#ff9b43] lg:px-[72px] lg:py-4 lg:text-[36px]"
             >
               14기 지원하기
             </Link>
+
             <p className="mt-[-9px] text-[16px] text-gray-3 font-normal lg:hidden">
               지원 마감까지{" "}
               <span
@@ -415,4 +424,3 @@ export default function HeroSection() {
     </section>
   );
 }
-

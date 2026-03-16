@@ -15,7 +15,7 @@ const ENTRY_ITEMS: EntryItem[] = [
   {
     title: "멋사 SYU 14TH\n지원자 관리",
     description:
-      "멋사 SYU 14TH 서류 지원자 목록을 확인하고\n합격/불합격 처리를 해요.",
+      "서류 지원부터 최종 합격까지\n지원자 상태를 단계별로 관리해요.",
     href: "/admin/applications",
   },
   {
@@ -137,9 +137,13 @@ export default function AdminEntryPage() {
                           {item.description}
                         </p>
                       </Link>
-                      <div className="mt-8 inline-flex h-10 items-center justify-center rounded-full bg-[#4a5162] px-4 text-sm font-semibold text-white">
+                      <Link
+                        href={item.href}
+                        onClick={(event) => handleCardClick(event, index)}
+                        className="mt-8 inline-flex h-10 items-center justify-center rounded-full bg-[#4a5162] px-4 text-sm font-semibold text-white"
+                      >
                         바로가기
-                      </div>
+                      </Link>
                     </article>
                   </div>
                 ))}

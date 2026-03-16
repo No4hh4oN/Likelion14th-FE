@@ -1,4 +1,8 @@
-﻿import BabyLionsSubmissionDetailPage from "@/features/admin/babyLions/BabyLionsSubmissionDetailPage";
+import BabyLionsSubmissionDetailPage from "@/features/admin/babyLions/BabyLionsSubmissionDetailPage";
+
+export function generateStaticParams() {
+  return [{ submissionId: "1" }];
+}
 
 type AdminBabyLionsSubmissionDetailRouteProps = {
   params: Promise<{ submissionId: string }>;
@@ -16,4 +20,3 @@ export default async function AdminBabyLionsSubmissionDetailRoutePage(
 
   return <BabyLionsSubmissionDetailPage submissionId={submissionId} />;
 }
-
