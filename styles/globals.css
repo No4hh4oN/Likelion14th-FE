@@ -156,3 +156,20 @@ html {
 .animate-bounce-gentle {
   animation: bounce-gentle 2.5s infinite;
 }
+
+@keyframes nudge-horizontal {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  70% {
+    transform: translateX(2px);
+  }
+}
+
+.animate-nudge-horizontal-twice {
+  animation: nudge-horizontal 0.8s ease-in-out 2;
+}

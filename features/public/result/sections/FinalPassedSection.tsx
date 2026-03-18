@@ -28,13 +28,13 @@ type CommunityInfoItem = {
 const COMMUNITY_INFO: CommunityInfoItem[] = [
   {
     title: "삼육대학교 멋쟁이사자처럼\n14기 디스코드",
-    imageSrc: "/images/passedSection/discord.webp",
+    imageSrc: "/images/passedSection/discord.png",
     imageAlt: "삼육대학교 멋쟁이사자처럼 14기 디스코드 안내 이미지",
     description: "*QR 코드를 스캔하여 안내된 링크에 입장해 주시기 바랍니다.",
   },
   {
     title: "삼육대학교 멋쟁이사자처럼\n인스타그램",
-    imageSrc: "/images/passedSection/instagram.webp",
+    imageSrc: "/images/passedSection/instagram.png",
     imageAlt: "삼육대학교 멋쟁이사자처럼 인스타그램 안내 이미지",
   },
 ] as const;
@@ -115,15 +115,7 @@ export default function FinalPassedSection({
           </h2>
           <div className="mt-5 grid gap-6 lg:mt-7 lg:grid-cols-[1.07fr_1fr] lg:items-start">
             <div className="relative h-[260px] overflow-hidden rounded-[8px] bg-[#DCE1EA] lg:h-[390px]">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_22%_25%,#c8d1e1,transparent_42%),radial-gradient(circle_at_82%_62%,#bec9dc,transparent_42%),linear-gradient(140deg,#eef1f6,#d6dce8)]" />
-              <div className="absolute left-[-14%] top-[10%] h-[67%] w-[72%] rounded-[160px] border-[18px] border-[#C4CCDA]/90" />
-              <div className="absolute left-[8%] top-[29%] h-[58%] w-[72%] rounded-[140px] border-[16px] border-[#D3D9E4]/95" />
-              <div className="absolute right-[9%] top-[6%] h-[47%] w-[48%] rounded-[140px] border-[14px] border-[#C9D1DF]/90" />
-              <div className="absolute right-[11%] top-[48%] h-[43%] w-[54%] rounded-[120px] border-[12px] border-[#CFD6E2]/95" />
-              <div className="absolute left-[62%] top-[48%] h-5 w-5 rounded-full bg-main-3/90 shadow-[0_0_0_6px_rgba(80,137,255,0.22)]" />
-              <span className="absolute left-[58%] top-[56%] rounded bg-white/78 px-2 py-1 text-[11px] font-semibold text-[#5A6273] lg:text-[13px]">
-                다니엘관
-              </span>
+              카톡 공지 예정(현재 장소 미정)
             </div>
 
             <div className="space-y-5">
