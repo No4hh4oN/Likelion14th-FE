@@ -9,7 +9,7 @@ type FinalPassedSectionProps = {
 
 const OT_INFO = {
   dateTime: "2026년 3월 27일(금) 17시 30분",
-  location: "위치 나오면 수정",
+  location: "삼육대학교 강의실 (추후공지)",
   notes: [
     "오리엔테이션은 약 1시간 정도 소요될 예정입니다.",
     "오리엔테이션에서는 향후 활동 계획 안내 및 아이스브레이킹 프로그램이 진행됩니다.",
@@ -115,7 +115,12 @@ export default function FinalPassedSection({
           </h2>
           <div className="mt-5 grid gap-6 lg:mt-7 lg:grid-cols-[1.07fr_1fr] lg:items-start">
             <div className="relative h-[260px] overflow-hidden rounded-[8px] bg-[#DCE1EA] lg:h-[390px]">
-              카톡 공지 예정(현재 장소 미정)
+              <Image
+                src="/images/passedSection/ot.webp"
+                alt="오리엔테이션 안내 이미지"
+                fill
+                className="object-cover"
+              />
             </div>
 
             <div className="space-y-5">
