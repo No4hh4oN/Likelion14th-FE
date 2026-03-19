@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { isFinalResultPhase } from "@/features/public/recruitmentPhase";
 import {
@@ -28,6 +28,7 @@ type HistoryDisplayRow = {
 
 export default function HistorySection({ onBack }: HistorySectionProps) {
   const router = useRouter();
+  const historyTableScrollRef = useRef<HTMLDivElement | null>(null);
   const [historyItems, setHistoryItems] = useState<ApplicationHistoryItem[]>(
     [],
   );
@@ -39,6 +40,9 @@ export default function HistorySection({ onBack }: HistorySectionProps) {
   >({});
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isHistoryTableScrollable, setIsHistoryTableScrollable] =
+    useState(false);
+  const [hasScrolledHistoryTable, setHasScrolledHistoryTable] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -199,6 +203,40 @@ export default function HistorySection({ onBack }: HistorySectionProps) {
     });
   }, [visibleRecords, dashboardByRecruitment]);
 
+  useEffect(() => {
+    const scrollContainer = historyTableScrollRef.current;
+
+    if (!scrollContainer) {
+      return;
+    }
+
+    const updateScrollability = () => {
+      setIsHistoryTableScrollable(
+        scrollContainer.scrollWidth > scrollContainer.clientWidth + 4,
+      );
+    };
+
+    const handleScroll = () => {
+      if (scrollContainer.scrollLeft > 4) {
+        setHasScrolledHistoryTable(true);
+      }
+    };
+
+    updateScrollability();
+    handleScroll();
+
+    scrollContainer.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", updateScrollability);
+
+    return () => {
+      scrollContainer.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", updateScrollability);
+    };
+  }, [displayRows.length, errorMessage, isLoading]);
+
+  const shouldShowScrollHint =
+    isHistoryTableScrollable && !hasScrolledHistoryTable;
+
   const getActionVisibility = (
     record: ApplicationHistoryItem,
     stage: HistoryDisplayStage,
@@ -228,11 +266,12 @@ export default function HistorySection({ onBack }: HistorySectionProps) {
 
     return {
       canShowEditButton: stage === "DOCUMENT" && canEdit === true,
-      canShowResultButton: stage === "INTERVIEW"
-        ? hasFinalResult ||
-          hasReachedFinalResultAt ||
-          isRecruitmentInFinalResultPhase
-        : canShowResultByDashboard || hasReachedDocResultAt || hasFinalResult,
+      canShowResultButton:
+        stage === "INTERVIEW"
+          ? hasFinalResult ||
+            hasReachedFinalResultAt ||
+            isRecruitmentInFinalResultPhase
+          : canShowResultByDashboard || hasReachedDocResultAt || hasFinalResult,
     };
   };
 
@@ -248,10 +287,7 @@ export default function HistorySection({ onBack }: HistorySectionProps) {
     router.push(`/14/apply?applicationId=${applicationId}`);
   };
 
-  const handleResultClick = (
-    applicationId: number,
-    recruitmentId: number,
-  ) => {
+  const handleResultClick = (applicationId: number, recruitmentId: number) => {
     router.push(
       `/14/result?applicationId=${applicationId}&recruitmentId=${recruitmentId}`,
     );
@@ -268,6 +304,11 @@ export default function HistorySection({ onBack }: HistorySectionProps) {
             <p className="mt-2 text-[12px] text-white/55 lg:text-[14px]">
               14기 이후 내역부터 확인 가능합니다
             </p>
+            {shouldShowScrollHint ? (
+              <p className="mt-3 text-xs text-white/55 md:hidden">
+                좌우로 스와이프해 전체 내역 보기 {"->"}
+              </p>
+            ) : null}
           </div>
           <button
             type="button"
@@ -279,146 +320,156 @@ export default function HistorySection({ onBack }: HistorySectionProps) {
           </button>
         </div>
 
-        <div className="mt-8 overflow-x-auto">
-          <table className="w-full min-w-[920px] border-separate border-spacing-0 text-center text-[12px] lg:text-[14px]">
-            <thead>
-              <tr className="text-white/80">
-                <th className="border-b border-white/15 px-3 py-3 font-semibold">
-                  No.
-                </th>
-                <th className="border-b border-white/15 px-3 py-3 font-semibold">
-                  기수
-                </th>
-                <th className="border-b border-white/15 px-3 py-3 font-semibold">
-                  전형
-                </th>
-                <th className="border-b border-white/15 px-3 py-3 font-semibold">
-                  지원일시
-                </th>
-                <th className="border-b border-white/15 px-3 py-3 font-semibold">
-                  수정일시
-                </th>
-                <th className="border-b border-white/15 px-3 py-3 font-semibold">
-                  면접일시
-                </th>
-                <th className="border-b border-white/15 px-3 py-3 font-semibold">
-                  수정하기
-                </th>
-                <th className="border-b border-white/15 px-3 py-3 font-semibold">
-                  결과 확인
-                </th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {isLoading ? (
-                <tr>
-                  <td
-                    colSpan={8}
-                    className="border-b border-white/10 px-3 py-10 text-center text-white/70"
-                  >
-                    지원 내역을 불러오는 중입니다.
-                  </td>
+        <div className="relative mt-8">
+          <div ref={historyTableScrollRef} className="overflow-x-auto">
+            <table className="w-full min-w-[920px] border-separate border-spacing-0 text-center text-[12px] lg:text-[14px]">
+              <thead>
+                <tr className="text-white/80">
+                  <th className="border-b border-white/15 px-3 py-3 font-semibold">
+                    No.
+                  </th>
+                  <th className="border-b border-white/15 px-3 py-3 font-semibold">
+                    기수
+                  </th>
+                  <th className="border-b border-white/15 px-3 py-3 font-semibold">
+                    전형
+                  </th>
+                  <th className="border-b border-white/15 px-3 py-3 font-semibold">
+                    지원일시
+                  </th>
+                  <th className="border-b border-white/15 px-3 py-3 font-semibold">
+                    수정일시
+                  </th>
+                  <th className="border-b border-white/15 px-3 py-3 font-semibold">
+                    면접일시
+                  </th>
+                  <th className="border-b border-white/15 px-3 py-3 font-semibold">
+                    수정하기
+                  </th>
+                  <th className="border-b border-white/15 px-3 py-3 font-semibold">
+                    결과 확인
+                  </th>
                 </tr>
-              ) : null}
+              </thead>
 
-              {!isLoading && errorMessage ? (
-                <tr>
-                  <td
-                    colSpan={8}
-                    className="border-b border-white/10 px-3 py-10 text-center text-[#ff9ea8]"
-                  >
-                    {errorMessage}
-                  </td>
-                </tr>
-              ) : null}
+              <tbody>
+                {isLoading ? (
+                  <tr>
+                    <td
+                      colSpan={8}
+                      className="border-b border-white/10 px-3 py-10 text-center text-white/70"
+                    >
+                      지원 내역을 불러오는 중입니다.
+                    </td>
+                  </tr>
+                ) : null}
 
-              {!isLoading && !errorMessage && visibleRecords.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={8}
-                    className="border-b border-white/10 px-3 py-10 text-center text-white/70"
-                  >
-                    제출된 지원 내역이 없습니다.
-                  </td>
-                </tr>
-              ) : null}
+                {!isLoading && errorMessage ? (
+                  <tr>
+                    <td
+                      colSpan={8}
+                      className="border-b border-white/10 px-3 py-10 text-center text-[#ff9ea8]"
+                    >
+                      {errorMessage}
+                    </td>
+                  </tr>
+                ) : null}
 
-              {!isLoading && !errorMessage
-                ? displayRows.map(({ record, stage }, index) => {
-                    const { canShowEditButton, canShowResultButton } =
-                      getActionVisibility(record, stage);
-                    const isInterviewRecord = stage === "INTERVIEW";
+                {!isLoading && !errorMessage && visibleRecords.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={8}
+                      className="border-b border-white/10 px-3 py-10 text-center text-white/70"
+                    >
+                      제출된 지원 내역이 없습니다.
+                    </td>
+                  </tr>
+                ) : null}
 
-                    return (
-                      <tr
-                        key={`${record.applicationId}-${stage}`}
-                        className="text-white/85"
-                      >
-                        <td className="border-b border-white/10 px-3 py-3">
-                          {index + 1}
-                        </td>
-                        <td className="border-b border-white/10 px-3 py-3">
-                          {record.generation}기
-                        </td>
-                        <td className="border-b border-white/10 px-3 py-3">
-                          {getApplicationTypeLabel(stage)}
-                        </td>
-                        <td className="border-b border-white/10 px-3 py-3">
-                          {isInterviewRecord
-                            ? "-"
-                            : formatDateTime(record.submittedAt)}
-                        </td>
-                        <td className="border-b border-white/10 px-3 py-3">
-                          {isInterviewRecord
-                            ? "-"
-                            : formatDateTime(record.updatedAt)}
-                        </td>
-                        <td className="border-b border-white/10 px-3 py-3">
-                          {isInterviewRecord
-                            ? formatInterviewDateTime(record)
-                            : "-"}
-                        </td>
-                        <td className="border-b border-white/10 px-3 py-3">
-                          {canShowEditButton ? (
-                            <ActionButton
-                              text="수정하기"
-                              onClick={() =>
-                                handleEditClick(record.applicationId)
-                              }
-                              className="bg-main-3 px-5 py-2.25 text-[14px] leading-none"
-                              hoverClassName="hover:bg-amber-600"
-                            />
-                          ) : (
-                            <span className="text-white/50">-</span>
-                          )}
-                        </td>
-                        <td className="border-b border-white/10 px-3 py-3">
-                          {canShowResultButton ? (
-                            <ActionButton
-                              text="결과 확인"
-                              onClick={() =>
-                                handleResultClick(
-                                  record.applicationId,
-                                  record.recruitmentId,
-                                )
-                              }
-                              className="bg-main-1 px-5 py-2.25 text-[14px] leading-none"
-                              hoverClassName="hover:bg-[#2289E6]"
-                            />
-                          ) : (
-                            <span className="text-white/50">-</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })
-                : null}
-            </tbody>
-          </table>
+                {!isLoading && !errorMessage
+                  ? displayRows.map(({ record, stage }, index) => {
+                      const { canShowEditButton, canShowResultButton } =
+                        getActionVisibility(record, stage);
+                      const isInterviewRecord = stage === "INTERVIEW";
+
+                      return (
+                        <tr
+                          key={`${record.applicationId}-${stage}`}
+                          className="text-white/85"
+                        >
+                          <td className="border-b border-white/10 px-3 py-3">
+                            {index + 1}
+                          </td>
+                          <td className="border-b border-white/10 px-3 py-3">
+                            {record.generation}기
+                          </td>
+                          <td className="border-b border-white/10 px-3 py-3">
+                            {getApplicationTypeLabel(stage)}
+                          </td>
+                          <td className="border-b border-white/10 px-3 py-3">
+                            {isInterviewRecord
+                              ? "-"
+                              : formatDateTime(record.submittedAt)}
+                          </td>
+                          <td className="border-b border-white/10 px-3 py-3">
+                            {isInterviewRecord
+                              ? "-"
+                              : formatDateTime(record.updatedAt)}
+                          </td>
+                          <td className="border-b border-white/10 px-3 py-3">
+                            {isInterviewRecord
+                              ? formatInterviewDateTime(record)
+                              : "-"}
+                          </td>
+                          <td className="border-b border-white/10 px-3 py-3">
+                            {canShowEditButton ? (
+                              <ActionButton
+                                text="수정하기"
+                                onClick={() =>
+                                  handleEditClick(record.applicationId)
+                                }
+                                className="bg-main-3 px-5 py-2.25 text-[14px] leading-none"
+                                hoverClassName="hover:bg-amber-600"
+                              />
+                            ) : (
+                              <span className="text-white/50">-</span>
+                            )}
+                          </td>
+                          <td className="border-b border-white/10 px-3 py-3">
+                            {canShowResultButton ? (
+                              <ActionButton
+                                text="결과 확인"
+                                onClick={() =>
+                                  handleResultClick(
+                                    record.applicationId,
+                                    record.recruitmentId,
+                                  )
+                                }
+                                className="bg-main-1 px-5 py-2.25 text-[14px] leading-none"
+                                hoverClassName="hover:bg-[#2289E6]"
+                              />
+                            ) : (
+                              <span className="text-white/50">-</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  : null}
+              </tbody>
+            </table>
+          </div>
+
+          {shouldShowScrollHint ? (
+            <>
+              <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-[#4b5161] via-[#2E313A]/88 to-transparent md:hidden" />
+              <div className="pointer-events-none absolute right-2 top-1/2 z-10 -translate-y-1/2 text-white/45 md:hidden">
+                <span className="block animate-nudge-horizontal-twice">→</span>
+              </div>
+            </>
+          ) : null}
         </div>
       </div>
     </section>
   );
 }
-
