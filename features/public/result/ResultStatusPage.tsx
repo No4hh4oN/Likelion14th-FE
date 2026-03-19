@@ -336,6 +336,15 @@ export default function ResultStatusPage() {
     }
   };
 
+  // 개발 편의를 위한 최종 합격 섹션 미리보기 기능
+  const preview = searchParams.get("preview");
+  const isPreviewFinalPassed =
+    process.env.NODE_ENV === "development" && preview === "final-passed";
+
+  if (isPreviewFinalPassed) {
+    return <FinalPassedSection userName="홍길동" />;
+  }
+
   if (isLoading) {
     return (
       <section className="min-h-screen bg-background px-4 pt-28 text-white lg:px-6">
@@ -422,12 +431,12 @@ export default function ResultStatusPage() {
       );
     }
 
-      return (
-        <PassedSection
-          userName={userName}
-          slots={slots}
-          reservation={reservation}
-          canReserve={canReserveInterview}
+    return (
+      <PassedSection
+        userName={userName}
+        slots={slots}
+        reservation={reservation}
+        canReserve={canReserveInterview}
         isReserving={isReserving}
         reserveErrorMessage={reserveErrorMessage}
         reserveSuccessMessage={reserveSuccessMessage}
