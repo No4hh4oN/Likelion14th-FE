@@ -3,6 +3,8 @@
 import Image from "next/image";
 
 export default function HomeSection() {
+  const SESSION_DEFAULT_THUMBNAIL = "/images/commonSpace/default.webp";
+  const TEMP = null;
   const noticeItems = [
     "세션의 규칙을 안내드립니다. (첨부파일 참조)",
     "공통 세션 장소 및 시간대 안내",
@@ -13,10 +15,22 @@ export default function HomeSection() {
   ];
 
   const materialItems = [
-    { title: "발로 해도 따라할 수 있는 기초 강의" },
-    { title: "2차 공통 세션 자료 PDF" },
-    { title: "발로 해도 따라할 수 있는 기초 강의2" },
-    { title: "2차 공통 세션 자료 PDF2" },
+    {
+      title: "발로 해도 따라할 수 있는 기초 강의",
+      thumbnailUrl: TEMP || SESSION_DEFAULT_THUMBNAIL,
+    },
+    {
+      title: "2차 공통 세션 자료 PDF",
+      thumbnailUrl: TEMP || SESSION_DEFAULT_THUMBNAIL,
+    },
+    {
+      title: "발로 해도 따라할 수 있는 기초 강의2",
+      thumbnailUrl: TEMP || SESSION_DEFAULT_THUMBNAIL,
+    },
+    {
+      title: "2차 공통 세션 자료 PDF2",
+      thumbnailUrl: TEMP || SESSION_DEFAULT_THUMBNAIL,
+    },
   ];
 
   const assignmentItems = [
@@ -75,15 +89,14 @@ export default function HomeSection() {
           alt="back head lion"
           width={384.3}
           height={332.1}
+          quality={90}
           className="z-10 absolute right-12 -top-36 rotate-[-30deg] h-[332.1px] w-[384.3px]"
         />
       </div>
       <div className="grid gap-10 lg:grid-cols-2">
         <section>
           <div className="flex items-center justify-between">
-            <h3 className="text-[30px] font-semibold text-white-1">
-              전체 공지
-            </h3>
+            <h3 className="text-[24px] font-bold text-white-1">전체 공지</h3>
             <button
               type="button"
               className="flex items-center gap-2 text-gray-3"
@@ -92,13 +105,21 @@ export default function HomeSection() {
               <span>{">"}</span>
             </button>
           </div>
-          <div className="mt-3 h-[2px] w-full bg-main-2" />
-          <ul className="mt-7 flex flex-col gap-3">
+          <div className="mt-8 h-[5px] w-full bg-main-1" />
+          <ul className="mt-16.75 flex flex-col gap-3.5">
             {noticeItems.map((item) => (
               <li
                 key={item}
-                className="rounded-[12px] bg-[#4f5465] px-6 py-5 text-[20px] font-medium text-white-1"
+                className="rounded-[14px] relative overflow-hidden bg-linear-to-r from-gray-6 to-gray-7 px-6 py-6.5 text-[20px] leading-[1.27] font-bold text-white-1"
               >
+                <Image
+                  src="/images/lions/lion-stand-half.webp"
+                  alt="lion-stand-half"
+                  width={384.3}
+                  height={332.1}
+                  quality={90}
+                  className="z-10 absolute right-12 opacity-15 -top-36 h-[332.1px] w-[384.3px]"
+                />
                 {item}
               </li>
             ))}
@@ -107,7 +128,7 @@ export default function HomeSection() {
 
         <section>
           <div className="flex items-center justify-between">
-            <h3 className="text-[30px] font-semibold text-white-1">
+            <h3 className="text-[24px] font-bold text-white-1">
               세션 자료 공유
             </h3>
             <button
@@ -118,20 +139,21 @@ export default function HomeSection() {
               <span>{">"}</span>
             </button>
           </div>
-          <div className="mt-3 h-[2px] w-full bg-main-2" />
-          <ul className="mt-7 grid grid-cols-2 gap-4">
+          <div className="mt-8 h-[5px] w-full bg-main-1" />
+          <ul className="mt-16.75 grid grid-cols-2 gap-y-7.75 gap-x-5.25">
             {materialItems.map((item, index) => (
               <li key={`${item.title}-${index}`}>
                 <div className="overflow-hidden rounded-[16px] bg-[#434958]">
                   <Image
-                    src="/images/lions/head-back.webp"
-                    alt="자료 썸네일"
-                    width={240}
-                    height={160}
-                    className="h-[170px] w-full object-cover"
+                    src={item.thumbnailUrl || SESSION_DEFAULT_THUMBNAIL}
+                    alt={`${item.title} 썸네일`}
+                    width={258}
+                    height={210}
+                    quality={90}
+                    className="h-[210px] w-full object-cover"
                   />
                 </div>
-                <p className="mt-3 text-[21px] font-semibold text-white-1 line-clamp-1">
+                <p className="mt-4.25 text-[20px] font-bold text-white-1 line-clamp-1">
                   {item.title}
                 </p>
               </li>
