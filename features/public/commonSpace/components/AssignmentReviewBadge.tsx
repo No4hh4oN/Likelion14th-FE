@@ -23,9 +23,9 @@ type ReviewBadgeVariant = "pending" | "rejected" | "completed";
  * 배지 변형별 색상 스타일을 매핑한다.
  */
 const reviewBadgeClassNameByVariant: Record<ReviewBadgeVariant, string> = {
-  pending: "border-main-2 bg-main-1",
-  rejected: "border-[#D20000] bg-red-1",
-  completed: "border-[#109A3E] bg-green-1",
+  pending: "ring-main-2 bg-main-1",
+  rejected: "ring-[#D20000] bg-red-1",
+  completed: "ring-[#109A3E] bg-green-1",
 };
 
 /**
@@ -63,7 +63,7 @@ export default function AssignmentReviewBadge({
   return (
     <span
       className={clsx(
-        "inline-flex items-center justify-center rounded-[10px] border-[3px] px-5.5 py-3.25 font-bold text-white-1 text-[20px]",
+        "inline-flex items-center justify-center rounded-[10px] ring-2 ring-inset px-5.5 py-3.25 font-bold text-white-1 text-[20px]",
         reviewBadgeClassNameByVariant[reviewBadgeVariant],
       )}
     >
