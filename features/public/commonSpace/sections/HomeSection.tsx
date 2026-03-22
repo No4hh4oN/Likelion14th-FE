@@ -83,7 +83,6 @@ export default function HomeSection() {
       submissionState: "submitted",
       reviewState: "pending",
       submissionFileName: "숨쉬는중.mp4",
-      bodyMessage: "운영진이 과제 평가를 작성 중입니다.",
     },
     {
       title: "공통 세션 OT : 자기소개 카드 만들기",
@@ -92,7 +91,6 @@ export default function HomeSection() {
       submissionState: "submitted",
       reviewState: "published",
       submissionFileName: "자기소개카드_윤혜원.png",
-      bodyMessage: "평가가 등록되었습니다.",
       reviewContent:
         "전달하고 싶은 정보가 명확하게 정리되어 있어서 읽기 쉬웠습니다.\n타이포 위계도 잘 잡혀 있고, 컬러 사용도 안정적입니다.\n\n다음 제출부터는 텍스트와 아이콘 사이 간격만 조금 더 정리해보면 완성도가 더 올라갈 것 같습니다.",
     },
