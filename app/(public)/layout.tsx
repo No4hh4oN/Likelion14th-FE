@@ -2,6 +2,7 @@
 import localFont from "next/font/local";
 import "@/styles/globals.css";
 import Header from "@/components/layout/Header";
+import DragBlocker from "@/components/layout/DragBlocker";
 
 export const metadata: Metadata = {
   title: "LIKELION SYU",
@@ -29,6 +30,7 @@ export default function PublicLayout({
   return (
     <html lang="ko" className={pretendard.variable}>
       <body>
+        <DragBlocker />
         <Header />
         <main>{children}</main>
       </body>
