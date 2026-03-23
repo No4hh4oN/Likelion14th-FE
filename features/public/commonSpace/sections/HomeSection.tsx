@@ -251,6 +251,20 @@ export default function HomeSection() {
           ))}
         </ul>
       </section>
+      <p className="mt-[242px] text-[14px] font-semibold leading-[1.5] text-gray-5 text-center">
+        LIKE LION UNIV.
+        <br />
+        X<br />
+        SAHMYOOK UNIV.
+      </p>
+      <Image
+        src="/images/lions/peek.webp"
+        alt="라이언 빼꼼"
+        width={476}
+        height={408}
+        quality={90}
+        className="w-61.5 mx-auto object-contain"
+      />
     </section>
   );
 }
