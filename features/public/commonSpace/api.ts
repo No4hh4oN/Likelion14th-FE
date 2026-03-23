@@ -3,14 +3,14 @@ import {
   buildCommonSpaceNoticeListParams,
   toCommonSpaceNoticeDetailItem,
   toCommonSpaceNoticeListResult,
-} from "./notices/adapter";
+} from "./notice.adapter";
 import type {
   CommonSpaceNoticeDetailApiResponse,
   CommonSpaceNoticeDetailItem,
   CommonSpaceNoticeListApiResponse,
   CommonSpaceNoticeListQuery,
   CommonSpaceNoticeListResult,
-} from "./notices/types";
+} from "./notice.types";
 
 /**
  * 공통 공간 전체 공지 목록을 조회한다.
