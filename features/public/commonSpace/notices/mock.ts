@@ -1,13 +1,13 @@
 import {
   DEFAULT_COMMON_SPACE_NOTICE_PAGE,
   DEFAULT_COMMON_SPACE_NOTICE_PAGE_SIZE,
-} from "./notice.constants";
+} from "./constants";
 import type {
   CommonSpaceNoticeDetailItem,
   CommonSpaceNoticeListItem,
   CommonSpaceNoticeListQuery,
   CommonSpaceNoticeListResult,
-} from "./notice.types";
+} from "./types";
 
 /**
  * 레이아웃 검증용 전체 공지 mock 목록이다.

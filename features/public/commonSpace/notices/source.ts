@@ -5,12 +5,12 @@ import {
 import {
   getMockCommonSpaceNoticeDetail,
   getMockCommonSpaceNoticeList,
-} from "./notice.mock";
+} from "./mock";
 import type {
   CommonSpaceNoticeDetailItem,
   CommonSpaceNoticeListQuery,
   CommonSpaceNoticeListResult,
-} from "./notice.types";
+} from "./types";
 
 /**
  * 전체 공지 섹션이 의존할 데이터 소스 계약이다.

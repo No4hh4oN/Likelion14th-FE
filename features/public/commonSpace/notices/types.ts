@@ -1,4 +1,4 @@
-import type { CommonSpacePartId } from "./types";
+import type { CommonSpacePartId } from "../types";
 
 /**
  * 공지 목록 조회 API에서 사용하는 카테고리 값이다.

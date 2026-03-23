@@ -1,9 +1,9 @@
-import type { CommonSpacePartId } from "./types";
+import type { CommonSpacePartId } from "../types";
 import {
   COMMON_SPACE_NOTICE_CATEGORY,
   DEFAULT_COMMON_SPACE_NOTICE_PAGE,
   DEFAULT_COMMON_SPACE_NOTICE_PAGE_SIZE,
-} from "./notice.constants";
+} from "./constants";
 import type {
   CommonSpaceNoticeApiPart,
   CommonSpaceNoticeAttachment,
@@ -15,7 +15,7 @@ import type {
   CommonSpaceNoticeListQuery,
   CommonSpaceNoticeListResult,
   CommonSpaceNoticeSummaryApiItem,
-} from "./notice.types";
+} from "./types";
 
 type CommonSpaceNoticeListApiParams = {
   page: number;

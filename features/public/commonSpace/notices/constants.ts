@@ -1,8 +1,8 @@
-import type { CommonSpacePartId } from "./types";
+import type { CommonSpacePartId } from "../types";
 import type {
   CommonSpaceNoticeApiCategory,
   CommonSpaceNoticeLoadState,
-} from "./notice.types";
+} from "./types";
 
 /**
  * 공지 목록 조회 시 고정으로 전달할 카테고리 값이다.
