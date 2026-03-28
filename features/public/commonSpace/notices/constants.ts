@@ -39,7 +39,7 @@ export const COMMON_SPACE_NOTICE_EMPTY_TITLE_BY_PART: Record<
   CommonSpacePartId,
   string
 > = {
-  all: "등록된 전체 공지가 없습니다.",
+  all: "등록된 공통 공간 공지가 없습니다.",
   "front-end": "등록된 프론트엔드 공지가 없습니다.",
   "back-end": "등록된 백엔드 공지가 없습니다.",
   "ai-ml": "등록된 AI/ML 공지가 없습니다.",

@@ -124,6 +124,10 @@ export type CommonSpaceNoticeListItem = {
   fileCount: number;
   /** 첨부파일 존재 여부 */
   hasAttachments: boolean;
+  /** 고정 공지 여부 */
+  isPinned: boolean;
+  /** 신규 공지 여부 */
+  isNew: boolean;
 };
 
 /**

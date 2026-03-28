@@ -21,12 +21,14 @@ type CommonSpaceNoticeListApiParams = {
   page: number;
   size: number;
   category: typeof COMMON_SPACE_NOTICE_CATEGORY;
-  part?: CommonSpaceNoticeApiPart;
+  part: CommonSpaceNoticeApiPart;
 };
 
-const commonSpacePartIdToNoticeApiPart: Partial<
-  Record<CommonSpacePartId, CommonSpaceNoticeApiPart>
+const commonSpacePartIdToNoticeApiPart: Record<
+  CommonSpacePartId,
+  CommonSpaceNoticeApiPart
 > = {
+  all: "ETC",
   "front-end": "FRONTEND",
   "back-end": "BACKEND",
   "ai-ml": "AI_ML",
@@ -46,15 +48,11 @@ const noticeApiPartToCommonSpacePartId: Record<
 
 /**
  * 공통공간 파트 식별자를 공지 API 파트 값으로 변환한다.
- * `all`은 전체 공지를 의미하므로 part 파라미터를 생략한다.
+ * `all`은 공통 공간 공지를 의미하므로 API의 `ETC`와 매핑한다.
  */
 export function mapCommonSpacePartIdToNoticeApiPart(
-  partId?: CommonSpacePartId,
-): CommonSpaceNoticeApiPart | undefined {
-  if (!partId || partId === "all") {
-    return undefined;
-  }
-
+  partId: CommonSpacePartId = "all",
+): CommonSpaceNoticeApiPart {
   return commonSpacePartIdToNoticeApiPart[partId];
 }
 
@@ -80,13 +78,13 @@ export function buildCommonSpaceNoticeListParams(
 ): CommonSpaceNoticeListApiParams {
   const page = query.page ?? DEFAULT_COMMON_SPACE_NOTICE_PAGE;
   const size = query.size ?? DEFAULT_COMMON_SPACE_NOTICE_PAGE_SIZE;
-  const part = mapCommonSpacePartIdToNoticeApiPart(query.partId);
+  const part = mapCommonSpacePartIdToNoticeApiPart(query.partId ?? "all");
 
   return {
     page,
     size,
     category: COMMON_SPACE_NOTICE_CATEGORY,
-    ...(part ? { part } : {}),
+    part,
   };
 }
 
@@ -103,6 +101,8 @@ export function toCommonSpaceNoticeListItem(
     createdAt: item.createdAt,
     fileCount: item.fileCount,
     hasAttachments: item.fileCount > 0,
+    isPinned: false,
+    isNew: false,
   };
 }
 
