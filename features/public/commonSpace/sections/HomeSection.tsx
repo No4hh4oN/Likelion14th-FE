@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import AssignmentCard from "../components/AssignmentCard";
+import NoticeCard from "../components/NoticeCard";
 import type { AssignmentItem } from "../types";
 
 /**
@@ -29,6 +30,16 @@ export default function HomeSection() {
     "과제 미제출 시 불이익3",
     "과제 미제출 시 불이익4",
   ];
+
+  /**
+   * 홈 상단에 노출할 고정 공지 카드의 임시 데이터다.
+   */
+  const pinnedNoticeTitle = "예시로 보여지는 텍스트입니다.";
+
+  /**
+   * 홈 공지 목록 카드에 사용할 장식 이미지 경로다.
+   */
+  const HOME_NOTICE_BACKGROUND_IMAGE_SRC = "/images/lions/lion-stand-half.webp";
 
   /**
    * 세션 자료 공유 섹션에 노출할 임시 자료 목록이다.
@@ -106,43 +117,7 @@ export default function HomeSection() {
 
   return (
     <section className="flex flex-col gap-28.5">
-      <div className="relative bg-linear-to-r from-[#334EBE] to-[#0B7DE2] w-full overflow-hidden rounded-[14px] px-10.5 py-8 text-center flex items-center gap-5 shadow-[0_0_17.3px_#003BA8]">
-        <Image
-          src="/icons/pin.svg"
-          alt="pin icon"
-          width={29}
-          height={29}
-          className="z-10 h-[29px] w-[29px]"
-        />
-        <span className="text-[20px] font-normal py-2 px-3.5 rounded-[40px] bg-[#2a3c75]">
-          NEW
-        </span>
-        <p className="text-[24px] font-bold">예시로 보여지는 텍스트입니다.</p>
-        <svg
-          className="ml-auto shrink-0 z-10"
-          width="12"
-          height="24"
-          viewBox="0 0 12 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M2 2L10 12L2 22"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="miter"
-          />
-        </svg>
-        <Image
-          src="/images/lions/head-back.webp"
-          alt="back head lion"
-          width={384.3}
-          height={332.1}
-          quality={90}
-          className="z-10 absolute right-12 -top-36 rotate-[-30deg] h-[332.1px] w-[384.3px]"
-        />
-      </div>
+      <NoticeCard title={pinnedNoticeTitle} pinned isNew />
       <div className="grid gap-10 lg:grid-cols-2">
         <section>
           <div className="flex items-center justify-between">
@@ -164,19 +139,12 @@ export default function HomeSection() {
           <div className="mt-8 h-[5px] w-full bg-main-1" />
           <ul className="mt-16.75 flex flex-col gap-3.5">
             {noticeItems.map((item) => (
-              <li
-                key={item}
-                className="rounded-[14px] relative overflow-hidden bg-linear-to-r from-gray-6 to-gray-7 px-6 py-6.5 text-[20px] leading-[1.27] font-bold text-white-1"
-              >
-                <Image
-                  src="/images/lions/lion-stand-half.webp"
-                  alt="lion-stand-half"
-                  width={527}
-                  height={515}
-                  quality={90}
-                  className="z-0 absolute right-1 opacity-15 -top-43 w-[270px]"
+              <li key={item}>
+                <NoticeCard
+                  title={item}
+                  displayVariant="home"
+                  backgroundImageSrc={HOME_NOTICE_BACKGROUND_IMAGE_SRC}
                 />
-                <span className="relative z-10">{item}</span>
               </li>
             ))}
           </ul>
@@ -251,7 +219,7 @@ export default function HomeSection() {
           ))}
         </ul>
       </section>
-      <p className="mt-[242px] text-[14px] font-semibold leading-[1.5] text-gray-5 text-center">
+      <p className="mt-60.5 text-[14px] font-semibold leading-normal text-gray-5 text-center">
         LIKE LION UNIV.
         <br />
         X<br />
