@@ -196,7 +196,7 @@ export const STAFF_MEMBERS: StaffMember[] = [
     ],
     projects: [
       "오픈소스 컨트리뷰터",
-      "-> toss suspensive / toss granite",
+      "-> toss (suspensive / frontend-fundamentals / granite / technical-writing) DevFive (devup-ui)",
       "다수의 해커톤 출전 경험",
       "1년 동안 2k Github contributions",
     ],
