@@ -14,6 +14,7 @@ import {
   resolveCommonSpaceSectionId,
 } from "./config";
 import HomeSection from "./sections/HomeSection";
+import NoticeSection from "./sections/NoticeSection";
 
 export default function CommonSpacePage() {
   const searchParams = useSearchParams();
@@ -91,7 +92,9 @@ export default function CommonSpacePage() {
               className="z-10 h-[53px] w-[53px]"
             />
           </section>
-          {activeSection ? (
+          {activeSectionId === "notices" ? (
+            <NoticeSection partId={activePart.id} />
+          ) : activeSection ? (
             <CommonSpaceDetailSection
               part={activePart}
               section={activeSection}
