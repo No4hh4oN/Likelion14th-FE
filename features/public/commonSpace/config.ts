@@ -185,6 +185,70 @@ export function buildCommonSpaceHref(
   return query ? `/14/commonSpace?${query}` : "/14/commonSpace";
 }
 
+/**
+ * 공지 상세 화면으로 이동할 href를 생성한다.
+ */
+export function buildCommonSpaceNoticeDetailHref(
+  partId: CommonSpacePartId,
+  noticeId: number,
+) {
+  const params = new URLSearchParams();
+
+  if (partId !== DEFAULT_COMMON_SPACE_PART) {
+    params.set("part", partId);
+  }
+
+  params.set("section", "notices");
+  params.set("noticeId", String(noticeId));
+
+  return `/14/commonSpace?${params.toString()}`;
+}
+
+/**
+ * 세션 자료 상세 화면으로 이동할 href를 생성한다.
+ */
+export function buildCommonSpaceMaterialDetailHref(
+  partId: CommonSpacePartId,
+  materialId: number,
+) {
+  const params = new URLSearchParams();
+
+  if (partId !== DEFAULT_COMMON_SPACE_PART) {
+    params.set("part", partId);
+  }
+
+  params.set("section", "materials");
+  params.set("materialId", String(materialId));
+
+  return `/14/commonSpace?${params.toString()}`;
+}
+
+/**
+ * 상세 식별자 query 값을 숫자로 정규화한다.
+ */
+function resolveCommonSpaceDetailId(value: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  const parsedValue = Number(value);
+  return Number.isInteger(parsedValue) && parsedValue > 0 ? parsedValue : null;
+}
+
+/**
+ * 공지 식별자 query 값을 숫자로 정규화한다.
+ */
+export function resolveCommonSpaceNoticeId(value: string | null) {
+  return resolveCommonSpaceDetailId(value);
+}
+
+/**
+ * 세션 자료 식별자 query 값을 숫자로 정규화한다.
+ */
+export function resolveCommonSpaceMaterialId(value: string | null) {
+  return resolveCommonSpaceDetailId(value);
+}
+
 export function getCommonSpaceHeading(part: CommonSpacePart) {
   return part.id === "all"
     ? "멋쟁이사자처럼 SYU 공통 공간"

@@ -3,6 +3,7 @@ import {
   DEFAULT_COMMON_SPACE_NOTICE_PAGE_SIZE,
 } from "./constants";
 import type {
+  CommonSpaceNoticeCommentItem,
   CommonSpaceNoticeDetailItem,
   CommonSpaceNoticeListItem,
   CommonSpaceNoticeListQuery,
@@ -246,8 +247,12 @@ export const COMMON_SPACE_NOTICE_MOCK_DETAIL_BY_ID: Record<
   101: {
     id: 101,
     title: "3/11 5주차 공통 세션 예정입니다.",
+    authorName: "윤혜원",
+    authorDescription: "멋쟁이사자처럼 삼육대학교 24학번",
     content:
-      "이번 주 공통 세션은 대면으로 진행됩니다.\n세부 시간표와 준비물은 첨부파일을 확인해 주세요.",
+      "레시피\n\n재료: 진짬뽕 5봉지, 썰은 소고기, 미역국(또는 냉동된 된장국), 반쪽 계란(개당 4등분)\n1. 냄비에 소고기 미역국 500ml(기본 진짬뽕 물 양 550ml)와 된장국을 넣고 색이 날 때까지 고기를 넣고 한번 볶습니다.\n2. 미역국이 끓으면 분말스프를 넣고 감칠맛을 더합니다.\n3. 육수가 끓기 전에 면 사리를 부어 면이 탄력을 살리도록 천천히 끓여 줍니다.\n4. 쫄깃한 면 위에 미역과 소고기를 얹습니다.\n\n그냥 집에서 끓인 미역국으로 만들어도 되는 것 같지만 저는 집에 미역국이 있어서 기존 국물 레시피 그대로 끓였고 그대로 넣어서 스프가 미역국이랑 잘 어울리더라고요! 면이랑 계란이 포인트라 입맛 없을 때 진짜 좋아요.\n\n만약 미역국 대신 김칫국이나 라면국물이 강하면 불리니까 추천하지는 않고요. 두부나 콩나물만 얹어 먹어도 괜찮더라고요. 전체적으로 입맛 없을 때 한 그릇으로도 충분히 배부른 조합이었습니다.",
+    bodyImageSrc: "/images/commonSpace/default.webp",
+    bodyImageAlt: "공지 본문 예시 이미지",
     partId: "all",
     status: "ACTIVE",
     createdAt: "2026-03-25T10:00:00",
@@ -264,6 +269,8 @@ export const COMMON_SPACE_NOTICE_MOCK_DETAIL_BY_ID: Record<
   102: {
     id: 102,
     title: "세션의 규칙을 안내드립니다. (첨부파일 참조)",
+    authorName: "운영진",
+    authorDescription: "멋쟁이사자처럼 삼육대학교",
     content:
       "세션 참여 규칙과 출결 기준을 다시 안내드립니다.\n첨부된 가이드 문서를 함께 확인해 주세요.",
     partId: "all",
@@ -282,6 +289,8 @@ export const COMMON_SPACE_NOTICE_MOCK_DETAIL_BY_ID: Record<
   201: {
     id: 201,
     title: "프론트엔드 2주차 세션 공지",
+    authorName: "프론트엔드 운영진",
+    authorDescription: "멋쟁이사자처럼 삼육대학교",
     content:
       "프론트엔드 2주차 세션은 React 상태 관리 기초를 다룹니다.\n사전 과제와 세션 링크를 확인해 주세요.",
     partId: "front-end",
@@ -297,6 +306,82 @@ export const COMMON_SPACE_NOTICE_MOCK_DETAIL_BY_ID: Record<
     ],
     hasAttachments: true,
   },
+};
+
+/**
+ * 상세 mock이 없는 공지에 대한 기본 상세 데이터를 만든다.
+ */
+function createFallbackMockNoticeDetail(
+  item: CommonSpaceNoticeListItem,
+): CommonSpaceNoticeDetailItem {
+  return {
+    id: item.id,
+    title: item.title,
+    authorName: "운영진",
+    authorDescription: "멋쟁이사자처럼 삼육대학교",
+    content:
+      "상세 본문은 추후 API 연결 시 실제 데이터로 교체됩니다.\n현재는 공지 상세 레이아웃 검증용 기본 문구를 표시하고 있습니다.",
+    partId: item.partId,
+    status: "ACTIVE",
+    createdAt: item.createdAt,
+    updatedAt: item.createdAt,
+    attachments: item.hasAttachments
+      ? [
+          {
+            id: item.id * 10,
+            name: `${item.title}.pdf`,
+            url: `https://example.com/files/notice-${item.id}.pdf`,
+          },
+        ]
+      : [],
+    hasAttachments: item.hasAttachments,
+  };
+}
+
+/**
+ * 공지별 댓글 레이아웃 검증용 mock 데이터다.
+ */
+export const COMMON_SPACE_NOTICE_MOCK_COMMENTS_BY_ID: Record<
+  number,
+  CommonSpaceNoticeCommentItem[]
+> = {
+  101: [
+    {
+      id: 1,
+      authorName: "윤혜원 (14기 운영진)",
+      authorDescription: "경동나비엔보일러공학과 24학번",
+      profileImageSrc: "/images/defaultProf.webp",
+      profileImageAlt: "윤혜원 프로필 사진",
+      content:
+        "빨리 병원을 가보심이 좋을 듯 하네요 좋은 병원 여러 곳 추천해드릴게요 여기가 화타입니다 정말 답이 없어 보이네요",
+      images: [
+        {
+          id: "comment-1-image-1",
+          src: "/images/commonSpace/default.webp",
+          alt: "댓글 첨부 이미지 1",
+        },
+        {
+          id: "comment-1-image-2",
+          src: "/images/lions/peek.webp",
+          alt: "댓글 첨부 이미지 2",
+        },
+        {
+          id: "comment-1-image-3",
+          src: "/images/lions/hug-gradient-white.webp",
+          alt: "댓글 첨부 이미지 3",
+        },
+      ],
+    },
+    {
+      id: 2,
+      authorName: "이라건 (14기 운영진)",
+      authorDescription: "경동나비엔보일러공학과 24학번",
+      profileImageSrc: "/images/defaultProf.webp",
+      profileImageAlt: "이라건 프로필 사진",
+      content: "신기한 일이 많이 일어나네",
+      images: [],
+    },
+  ],
 };
 
 /**
@@ -331,5 +416,17 @@ export function getMockCommonSpaceNoticeList(
  * 공지 상세 mock 데이터를 반환한다.
  */
 export function getMockCommonSpaceNoticeDetail(noticeId: number) {
-  return COMMON_SPACE_NOTICE_MOCK_DETAIL_BY_ID[noticeId] ?? null;
+  if (COMMON_SPACE_NOTICE_MOCK_DETAIL_BY_ID[noticeId]) {
+    return COMMON_SPACE_NOTICE_MOCK_DETAIL_BY_ID[noticeId];
+  }
+
+  const noticeItem = COMMON_SPACE_NOTICE_MOCK_ITEMS.find((item) => item.id === noticeId);
+  return noticeItem ? createFallbackMockNoticeDetail(noticeItem) : null;
+}
+
+/**
+ * 공지별 댓글 mock 데이터를 반환한다.
+ */
+export function getMockCommonSpaceNoticeComments(noticeId: number) {
+  return COMMON_SPACE_NOTICE_MOCK_COMMENTS_BY_ID[noticeId] ?? [];
 }

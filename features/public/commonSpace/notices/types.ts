@@ -150,8 +150,16 @@ export type CommonSpaceNoticeDetailItem = {
   id: number;
   /** 공지 제목 */
   title: string;
+  /** 작성자명 */
+  authorName?: string;
+  /** 작성자 부가 정보 */
+  authorDescription?: string;
   /** 공지 본문 */
   content: string;
+  /** 본문 상단에 노출할 이미지 경로 */
+  bodyImageSrc?: string;
+  /** 본문 이미지 대체 텍스트 */
+  bodyImageAlt?: string;
   /** 공지 대상 파트 */
   partId: CommonSpacePartId;
   /** 게시글 상태 */
@@ -164,6 +172,38 @@ export type CommonSpaceNoticeDetailItem = {
   attachments: CommonSpaceNoticeAttachment[];
   /** 첨부파일 존재 여부 */
   hasAttachments: boolean;
+};
+
+/**
+ * 공지 댓글에 첨부된 이미지 한 장의 표시용 데이터다.
+ */
+export type CommonSpaceNoticeCommentImage = {
+  /** 이미지 식별자 */
+  id: string;
+  /** 이미지 경로 */
+  src: string;
+  /** 이미지 대체 텍스트 */
+  alt: string;
+};
+
+/**
+ * 공지 댓글 한 건의 표시용 데이터다.
+ */
+export type CommonSpaceNoticeCommentItem = {
+  /** 댓글 식별자 */
+  id: number;
+  /** 작성자명 */
+  authorName: string;
+  /** 작성자 부가 정보 */
+  authorDescription: string;
+  /** 작성자 프로필 이미지 경로 */
+  profileImageSrc?: string;
+  /** 작성자 프로필 이미지 대체 텍스트 */
+  profileImageAlt?: string;
+  /** 댓글 본문 */
+  content: string;
+  /** 댓글 첨부 이미지 목록 */
+  images: CommonSpaceNoticeCommentImage[];
 };
 
 /**

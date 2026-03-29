@@ -26,6 +26,8 @@ export {
   commonSpaceNoticeMockDataSource,
 } from "./source";
 export type {
+  CommonSpaceNoticeCommentImage,
+  CommonSpaceNoticeCommentItem,
   CommonSpaceNoticeApiCategory,
   CommonSpaceNoticeApiItem,
   CommonSpaceNoticeApiPart,
