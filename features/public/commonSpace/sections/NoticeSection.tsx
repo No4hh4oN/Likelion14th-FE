@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import NoticeCard from "../components/NoticeCard";
 import type { CommonSpacePartId } from "../types";
+import { buildCommonSpaceNoticeDetailHref } from "../config";
 import {
   COMMON_SPACE_NOTICE_EMPTY_TITLE_BY_PART,
   COMMON_SPACE_NOTICE_STATUS_MESSAGE,
@@ -32,15 +34,20 @@ const NOTICE_SEARCH_MAX_LENGTH = 10;
  * 전체 공지 섹션을 렌더링한다.
  */
 export default function NoticeSection({ partId }: NoticeSectionProps) {
+  const router = useRouter();
+
   /**
    * 화면에 표시할 공지 목록 상태다.
    */
-  const [noticeItems, setNoticeItems] = useState<CommonSpaceNoticeListItem[]>([]);
+  const [noticeItems, setNoticeItems] = useState<CommonSpaceNoticeListItem[]>(
+    [],
+  );
 
   /**
    * 공지 목록 비동기 로드 상태다.
    */
-  const [loadState, setLoadState] = useState<CommonSpaceNoticeLoadState>("idle");
+  const [loadState, setLoadState] =
+    useState<CommonSpaceNoticeLoadState>("idle");
 
   /**
    * 입력창에 보이는 검색어다.
@@ -119,13 +126,17 @@ export default function NoticeSection({ partId }: NoticeSectionProps) {
   /**
    * pinned 공지를 제외한 일반 공지 목록이다.
    */
-  const regularNoticeItems = filteredNoticeItems.filter((item) => !item.isPinned);
+  const regularNoticeItems = filteredNoticeItems.filter(
+    (item) => !item.isPinned,
+  );
 
   /**
    * 검색 결과 기준 전체 페이지 수다.
    */
   const totalPages =
-    Math.ceil(regularNoticeItems.length / DEFAULT_COMMON_SPACE_NOTICE_PAGE_SIZE) || 1;
+    Math.ceil(
+      regularNoticeItems.length / DEFAULT_COMMON_SPACE_NOTICE_PAGE_SIZE,
+    ) || 1;
 
   /**
    * 필터링 결과를 기준으로 보정한 현재 페이지 번호다.
@@ -150,6 +161,13 @@ export default function NoticeSection({ partId }: NoticeSectionProps) {
   }
 
   /**
+   * 상세 공지 화면으로 이동한다.
+   */
+  function handleNoticeClick(noticeId: number) {
+    router.push(buildCommonSpaceNoticeDetailHref(partId, noticeId));
+  }
+
+  /**
    * 로딩/에러/빈 상태에서 보여줄 안내 문구다.
    */
   const statusMessage =
@@ -168,7 +186,10 @@ export default function NoticeSection({ partId }: NoticeSectionProps) {
   /**
    * 페이지 버튼 목록이다.
    */
-  const pageNumbers = Array.from({ length: totalPages }, (_, index) => index + 1);
+  const pageNumbers = Array.from(
+    { length: totalPages },
+    (_, index) => index + 1,
+  );
 
   return (
     <section className="pb-16">
@@ -184,13 +205,18 @@ export default function NoticeSection({ partId }: NoticeSectionProps) {
                 title={pinnedNoticeItem.title}
                 pinned
                 isNew={pinnedNoticeItem.isNew}
+                onClick={() => handleNoticeClick(pinnedNoticeItem.id)}
               />
             ) : null}
 
-            <ul className="space-y-4">
+            <ul className="mt-10 space-y-4">
               {paginatedNoticeItems.map((item) => (
                 <li key={item.id}>
-                  <NoticeCard title={item.title} isNew={item.isNew} />
+                  <NoticeCard
+                    title={item.title}
+                    isNew={item.isNew}
+                    onClick={() => handleNoticeClick(item.id)}
+                  />
                 </li>
               ))}
             </ul>
@@ -231,7 +257,7 @@ export default function NoticeSection({ partId }: NoticeSectionProps) {
               type="button"
               onClick={() => setCurrentPage(1)}
               disabled={resolvedCurrentPage === 1}
-              className="disabled:opacity-40"
+              className="disabled:opacity-40 disabled:cursor-auto cursor-pointer"
             >
               &laquo;
             </button>
@@ -239,7 +265,7 @@ export default function NoticeSection({ partId }: NoticeSectionProps) {
               type="button"
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={resolvedCurrentPage === 1}
-              className="disabled:opacity-40"
+              className="disabled:opacity-40 disabled:cursor-auto cursor-pointer"
             >
               &lsaquo;
             </button>
@@ -252,7 +278,7 @@ export default function NoticeSection({ partId }: NoticeSectionProps) {
                 className={
                   pageNumber === resolvedCurrentPage
                     ? "font-semibold text-white-1"
-                    : "text-gray-4"
+                    : "text-gray-4 cursor-pointer"
                 }
                 aria-current={
                   pageNumber === resolvedCurrentPage ? "page" : undefined
@@ -268,7 +294,7 @@ export default function NoticeSection({ partId }: NoticeSectionProps) {
                 setCurrentPage((prev) => Math.min(prev + 1, totalPages))
               }
               disabled={resolvedCurrentPage === totalPages}
-              className="disabled:opacity-40"
+              className="disabled:opacity-40 disabled:cursor-auto cursor-pointer"
             >
               &rsaquo;
             </button>
@@ -276,7 +302,7 @@ export default function NoticeSection({ partId }: NoticeSectionProps) {
               type="button"
               onClick={() => setCurrentPage(totalPages)}
               disabled={resolvedCurrentPage === totalPages}
-              className="disabled:opacity-40"
+              className="disabled:opacity-40 disabled:cursor-auto cursor-pointer"
             >
               &raquo;
             </button>
