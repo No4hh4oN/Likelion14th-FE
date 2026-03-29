@@ -85,15 +85,15 @@ const NOTICE_CARD_TITLE_CLASS_NAME_BY_DISPLAY_VARIANT: Record<
   string
 > = {
   section:
-    "min-w-0 truncate text-[20px] leading-[1.25] font-bold text-white-1 md:text-[24px]",
-  home: "min-w-0 flex-1 text-[20px] leading-[1.27] font-bold text-white-1",
+    "min-w-0 truncate text-[20px] leading-[1.25] font-bold text-white-1 md:text-[24px] cursor-pointer",
+  home: "min-w-0 flex-1 text-[20px] leading-[1.27] font-bold text-white-1 cursor-pointer",
 };
 
 /**
  * 홈 공지 카드 장식 이미지의 기본 스타일이다.
  */
 const NOTICE_CARD_HOME_BACKGROUND_IMAGE_CLASS_NAME =
-  "absolute right-1 -top-43 z-0 w-[270px] opacity-15";
+  "absolute right-1 -top-43 z-0 w-[270px] opacity-15 cursor-pointer";
 
 /**
  * 공지 카드가 사용할 시각적 변형을 계산한다.

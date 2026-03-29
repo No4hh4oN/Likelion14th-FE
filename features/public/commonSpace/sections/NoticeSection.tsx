@@ -251,24 +251,26 @@ export default function NoticeSection({ partId }: NoticeSectionProps) {
 
           <nav
             aria-label="전체 공지 페이지네이션"
-            className="mt-11 flex items-center justify-center gap-5 text-[18px] text-gray-4"
+            className="mt-11 flex items-center justify-center gap-17.25 text-[24px] text-gray-4"
           >
-            <button
-              type="button"
-              onClick={() => setCurrentPage(1)}
-              disabled={resolvedCurrentPage === 1}
-              className="disabled:opacity-40 disabled:cursor-auto cursor-pointer"
-            >
-              &laquo;
-            </button>
-            <button
-              type="button"
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={resolvedCurrentPage === 1}
-              className="disabled:opacity-40 disabled:cursor-auto cursor-pointer"
-            >
-              &lsaquo;
-            </button>
+            <div className="flex gap-5 -mr-3.25">
+              <button
+                type="button"
+                onClick={() => setCurrentPage(1)}
+                disabled={resolvedCurrentPage === 1}
+                className="disabled:opacity-40 disabled:cursor-auto cursor-pointer"
+              >
+                &laquo;
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={resolvedCurrentPage === 1}
+                className="disabled:opacity-40 disabled:cursor-auto cursor-pointer"
+              >
+                &lsaquo;
+              </button>
+            </div>
 
             {pageNumbers.map((pageNumber) => (
               <button
@@ -287,25 +289,26 @@ export default function NoticeSection({ partId }: NoticeSectionProps) {
                 {pageNumber}
               </button>
             ))}
-
-            <button
-              type="button"
-              onClick={() =>
-                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
-              disabled={resolvedCurrentPage === totalPages}
-              className="disabled:opacity-40 disabled:cursor-auto cursor-pointer"
-            >
-              &rsaquo;
-            </button>
-            <button
-              type="button"
-              onClick={() => setCurrentPage(totalPages)}
-              disabled={resolvedCurrentPage === totalPages}
-              className="disabled:opacity-40 disabled:cursor-auto cursor-pointer"
-            >
-              &raquo;
-            </button>
+            <div className="flex gap-5 -ml-3.25">
+              <button
+                type="button"
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={resolvedCurrentPage === totalPages}
+                className="disabled:opacity-40 disabled:cursor-auto cursor-pointer"
+              >
+                &rsaquo;
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={resolvedCurrentPage === totalPages}
+                className="disabled:opacity-40 disabled:cursor-auto cursor-pointer"
+              >
+                &raquo;
+              </button>
+            </div>
           </nav>
         </>
       )}
