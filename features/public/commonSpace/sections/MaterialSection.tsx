@@ -243,7 +243,7 @@ export default function MaterialSection({ partId }: MaterialSectionProps) {
 
           <form
             onSubmit={handleSearchSubmit}
-            className="mt-12 flex flex-wrap items-center gap-4"
+            className="mt-29 flex flex-wrap items-center gap-4"
           >
             <input
               value={searchInput}
@@ -262,7 +262,7 @@ export default function MaterialSection({ partId }: MaterialSectionProps) {
 
           <nav
             aria-label="세션 자료 페이지네이션"
-            className="mt-11 flex items-center justify-center gap-17.25 text-[24px] text-gray-4"
+            className="mt-29 flex items-center justify-between text-[24px] text-gray-4"
           >
             <div className="flex gap-5 -mr-3.25">
               <button
@@ -283,23 +283,25 @@ export default function MaterialSection({ partId }: MaterialSectionProps) {
               </button>
             </div>
 
-            {pageNumbers.map((pageNumber) => (
-              <button
-                key={pageNumber}
-                type="button"
-                onClick={() => setCurrentPage(pageNumber)}
-                className={
-                  pageNumber === resolvedCurrentPage
-                    ? "font-semibold text-white-1"
-                    : "cursor-pointer text-gray-4"
-                }
-                aria-current={
-                  pageNumber === resolvedCurrentPage ? "page" : undefined
-                }
-              >
-                {pageNumber}
-              </button>
-            ))}
+            <div className="flex justify-center gap-17.25">
+              {pageNumbers.map((pageNumber) => (
+                <button
+                  key={pageNumber}
+                  type="button"
+                  onClick={() => setCurrentPage(pageNumber)}
+                  className={
+                    pageNumber === resolvedCurrentPage
+                      ? "font-semibold text-white-1"
+                      : "cursor-pointer text-gray-4"
+                  }
+                  aria-current={
+                    pageNumber === resolvedCurrentPage ? "page" : undefined
+                  }
+                >
+                  {pageNumber}
+                </button>
+              ))}
+            </div>
 
             <div className="flex gap-5 -ml-3.25">
               <button

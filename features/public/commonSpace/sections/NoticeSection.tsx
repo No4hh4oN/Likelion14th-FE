@@ -232,7 +232,7 @@ export default function NoticeSection({ partId }: NoticeSectionProps) {
 
           <form
             onSubmit={handleSearchSubmit}
-            className="mt-12 flex flex-wrap items-center gap-4"
+            className="mt-29 flex flex-wrap items-center gap-4"
           >
             <input
               value={searchInput}
@@ -251,7 +251,7 @@ export default function NoticeSection({ partId }: NoticeSectionProps) {
 
           <nav
             aria-label="전체 공지 페이지네이션"
-            className="mt-11 flex items-center justify-center gap-17.25 text-[24px] text-gray-4"
+            className="mt-29 flex items-center justify-between text-[24px] text-gray-4"
           >
             <div className="flex gap-5 -mr-3.25">
               <button
@@ -272,23 +272,26 @@ export default function NoticeSection({ partId }: NoticeSectionProps) {
               </button>
             </div>
 
-            {pageNumbers.map((pageNumber) => (
-              <button
-                key={pageNumber}
-                type="button"
-                onClick={() => setCurrentPage(pageNumber)}
-                className={
-                  pageNumber === resolvedCurrentPage
-                    ? "font-semibold text-white-1"
-                    : "text-gray-4 cursor-pointer"
-                }
-                aria-current={
-                  pageNumber === resolvedCurrentPage ? "page" : undefined
-                }
-              >
-                {pageNumber}
-              </button>
-            ))}
+            <div className="flex justify-center gap-17.25">
+              {pageNumbers.map((pageNumber) => (
+                <button
+                  key={pageNumber}
+                  type="button"
+                  onClick={() => setCurrentPage(pageNumber)}
+                  className={
+                    pageNumber === resolvedCurrentPage
+                      ? "font-semibold text-white-1"
+                      : "text-gray-4 cursor-pointer"
+                  }
+                  aria-current={
+                    pageNumber === resolvedCurrentPage ? "page" : undefined
+                  }
+                >
+                  {pageNumber}
+                </button>
+              ))}
+            </div>
+
             <div className="flex gap-5 -ml-3.25">
               <button
                 type="button"
