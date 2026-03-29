@@ -48,27 +48,27 @@ export default function MaterialCard({
     <button
       type="button"
       onClick={onClick}
-      className="group flex w-full items-stretch gap-6 rounded-[14px] bg-linear-to-r from-[#484D5A] to-[#303136] px-6 py-6 text-left text-white-1 transition-shadow hover:shadow-[0_0_12px_white] md:px-8 md:py-7"
+      className="group flex w-full items-stretch gap-6 rounded-[14px] bg-gray-7 px-9 py-8 text-left text-white-1 transition-shadow hover:shadow-[0_0_8px_#484D5A] cursor-pointer"
       aria-label={`${title} 세션 자료 열기`}
     >
-      <div className="min-w-0 flex-1">
-        <p className="line-clamp-2 text-[22px] font-bold leading-[1.25] text-white-1">
+      <div className="min-w-0 flex-1 flex flex-col justify-between">
+        <p className="truncate text-[24px] font-bold leading-[1.27] text-white-1">
           {title}
         </p>
 
         {summary ? (
-          <p className="mt-4 line-clamp-3 text-[13px] leading-[1.55] text-gray-3 md:text-[15px]">
+          <p className="mt-3.75 line-clamp-3 text-[18px] leading-[1.27] text-gray-4">
             {summary}
           </p>
         ) : null}
 
-        <p className="mt-4 text-[18px] font-medium text-gray-4 md:mt-6">
+        <p className="mt-4 text-[18px] font-normal text-white-1">
           {formatMaterialCardDate(createdAt)}
         </p>
       </div>
 
       {thumbnailSrc ? (
-        <div className="hidden h-[110px] w-[110px] shrink-0 overflow-hidden rounded-[12px] bg-[#3A404D] md:block">
+        <div className="h-[170px] w-[170px] shrink-0 overflow-hidden rounded-[8px] bg-gray-6">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={thumbnailSrc}

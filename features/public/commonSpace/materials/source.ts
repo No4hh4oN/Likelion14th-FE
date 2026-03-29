@@ -30,6 +30,45 @@ export type CommonSpaceMaterialDataSource = {
 };
 
 /**
+ * 세션 자료 목록 카드에 사용할 요약문 최대 길이다.
+ */
+const COMMON_SPACE_MATERIAL_SUMMARY_MAX_LENGTH = 140;
+
+/**
+ * 세션 자료 본문을 목록 카드용 요약문으로 정규화한다.
+ */
+export function buildCommonSpaceMaterialSummary(content: string) {
+  const normalizedContent = content.replace(/\s+/g, " ").trim();
+
+  if (normalizedContent.length <= COMMON_SPACE_MATERIAL_SUMMARY_MAX_LENGTH) {
+    return normalizedContent;
+  }
+
+  return `${normalizedContent.slice(0, COMMON_SPACE_MATERIAL_SUMMARY_MAX_LENGTH).trimEnd()}...`;
+}
+
+/**
+ * 목록 아이템에 상세 본문 기반 요약문을 붙인다.
+ */
+export async function hydrateCommonSpaceMaterialSummaries(
+  dataSource: CommonSpaceMaterialDataSource,
+  items: CommonSpaceMaterialListResult["items"],
+) {
+  const hydratedItems = await Promise.all(
+    items.map(async (item) => {
+      const detail = await dataSource.getDetail(item.id);
+
+      return {
+        ...item,
+        summary: detail ? buildCommonSpaceMaterialSummary(detail.content) : item.summary,
+      };
+    }),
+  );
+
+  return hydratedItems;
+}
+
+/**
  * 실 API를 사용하는 세션 자료 데이터 소스다.
  */
 export const commonSpaceMaterialApiDataSource: CommonSpaceMaterialDataSource = {

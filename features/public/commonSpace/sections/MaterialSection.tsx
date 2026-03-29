@@ -4,15 +4,16 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import MaterialCard from "../components/MaterialCard";
 import NoticeCard from "../components/NoticeCard";
-import {
-  buildCommonSpaceMaterialDetailHref,
-} from "../config";
+import { buildCommonSpaceMaterialDetailHref } from "../config";
 import {
   COMMON_SPACE_MATERIAL_EMPTY_TITLE_BY_PART,
   COMMON_SPACE_MATERIAL_STATUS_MESSAGE,
   DEFAULT_COMMON_SPACE_MATERIAL_PAGE_SIZE,
 } from "../materials/constants";
-import { commonSpaceMaterialMockDataSource } from "../materials/source";
+import {
+  commonSpaceMaterialMockDataSource,
+  hydrateCommonSpaceMaterialSummaries,
+} from "../materials/source";
 import type {
   CommonSpaceMaterialListItem,
   CommonSpaceMaterialLoadState,
@@ -42,9 +43,9 @@ export default function MaterialSection({ partId }: MaterialSectionProps) {
   /**
    * 화면에 표시할 세션 자료 목록 상태다.
    */
-  const [materialItems, setMaterialItems] = useState<CommonSpaceMaterialListItem[]>(
-    [],
-  );
+  const [materialItems, setMaterialItems] = useState<
+    CommonSpaceMaterialListItem[]
+  >([]);
 
   /**
    * 세션 자료 목록 비동기 로드 상태다.
@@ -82,13 +83,17 @@ export default function MaterialSection({ partId }: MaterialSectionProps) {
           page: 0,
           size: 100,
         });
+        const hydratedItems = await hydrateCommonSpaceMaterialSummaries(
+          commonSpaceMaterialMockDataSource,
+          response.items,
+        );
 
         if (!isMounted) {
           return;
         }
 
-        setMaterialItems(response.items);
-        setLoadState(response.items.length > 0 ? "success" : "empty");
+        setMaterialItems(hydratedItems);
+        setLoadState(hydratedItems.length > 0 ? "success" : "empty");
       } catch {
         if (!isMounted) {
           return;
@@ -257,24 +262,26 @@ export default function MaterialSection({ partId }: MaterialSectionProps) {
 
           <nav
             aria-label="세션 자료 페이지네이션"
-            className="mt-11 flex items-center justify-center gap-5 text-[18px] text-gray-4"
+            className="mt-11 flex items-center justify-center gap-17.25 text-[24px] text-gray-4"
           >
-            <button
-              type="button"
-              onClick={() => setCurrentPage(1)}
-              disabled={resolvedCurrentPage === 1}
-              className="cursor-pointer disabled:cursor-auto disabled:opacity-40"
-            >
-              &laquo;
-            </button>
-            <button
-              type="button"
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={resolvedCurrentPage === 1}
-              className="cursor-pointer disabled:cursor-auto disabled:opacity-40"
-            >
-              &lsaquo;
-            </button>
+            <div className="flex gap-5 -mr-3.25">
+              <button
+                type="button"
+                onClick={() => setCurrentPage(1)}
+                disabled={resolvedCurrentPage === 1}
+                className="cursor-pointer disabled:cursor-auto disabled:opacity-40"
+              >
+                &laquo;
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={resolvedCurrentPage === 1}
+                className="cursor-pointer disabled:cursor-auto disabled:opacity-40"
+              >
+                &lsaquo;
+              </button>
+            </div>
 
             {pageNumbers.map((pageNumber) => (
               <button
@@ -294,24 +301,26 @@ export default function MaterialSection({ partId }: MaterialSectionProps) {
               </button>
             ))}
 
-            <button
-              type="button"
-              onClick={() =>
-                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
-              disabled={resolvedCurrentPage === totalPages}
-              className="cursor-pointer disabled:cursor-auto disabled:opacity-40"
-            >
-              &rsaquo;
-            </button>
-            <button
-              type="button"
-              onClick={() => setCurrentPage(totalPages)}
-              disabled={resolvedCurrentPage === totalPages}
-              className="cursor-pointer disabled:cursor-auto disabled:opacity-40"
-            >
-              &raquo;
-            </button>
+            <div className="flex gap-5 -ml-3.25">
+              <button
+                type="button"
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={resolvedCurrentPage === totalPages}
+                className="cursor-pointer disabled:cursor-auto disabled:opacity-40"
+              >
+                &rsaquo;
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={resolvedCurrentPage === totalPages}
+                className="cursor-pointer disabled:cursor-auto disabled:opacity-40"
+              >
+                &raquo;
+              </button>
+            </div>
           </nav>
         </>
       )}
