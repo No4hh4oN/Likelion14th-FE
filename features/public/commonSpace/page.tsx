@@ -16,6 +16,7 @@ import {
   resolveCommonSpaceSectionId,
 } from "./config";
 import HomeSection from "./sections/HomeSection";
+import AssignmentSection from "./sections/AssignmentSection";
 import MaterialDetailSection from "./sections/MaterialDetailSection";
 import MaterialSection from "./sections/MaterialSection";
 import NoticeDetailSection from "./sections/NoticeDetailSection";
@@ -112,6 +113,8 @@ export default function CommonSpacePage() {
             <NoticeSection partId={activePart.id} />
           ) : activeSectionId === "materials" ? (
             <MaterialSection partId={activePart.id} />
+          ) : activeSectionId === "assignments" ? (
+            <AssignmentSection partId={activePart.id} />
           ) : activeSection ? (
             <CommonSpaceDetailSection
               part={activePart}
