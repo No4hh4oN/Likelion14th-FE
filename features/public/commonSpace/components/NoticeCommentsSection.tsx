@@ -1,0 +1,346 @@
+"use client";
+/* eslint-disable @next/next/no-img-element */
+
+import Image from "next/image";
+import { useEffect, useId, useRef, useState } from "react";
+import { getMockCommonSpaceNoticeComments } from "../notices/mock";
+import type {
+  CommonSpaceNoticeCommentImage,
+  CommonSpaceNoticeCommentItem,
+} from "../notices/types";
+
+type NoticeCommentsSectionProps = {
+  noticeId: number;
+  /** 현재 사용자가 댓글을 작성할 수 있는지 여부 */
+  canWriteComment?: boolean;
+  /** 외부에서 주입할 초기 댓글 목록 */
+  initialComments?: CommonSpaceNoticeCommentItem[];
+};
+
+/**
+ * 댓글 작성자명을 표시할 기본 문자열이다.
+ */
+const NOTICE_COMMENT_AUTHOR_NAME = "제희중 (14기 아기사자)";
+
+/**
+ * 댓글 작성자 부가 설명 문자열이다.
+ */
+const NOTICE_COMMENT_AUTHOR_DESCRIPTION = "삼육대학교 24학번";
+
+/**
+ * 댓글 작성자 기본 프로필 이미지 경로다.
+ */
+const NOTICE_COMMENT_AUTHOR_PROFILE_IMAGE_SRC = "/images/defaultProf.webp";
+
+/**
+ * 댓글 작성자 기본 프로필 이미지 대체 텍스트다.
+ */
+const NOTICE_COMMENT_AUTHOR_PROFILE_IMAGE_ALT = "댓글 작성자 프로필 사진";
+
+/**
+ * 댓글 입력창이 자동으로 늘어날 최대 높이다.
+ */
+const NOTICE_COMMENT_TEXTAREA_MAX_HEIGHT = 220;
+
+/**
+ * 댓글 이미지 미리보기 확대 모달을 렌더링한다.
+ */
+function NoticeCommentImageDialog({
+  image,
+  onClose,
+}: {
+  image: CommonSpaceNoticeCommentImage;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 px-6 py-10"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="댓글 첨부 이미지 확대 보기"
+    >
+      <div
+        className="max-h-[calc(100vh-80px)] max-w-[min(96vw,1100px)] overflow-auto rounded-[18px] bg-white p-4"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <img
+          src={image.src}
+          alt={image.alt}
+          className="h-auto max-h-none w-auto max-w-full object-contain"
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 공지 상세 하단의 댓글 작성/목록/이미지 미리보기 레이아웃을 렌더링한다.
+ */
+export default function NoticeCommentsSection({
+  noticeId,
+  canWriteComment = true,
+  initialComments,
+}: NoticeCommentsSectionProps) {
+  const fileInputId = useId();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const draftTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  /**
+   * 현재 공지에 달린 댓글 목록이다.
+   */
+  const [comments, setComments] = useState<CommonSpaceNoticeCommentItem[]>(() =>
+    initialComments ?? getMockCommonSpaceNoticeComments(noticeId),
+  );
+
+  /**
+   * 작성 중인 댓글 본문이다.
+   */
+  const [draftContent, setDraftContent] = useState("");
+
+  /**
+   * 작성 중인 댓글에 첨부한 이미지 목록이다.
+   */
+  const [draftImages, setDraftImages] = useState<
+    CommonSpaceNoticeCommentImage[]
+  >([]);
+
+  /**
+   * 모달에 띄운 댓글 이미지다.
+   */
+  const [activePreviewImage, setActivePreviewImage] =
+    useState<CommonSpaceNoticeCommentImage | null>(null);
+
+  /**
+   * 댓글 입력창 높이를 현재 입력 길이에 맞춰 조정한다.
+   */
+  function resizeDraftTextarea() {
+    if (!draftTextareaRef.current) {
+      return;
+    }
+
+    draftTextareaRef.current.style.height = "auto";
+
+    const nextHeight = Math.min(
+      draftTextareaRef.current.scrollHeight,
+      NOTICE_COMMENT_TEXTAREA_MAX_HEIGHT,
+    );
+
+    draftTextareaRef.current.style.height = `${nextHeight}px`;
+    draftTextareaRef.current.style.overflowY =
+      draftTextareaRef.current.scrollHeight > NOTICE_COMMENT_TEXTAREA_MAX_HEIGHT
+        ? "auto"
+        : "hidden";
+  }
+
+  /**
+   * 댓글 본문 입력값 변경을 처리한다.
+   */
+  function handleDraftContentChange(
+    event: React.ChangeEvent<HTMLTextAreaElement>,
+  ) {
+    setDraftContent(event.target.value);
+  }
+
+  useEffect(() => {
+    resizeDraftTextarea();
+  }, [draftContent]);
+
+  /**
+   * 댓글 이미지 파일 선택을 처리한다.
+   */
+  function handleImageChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const selectedFiles = Array.from(event.target.files ?? []);
+
+    if (selectedFiles.length === 0) {
+      return;
+    }
+
+    const nextImages = selectedFiles.map((file, index) => ({
+      id: `${Date.now()}-${index}`,
+      src: URL.createObjectURL(file),
+      alt: file.name,
+    }));
+
+    setDraftImages((prev) => [...prev, ...nextImages]);
+    event.target.value = "";
+  }
+
+  /**
+   * 작성 중인 첨부 이미지를 제거한다.
+   */
+  function handleRemoveDraftImage(imageId: string) {
+    setDraftImages((prev) => prev.filter((image) => image.id !== imageId));
+  }
+
+  /**
+   * 댓글 등록을 처리한다.
+   */
+  function handleSubmitComment() {
+    if (draftContent.trim() === "" && draftImages.length === 0) {
+      return;
+    }
+
+    const nextComment: CommonSpaceNoticeCommentItem = {
+      id: Date.now(),
+      authorName: NOTICE_COMMENT_AUTHOR_NAME,
+      authorDescription: NOTICE_COMMENT_AUTHOR_DESCRIPTION,
+      profileImageSrc: NOTICE_COMMENT_AUTHOR_PROFILE_IMAGE_SRC,
+      profileImageAlt: NOTICE_COMMENT_AUTHOR_PROFILE_IMAGE_ALT,
+      content: draftContent.trim(),
+      images: draftImages,
+    };
+
+    setComments((prev) => [nextComment, ...prev]);
+    setDraftContent("");
+    setDraftImages([]);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+
+  return (
+    <section className="mt-10 space-y-8">
+      <div className="space-y-10">
+        {comments.map((comment) => (
+          <article key={comment.id} className="flex gap-4">
+            <Image
+              src={
+                comment.profileImageSrc ??
+                NOTICE_COMMENT_AUTHOR_PROFILE_IMAGE_SRC
+              }
+              alt={
+                comment.profileImageAlt ?? `${comment.authorName} 프로필 사진`
+              }
+              width={48}
+              height={48}
+              className="mt-1 h-12 w-12 shrink-0 rounded-full object-cover"
+            />
+
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <p className="text-[16px] font-semibold text-white-1">
+                  {comment.authorName}
+                </p>
+                <p className="text-[14px] text-gray-4">
+                  {comment.authorDescription}
+                </p>
+              </div>
+
+              <p className="mt-3 whitespace-pre-line text-[15px] leading-[1.7] text-white-1">
+                {comment.content}
+              </p>
+
+              {comment.images.length > 0 ? (
+                <div className="mt-4 flex flex-wrap gap-3">
+                  {comment.images.map((image) => (
+                    <button
+                      key={image.id}
+                      type="button"
+                      onClick={() => setActivePreviewImage(image)}
+                      className="relative h-[84px] w-[84px] overflow-hidden rounded-[10px] bg-[#5A6070] cursor-pointer"
+                    >
+                      <img
+                        src={image.src}
+                        alt={image.alt}
+                        className="h-full w-full object-cover"
+                      />
+                      <span className="absolute bottom-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/65 text-[16px] leading-none text-white-1">
+                        +
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </article>
+        ))}
+      </div>
+      {canWriteComment ? (
+        <div className="rounded-[14px] bg-gray-6 px-9 py-8">
+          <p className="text-[20px] font-bold text-white-1">
+            {NOTICE_COMMENT_AUTHOR_NAME}
+          </p>
+
+          <textarea
+            ref={draftTextareaRef}
+            value={draftContent}
+            onChange={handleDraftContentChange}
+            placeholder="댓글 내용을 입력하세요."
+            rows={1}
+            className="mt-4 h-auto w-full resize-none bg-transparent text-[15px] leading-[1.27] text-white-1 placeholder:text-gray-5 focus:outline-none"
+          />
+
+          {draftImages.length > 0 ? (
+            <div className="mt-3 flex flex-wrap gap-3">
+              {draftImages.map((image) => (
+                <div
+                  key={image.id}
+                  className="relative h-[88px] w-[88px] overflow-hidden rounded-[10px] bg-[#434958]"
+                >
+                  <img
+                    src={image.src}
+                    alt={image.alt}
+                    className="h-full w-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveDraftImage(image.id)}
+                    className="absolute cursor-pointer right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-[12px] font-semibold text-white-1"
+                    aria-label="첨부 이미지 삭제"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          <div className="flex items-end justify-between gap-4">
+            <label
+              htmlFor={fileInputId}
+              className="inline-flex cursor-pointer items-center gap-2 text-[15px] text-gray-5"
+            >
+              <Image
+                src="/icons/camera.svg"
+                alt="사진 첨부 아이콘"
+                width={16}
+                height={16}
+              />
+              사진 첨부
+            </label>
+            <input
+              id={fileInputId}
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageChange}
+              className="hidden"
+            />
+
+            <button
+              type="button"
+              onClick={handleSubmitComment}
+              className="rounded-[8px] bg-main-1 px-7 py-5 text-[18px] font-semibold text-white-1"
+            >
+              등록하기
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-[12px] bg-[#5A6070] px-6 py-8 text-center text-[14px] text-gray-4">
+          아기사자는 답변을 작성할 수 없습니다.
+        </div>
+      )}
+
+      {activePreviewImage ? (
+        <NoticeCommentImageDialog
+          image={activePreviewImage}
+          onClose={() => setActivePreviewImage(null)}
+        />
+      ) : null}
+    </section>
+  );
+}

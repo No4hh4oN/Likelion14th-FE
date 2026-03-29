@@ -44,8 +44,8 @@ const NOTICE_CARD_BASE_CLASS_NAME_BY_DISPLAY_VARIANT: Record<
   string
 > = {
   section:
-    "group relative flex w-full items-center overflow-hidden rounded-[14px] px-6 py-6 text-white-1 md:px-10.5 md:py-8",
-  home: "group relative w-full overflow-hidden rounded-[14px] px-6 py-6.5 text-white-1",
+    "group relative flex w-full items-center overflow-hidden rounded-[14px] px-6 py-6 text-white-1 md:px-10.5 md:py-8 cursor-pointer hover:shadow-[0_0_12px_white] transition-shadow",
+  home: "group relative w-full overflow-hidden rounded-[14px] px-6 py-6.5 text-white-1 cursor-pointer hover:shadow-[0_0_12px_white] transition-shadow",
 };
 
 /**
