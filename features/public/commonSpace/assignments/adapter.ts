@@ -1,5 +1,9 @@
 import type { CommonSpacePartId } from "../types";
 import type {
+  CommonSpaceAssignmentAttachment,
+  CommonSpaceAssignmentDetailApiResponse,
+  CommonSpaceAssignmentDetailItem,
+  CommonSpaceAssignmentFileApiItem,
   CommonSpaceAssignmentApiTrack,
   CommonSpaceAssignmentListItem,
   CommonSpaceAssignmentMySubmissionApiResponse,
@@ -184,5 +188,53 @@ export function toCommonSpaceAssignmentListItem(
     submissionFileUrl: submission?.fileUrl,
     reviewContent: submission?.feedback,
     canResubmit: submissionState === "rejected",
+  };
+}
+
+/**
+ * 과제 상세 API의 첨부파일 응답을 화면용 데이터로 변환한다.
+ */
+export function toCommonSpaceAssignmentAttachment(
+  file: CommonSpaceAssignmentFileApiItem,
+): CommonSpaceAssignmentAttachment {
+  return {
+    id: file.fileId,
+    name: file.originalFileName,
+    url: file.fileUrl,
+  };
+}
+
+/**
+ * 과제 상세 API 응답과 제출 응답을 화면용 상세 데이터로 변환한다.
+ */
+export function toCommonSpaceAssignmentDetailItem(
+  detail: CommonSpaceAssignmentDetailApiResponse,
+  submission?: CommonSpaceAssignmentMySubmissionApiResponse | null,
+  now: Date = new Date(),
+): CommonSpaceAssignmentDetailItem {
+  const assignment = toCommonSpaceAssignmentListItem(
+    {
+      id: detail.projectId,
+      title: detail.title,
+      description: detail.description,
+      track: detail.track,
+      startDate: detail.startDate,
+      deadline: detail.endDate,
+      status: detail.status,
+    },
+    submission,
+    now,
+  );
+
+  return {
+    id: detail.projectId,
+    title: detail.title,
+    content: detail.description,
+    partId: mapAssignmentTrackToCommonSpacePartId(detail.track),
+    createdAt: detail.startDate,
+    deadlineAt: detail.endDate,
+    status: detail.status,
+    attachments: detail.files.map(toCommonSpaceAssignmentAttachment),
+    assignment,
   };
 }

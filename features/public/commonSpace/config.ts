@@ -95,7 +95,7 @@ export const COMMON_SPACE_PARTS: CommonSpacePart[] = [
   {
     id: "ai-ml",
     label: "AI / ML",
-    iconSrc: "/images/lions/lion-long-hair.webp",
+    iconSrc: "/icons/ai.webp",
     iconAlt: "롱헤어 라이언",
     sections: [...SHARED_PART_SECTIONS],
   },
@@ -224,6 +224,25 @@ export function buildCommonSpaceMaterialDetailHref(
 }
 
 /**
+ * 과제 상세 화면으로 이동할 href를 생성한다.
+ */
+export function buildCommonSpaceAssignmentDetailHref(
+  partId: CommonSpacePartId,
+  assignmentId: number,
+) {
+  const params = new URLSearchParams();
+
+  if (partId !== DEFAULT_COMMON_SPACE_PART) {
+    params.set("part", partId);
+  }
+
+  params.set("section", "assignments");
+  params.set("assignmentId", String(assignmentId));
+
+  return `/14/commonSpace?${params.toString()}`;
+}
+
+/**
  * 상세 식별자 query 값을 숫자로 정규화한다.
  */
 function resolveCommonSpaceDetailId(value: string | null) {
@@ -246,6 +265,13 @@ export function resolveCommonSpaceNoticeId(value: string | null) {
  * 세션 자료 식별자 query 값을 숫자로 정규화한다.
  */
 export function resolveCommonSpaceMaterialId(value: string | null) {
+  return resolveCommonSpaceDetailId(value);
+}
+
+/**
+ * 과제 식별자 query 값을 숫자로 정규화한다.
+ */
+export function resolveCommonSpaceAssignmentId(value: string | null) {
   return resolveCommonSpaceDetailId(value);
 }
 

@@ -59,6 +59,66 @@ export type CommonSpaceAssignmentMySubmissionApiResponse = {
 };
 
 /**
+ * 과제 제출/재제출 요청 본문에 담을 JSON 데이터다.
+ */
+export type CommonSpaceAssignmentSubmissionRequestBody = {
+  /** 텍스트 제출 본문 */
+  content?: string;
+};
+
+/**
+ * 과제 제출/재제출 시 화면에서 전달하는 업로드 요청 데이터다.
+ */
+export type CommonSpaceAssignmentSubmissionRequest = {
+  /** JSON request 파트에 실어 보낼 제출 본문 */
+  request: CommonSpaceAssignmentSubmissionRequestBody;
+  /** multipart로 업로드할 제출 파일 목록 */
+  files: File[];
+};
+
+/**
+ * 과제 제출/재제출 후 반환되는 응답 메시지다.
+ */
+export type CommonSpaceAssignmentSubmissionMutationResult = {
+  /** 서버가 반환한 결과 메시지 */
+  message: string;
+};
+
+/**
+ * 과제 상세 API의 첨부파일 응답이다.
+ */
+export type CommonSpaceAssignmentFileApiItem = {
+  /** 첨부파일 식별자 */
+  fileId: number;
+  /** 원본 파일명 */
+  originalFileName: string;
+  /** 다운로드 URL */
+  fileUrl: string;
+};
+
+/**
+ * 과제 상세 조회 API 응답이다.
+ */
+export type CommonSpaceAssignmentDetailApiResponse = {
+  /** 과제 식별자 */
+  projectId: number;
+  /** 과제 제목 */
+  title: string;
+  /** 과제 본문 */
+  description: string;
+  /** 과제 대상 트랙 */
+  track?: CommonSpaceAssignmentApiTrack | null;
+  /** 과제 시작 시각 */
+  startDate: string;
+  /** 과제 마감 시각 */
+  endDate: string;
+  /** 과제 상태 */
+  status: "ACTIVE" | "INACTIVE" | string;
+  /** 첨부파일 목록 */
+  files: CommonSpaceAssignmentFileApiItem[];
+};
+
+/**
  * 과제 목록 조회에 사용하는 화면용 쿼리 타입이다.
  */
 export type CommonSpaceAssignmentListQuery = {
@@ -80,6 +140,52 @@ export type CommonSpaceAssignmentListItem = AssignmentItem & {
   deadlineAt: string;
   /** 제출 식별자 */
   submissionId?: number;
+};
+
+/**
+ * 과제 상세 화면이 사용하는 첨부파일 아이템이다.
+ */
+export type CommonSpaceAssignmentAttachment = {
+  /** 첨부파일 식별자 */
+  id: number;
+  /** 화면에 노출할 파일명 */
+  name: string;
+  /** 다운로드 URL */
+  url: string;
+};
+
+/**
+ * 과제 상세 화면이 사용하는 표시용 데이터다.
+ */
+export type CommonSpaceAssignmentDetailItem = {
+  /** 과제 식별자 */
+  id: number;
+  /** 과제 제목 */
+  title: string;
+  /** 작성자명 */
+  authorName?: string;
+  /** 작성자 부가 정보 */
+  authorDescription?: string;
+  /** 과제 본문 */
+  content: string;
+  /** 본문 상단에 노출할 이미지 경로 */
+  bodyImageSrc?: string;
+  /** 본문 이미지 대체 텍스트 */
+  bodyImageAlt?: string;
+  /** 과제 대상 파트 */
+  partId: CommonSpacePartId;
+  /** 화면 상단에 노출할 기준 시각 */
+  createdAt: string;
+  /** mock 검증 시 D-Day 계산에 사용할 기준 시각 */
+  displayNowAt?: string;
+  /** 과제 마감 시각 */
+  deadlineAt: string;
+  /** 과제 상태 */
+  status: string;
+  /** 첨부파일 목록 */
+  attachments: CommonSpaceAssignmentAttachment[];
+  /** 하단 제출 영역에 재사용할 카드 데이터 */
+  assignment: CommonSpaceAssignmentListItem;
 };
 
 /**

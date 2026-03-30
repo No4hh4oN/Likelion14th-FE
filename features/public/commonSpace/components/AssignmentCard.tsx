@@ -4,6 +4,7 @@ import { useState } from "react";
 import clsx from "clsx";
 import type { AssignmentItem } from "../types";
 import AssignmentReviewBadge from "./AssignmentReviewBadge";
+import AssignmentSubmitDialog from "./AssignmentSubmitDialog";
 
 /**
  * AssignmentCard 컴포넌트가 받을 props다.
@@ -11,6 +12,10 @@ import AssignmentReviewBadge from "./AssignmentReviewBadge";
 type AssignmentCardProps = {
   /** 화면에 그릴 단일 과제 카드 데이터 */
   assignment: AssignmentItem;
+  /** 카드 클릭 시 실행할 핸들러 */
+  onClick?: () => void;
+  /** 제출/재제출 파일 업로드 시 실행할 핸들러 */
+  onSubmitFile?: (file: File) => Promise<void> | void;
 };
 
 type FileIconProps = {
@@ -51,7 +56,9 @@ function FileIcon({ className }: FileIconProps) {
 /**
  * 제출 상태에 대응하는 헤더 라벨을 반환한다.
  */
-function getAssignmentStatusLabel(submissionState: AssignmentItem["submissionState"]) {
+function getAssignmentStatusLabel(
+  submissionState: AssignmentItem["submissionState"],
+) {
   return submissionState === "submitted" || submissionState === "rejected"
     ? "제출함"
     : "미제출";
@@ -70,13 +77,22 @@ function getAssignmentFileNameFromUrl(fileUrl: string) {
 /**
  * 상태 기반 과제 카드 UI를 렌더링한다.
  */
-export default function AssignmentCard({ assignment }: AssignmentCardProps) {
+export default function AssignmentCard({
+  assignment,
+  onClick,
+  onSubmitFile,
+}: AssignmentCardProps) {
   /**
    * 평가가 공개된 카드에서 피드백 패널의 열림/닫힘 상태를 관리한다.
    */
   const [isReviewOpen, setIsReviewOpen] = useState(
     assignment.defaultReviewOpen ?? false,
   );
+
+  /**
+   * 과제 제출 팝업의 열림/닫힘 상태다.
+   */
+  const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
 
   /**
    * 본문을 미제출형 레이아웃으로 그릴지, 제출형 레이아웃으로 그릴지 판별한다.
@@ -95,6 +111,11 @@ export default function AssignmentCard({ assignment }: AssignmentCardProps) {
    */
   const isUnsubmittedCard =
     assignment.submissionState === "notSubmitted" || isClosedAssignment;
+
+  /**
+   * 아직 제출 가능해 hover 제출 오버레이를 노출할 수 있는 상태인지 판별한다.
+   */
+  const isSubmittableAssignment = assignment.submissionState === "notSubmitted";
 
   /**
    * 카드 외곽에 적용할 상태별 그림자 스타일이다.
@@ -136,12 +157,53 @@ export default function AssignmentCard({ assignment }: AssignmentCardProps) {
   const unsubmittedBodyMessage =
     assignment.bodyMessage ?? "아직 과제를 제출하지 않았습니다.";
 
+  /**
+   * 카드 키보드 접근을 처리한다.
+   */
+  function handleCardKeyDown(event: React.KeyboardEvent<HTMLElement>) {
+    if (!onClick) {
+      return;
+    }
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onClick();
+    }
+  }
+
+  /**
+   * 과제 제출 버튼 클릭 시 파일 업로드 팝업을 연다.
+   */
+  function handleOpenSubmitDialog(event: React.MouseEvent<HTMLButtonElement>) {
+    event.stopPropagation();
+    setIsSubmitDialogOpen(true);
+  }
+
+  /**
+   * 과제 제출 팝업을 닫는다.
+   */
+  function handleCloseSubmitDialog() {
+    setIsSubmitDialogOpen(false);
+  }
+
+  /**
+   * 선택한 제출 파일을 상위 제출 로직으로 전달한다.
+   */
+  function handleSubmitFile(file: File) {
+    return onSubmitFile?.(file);
+  }
+
   return (
     <li
       className={clsx(
-        "relative overflow-hidden rounded-[14px] bg-foreground",
+        "group relative overflow-hidden rounded-[14px] bg-foreground",
         cardShadowClassName,
+        onClick && "cursor-pointer",
       )}
+      onClick={onClick}
+      onKeyDown={handleCardKeyDown}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
     >
       <div
         className={`flex gap-4 flex-row items-center justify-between px-10 py-6.5 ${
@@ -150,11 +212,11 @@ export default function AssignmentCard({ assignment }: AssignmentCardProps) {
             : "bg-gray-4"
         }`}
       >
-        <p className="font-bold text-background text-[24px]">
+        <p className="min-w-0 truncate font-bold text-background text-[24px]">
           {assignment.title}
         </p>
 
-        <div className="flex items-center gap-6">
+        <div className="flex shrink-0 items-center gap-6 whitespace-nowrap">
           <span
             className={`text-[24px] font-bold ${
               isUnsubmittedCard ? "text-red-1" : "text-main-2"
@@ -178,12 +240,14 @@ export default function AssignmentCard({ assignment }: AssignmentCardProps) {
         </div>
       ) : (
         <div className="bg-gray-2 px-8 py-10">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex min-w-0 flex-wrap items-center gap-3">
-              <AssignmentReviewBadge
-                reviewState={assignment.reviewState}
-                submissionState={assignment.submissionState}
-              />
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <div className="shrink-0">
+                <AssignmentReviewBadge
+                  reviewState={assignment.reviewState}
+                  submissionState={assignment.submissionState}
+                />
+              </div>
 
               {submissionFileName &&
                 (assignment.submissionFileUrl ? (
@@ -192,8 +256,9 @@ export default function AssignmentCard({ assignment }: AssignmentCardProps) {
                     download
                     target="_blank"
                     rel="noreferrer"
+                    onClick={(event) => event.stopPropagation()}
                     className={clsx(
-                      "flex min-w-0 items-center gap-2 rounded-[10px] leading-[1.27] px-4 py-3.25 text-[20px]",
+                      "flex min-w-0 flex-1 items-center gap-2 rounded-[10px] leading-[1.27] px-4 py-3.25 text-[20px]",
                       isRejectedSubmission
                         ? "bg-gray-3 text-white-1"
                         : "bg-white-1 text-gray-6",
@@ -202,7 +267,9 @@ export default function AssignmentCard({ assignment }: AssignmentCardProps) {
                     <FileIcon
                       className={clsx(
                         "h-[18px] w-[17px] shrink-0",
-                        isRejectedSubmission ? "text-white-1" : "text-[#606060]",
+                        isRejectedSubmission
+                          ? "text-white-1"
+                          : "text-[#606060]",
                       )}
                     />
                     <span
@@ -217,7 +284,7 @@ export default function AssignmentCard({ assignment }: AssignmentCardProps) {
                 ) : (
                   <div
                     className={clsx(
-                      "flex min-w-0 items-center gap-2 rounded-[10px] leading-[1.27] px-4 py-3.25 text-[20px]",
+                      "flex min-w-0 flex-1 items-center gap-2 rounded-[10px] leading-[1.27] px-4 py-3.25 text-[20px]",
                       isRejectedSubmission
                         ? "bg-gray-3 text-white-1"
                         : "bg-white-1 text-gray-6",
@@ -226,7 +293,9 @@ export default function AssignmentCard({ assignment }: AssignmentCardProps) {
                     <FileIcon
                       className={clsx(
                         "h-[18px] w-[17px] shrink-0",
-                        isRejectedSubmission ? "text-white-1" : "text-[#606060]",
+                        isRejectedSubmission
+                          ? "text-white-1"
+                          : "text-[#606060]",
                       )}
                     />
                     <span
@@ -243,8 +312,11 @@ export default function AssignmentCard({ assignment }: AssignmentCardProps) {
 
             <button
               type="button"
-              onClick={() => setIsReviewOpen((prev) => !prev)}
-              className="flex items-center gap-2 self-start text-[18px] cursor-pointer font-medium text-[#355BCB] md:self-auto"
+              onClick={(event) => {
+                event.stopPropagation();
+                setIsReviewOpen((prev) => !prev);
+              }}
+              className="flex shrink-0 items-center gap-2 self-start whitespace-nowrap text-[18px] cursor-pointer font-medium text-[#355BCB] md:self-auto"
             >
               과제 평가 {isReviewOpen ? "접기" : "열기"}
               <svg
@@ -295,6 +367,10 @@ export default function AssignmentCard({ assignment }: AssignmentCardProps) {
                 <div className="mt-10.5 flex justify-end">
                   <button
                     type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setIsSubmitDialogOpen(true);
+                    }}
                     className="rounded-[14px] bg-main-1 cursor-pointer px-10.75 py-6.75 text-[20px] font-bold text-white-1"
                   >
                     과제 수정하기
@@ -311,6 +387,24 @@ export default function AssignmentCard({ assignment }: AssignmentCardProps) {
           기한 내에 과제를 제출하지 않았습니다.
         </div>
       )}
+
+      {isSubmittableAssignment && (
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-[#303136]/80 opacity-0 backdrop-blur-[4px] transition-opacity duration-200 group-hover:opacity-100">
+          <button
+            type="button"
+            onClick={handleOpenSubmitDialog}
+            className="pointer-events-auto rounded-[14px] bg-main-1 px-12 py-6 text-[20px] font-bold text-white-1 cursor-pointer hover:shadow-[0_0_6px_#829797]"
+          >
+            과제 제출하기
+          </button>
+        </div>
+      )}
+
+      <AssignmentSubmitDialog
+        isOpen={isSubmitDialogOpen}
+        onClose={handleCloseSubmitDialog}
+        onSubmit={handleSubmitFile}
+      />
     </li>
   );
 }

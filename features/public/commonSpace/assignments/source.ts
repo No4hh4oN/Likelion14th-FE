@@ -1,16 +1,28 @@
 import {
+  getCommonSpaceAssignmentDetail,
   getCommonSpaceAssignmentMySubmission,
   getCommonSpaceAssignmentProjects,
+  submitCommonSpaceAssignment,
+  updateCommonSpaceAssignmentSubmission,
 } from "./api";
 import {
+  getMockCommonSpaceAssignmentDetail,
   getMockCommonSpaceAssignmentList,
   getMockCommonSpaceAssignmentMySubmission,
   getMockCommonSpaceAssignmentProjects,
+  submitMockCommonSpaceAssignment,
+  updateMockCommonSpaceAssignmentSubmission,
 } from "./mock";
-import { toCommonSpaceAssignmentListItem } from "./adapter";
+import {
+  toCommonSpaceAssignmentDetailItem,
+  toCommonSpaceAssignmentListItem,
+} from "./adapter";
 import type {
+  CommonSpaceAssignmentDetailItem,
   CommonSpaceAssignmentListQuery,
   CommonSpaceAssignmentListResult,
+  CommonSpaceAssignmentSubmissionMutationResult,
+  CommonSpaceAssignmentSubmissionRequest,
 } from "./types";
 
 /**
@@ -22,6 +34,24 @@ export type CommonSpaceAssignmentDataSource = {
    * 과제 목록을 조회한다.
    */
   getList(query?: CommonSpaceAssignmentListQuery): Promise<CommonSpaceAssignmentListResult>;
+  /**
+   * 과제 상세를 조회한다.
+   */
+  getDetail(projectId: number): Promise<CommonSpaceAssignmentDetailItem | null>;
+  /**
+   * 과제를 최초 제출한다.
+   */
+  submit(
+    projectId: number,
+    payload: CommonSpaceAssignmentSubmissionRequest,
+  ): Promise<CommonSpaceAssignmentSubmissionMutationResult>;
+  /**
+   * 반려된 과제를 수정 제출한다.
+   */
+  updateSubmission(
+    projectId: number,
+    payload: CommonSpaceAssignmentSubmissionRequest,
+  ): Promise<CommonSpaceAssignmentSubmissionMutationResult>;
 };
 
 /**
@@ -42,6 +72,20 @@ export const commonSpaceAssignmentApiDataSource: CommonSpaceAssignmentDataSource
       ),
     };
   },
+  async getDetail(projectId) {
+    const [detail, submission] = await Promise.all([
+      getCommonSpaceAssignmentDetail(projectId),
+      getCommonSpaceAssignmentMySubmission(projectId).catch(() => null),
+    ]);
+
+    return toCommonSpaceAssignmentDetailItem(detail, submission);
+  },
+  async submit(projectId, payload) {
+    return submitCommonSpaceAssignment(projectId, payload);
+  },
+  async updateSubmission(projectId, payload) {
+    return updateCommonSpaceAssignmentSubmission(projectId, payload);
+  },
 };
 
 /**
@@ -50,6 +94,15 @@ export const commonSpaceAssignmentApiDataSource: CommonSpaceAssignmentDataSource
 export const commonSpaceAssignmentMockDataSource: CommonSpaceAssignmentDataSource = {
   async getList(query = {}) {
     return getMockCommonSpaceAssignmentList(query);
+  },
+  async getDetail(projectId) {
+    return getMockCommonSpaceAssignmentDetail(projectId);
+  },
+  async submit(projectId, payload) {
+    return submitMockCommonSpaceAssignment(projectId, payload);
+  },
+  async updateSubmission(projectId, payload) {
+    return updateMockCommonSpaceAssignmentSubmission(projectId, payload);
   },
 };
 
