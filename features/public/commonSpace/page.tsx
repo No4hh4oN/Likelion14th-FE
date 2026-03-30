@@ -10,6 +10,7 @@ import {
   getCommonSpaceHeading,
   getCommonSpacePart,
   getCommonSpaceSection,
+  resolveCommonSpaceAssignmentId,
   resolveCommonSpaceMaterialId,
   resolveCommonSpaceNoticeId,
   resolveCommonSpacePartId,
@@ -17,6 +18,7 @@ import {
 } from "./config";
 import HomeSection from "./sections/HomeSection";
 import AssignmentSection from "./sections/AssignmentSection";
+import AssignmentDetailSection from "./sections/AssignmentDetailSection";
 import MaterialDetailSection from "./sections/MaterialDetailSection";
 import MaterialSection from "./sections/MaterialSection";
 import NoticeDetailSection from "./sections/NoticeDetailSection";
@@ -31,6 +33,9 @@ export default function CommonSpacePage() {
     searchParams.get("section"),
   );
   const activeNoticeId = resolveCommonSpaceNoticeId(searchParams.get("noticeId"));
+  const activeAssignmentId = resolveCommonSpaceAssignmentId(
+    searchParams.get("assignmentId"),
+  );
   const activeMaterialId = resolveCommonSpaceMaterialId(
     searchParams.get("materialId"),
   );
@@ -104,6 +109,11 @@ export default function CommonSpacePage() {
           </section>
           {activeSectionId === "notices" && activeNoticeId ? (
             <NoticeDetailSection partId={activePart.id} noticeId={activeNoticeId} />
+          ) : activeSectionId === "assignments" && activeAssignmentId ? (
+            <AssignmentDetailSection
+              partId={activePart.id}
+              assignmentId={activeAssignmentId}
+            />
           ) : activeSectionId === "materials" && activeMaterialId ? (
             <MaterialDetailSection
               partId={activePart.id}

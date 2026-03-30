@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AssignmentCard from "../components/AssignmentCard";
 import NoticeCard from "../components/NoticeCard";
-import { buildCommonSpaceNoticeDetailHref } from "../config";
+import {
+  buildCommonSpaceAssignmentDetailHref,
+  buildCommonSpaceNoticeDetailHref,
+} from "../config";
 import {
   COMMON_SPACE_ASSIGNMENT_EMPTY_TITLE_BY_PART,
   COMMON_SPACE_ASSIGNMENT_STATUS_MESSAGE,
@@ -14,6 +17,7 @@ import { commonSpaceAssignmentMockDataSource } from "../assignments/source";
 import type {
   CommonSpaceAssignmentListItem,
   CommonSpaceAssignmentLoadState,
+  CommonSpaceAssignmentSubmissionRequest,
 } from "../assignments/types";
 import { commonSpaceNoticeMockDataSource } from "../notices/source";
 import type { CommonSpaceNoticeListItem } from "../notices/types";
@@ -32,6 +36,33 @@ const ASSIGNMENT_SEARCH_PLACEHOLDER = "검색어를 입력하세요. (최대 10�
  * 검색어 최대 글자 수다.
  */
 const ASSIGNMENT_SEARCH_MAX_LENGTH = 10;
+
+/**
+ * 과제 섹션이 현재 사용할 데이터 소스다.
+ * 실 API 연결 시 mock 대신 api data source로 교체하면 된다.
+ */
+const commonSpaceAssignmentDataSource = commonSpaceAssignmentMockDataSource;
+
+/**
+ * 과제 섹션 목록과 상단 pinned 공지를 함께 불러온다.
+ */
+async function getAssignmentSectionData(partId: CommonSpacePartId) {
+  const [assignmentResponse, noticeResponse] = await Promise.all([
+    commonSpaceAssignmentDataSource.getList({
+      partId,
+    }),
+    commonSpaceNoticeMockDataSource.getList({
+      partId,
+      page: 0,
+      size: 100,
+    }),
+  ]);
+
+  return {
+    assignmentItems: assignmentResponse.items,
+    pinnedNoticeItem: noticeResponse.items.find((item) => item.isPinned) ?? null,
+  };
+}
 
 /**
  * 과제 안내 및 제출 섹션을 렌더링한다.
@@ -83,26 +114,17 @@ export default function AssignmentSection({ partId }: AssignmentSectionProps) {
       setCurrentPage(1);
 
       try {
-        const [assignmentResponse, noticeResponse] = await Promise.all([
-          commonSpaceAssignmentMockDataSource.getList({
-            partId,
-          }),
-          commonSpaceNoticeMockDataSource.getList({
-            partId,
-            page: 0,
-            size: 100,
-          }),
-        ]);
+        const nextSectionData = await getAssignmentSectionData(partId);
 
         if (!isMounted) {
           return;
         }
 
-        setAssignmentItems(assignmentResponse.items);
-        setPinnedNoticeItem(
-          noticeResponse.items.find((item) => item.isPinned) ?? null,
+        setAssignmentItems(nextSectionData.assignmentItems);
+        setPinnedNoticeItem(nextSectionData.pinnedNoticeItem);
+        setLoadState(
+          nextSectionData.assignmentItems.length > 0 ? "success" : "empty",
         );
-        setLoadState(assignmentResponse.items.length > 0 ? "success" : "empty");
       } catch {
         if (!isMounted) {
           return;
@@ -173,6 +195,47 @@ export default function AssignmentSection({ partId }: AssignmentSectionProps) {
   }
 
   /**
+   * 과제 상세 화면으로 이동한다.
+   */
+  function handleAssignmentClick(assignmentId: number) {
+    router.push(buildCommonSpaceAssignmentDetailHref(partId, assignmentId));
+  }
+
+  /**
+   * 과제 제출 또는 수정 제출 이후 목록 상태를 갱신한다.
+   */
+  async function handleAssignmentSubmit(
+    assignmentId: number,
+    submissionState: CommonSpaceAssignmentListItem["submissionState"],
+    file: File,
+  ) {
+    const submissionPayload = {
+      request: {},
+      files: [file],
+    } satisfies CommonSpaceAssignmentSubmissionRequest;
+
+    if (submissionState === "rejected") {
+      await commonSpaceAssignmentDataSource.updateSubmission(
+        assignmentId,
+        submissionPayload,
+      );
+    } else {
+      await commonSpaceAssignmentDataSource.submit(
+        assignmentId,
+        submissionPayload,
+      );
+    }
+
+    const nextSectionData = await getAssignmentSectionData(partId);
+
+    setAssignmentItems(nextSectionData.assignmentItems);
+    setPinnedNoticeItem(nextSectionData.pinnedNoticeItem);
+    setLoadState(
+      nextSectionData.assignmentItems.length > 0 ? "success" : "empty",
+    );
+  }
+
+  /**
    * 로딩/에러/빈 상태에서 보여줄 안내 문구다.
    */
   const statusMessage =
@@ -216,7 +279,14 @@ export default function AssignmentSection({ partId }: AssignmentSectionProps) {
           <>
             <ul className="mt-10 flex flex-col gap-6">
               {paginatedAssignmentItems.map((item) => (
-                <AssignmentCard key={item.id} assignment={item} />
+                <AssignmentCard
+                  key={item.id}
+                  assignment={item}
+                  onClick={() => handleAssignmentClick(item.id)}
+                  onSubmitFile={(file) =>
+                    handleAssignmentSubmit(item.id, item.submissionState, file)
+                  }
+                />
               ))}
             </ul>
 
