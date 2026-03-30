@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import DetailAttachmentList from "../components/DetailAttachmentList";
 import {
   buildCommonSpaceHref,
   buildCommonSpaceMaterialDetailHref,
@@ -63,9 +64,9 @@ export default function MaterialDetailSection({
   /**
    * 이전/다음 글 계산에 사용할 목록 데이터다.
    */
-  const [materialItems, setMaterialItems] = useState<CommonSpaceMaterialListItem[]>(
-    [],
-  );
+  const [materialItems, setMaterialItems] = useState<
+    CommonSpaceMaterialListItem[]
+  >([]);
 
   /**
    * 세션 자료 상세 로드 상태다.
@@ -209,7 +210,7 @@ export default function MaterialDetailSection({
                 width={920}
                 height={520}
                 quality={90}
-                className="w-full object-cover"
+                className="h-auto max-h-[520px] w-auto max-w-full object-contain"
               />
             </div>
           ) : null}
@@ -221,37 +222,10 @@ export default function MaterialDetailSection({
 
         {materialDetail.attachments.length > 0 ? (
           <>
-            <div className="mt-8 rounded-[12px] bg-[#484D5A] px-6 py-5">
-              <p className="text-[16px] font-semibold text-white-1">
-                첨부파일 ({materialDetail.attachments.length}개)
-              </p>
-
-              <div className="mt-4 space-y-3">
-                {materialDetail.attachments.map((attachment) => (
-                  <div
-                    key={attachment.id}
-                    className="flex items-center justify-between gap-4 rounded-[10px] bg-[#5A6070] px-4 py-3"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-[15px] font-medium text-white-1">
-                        {attachment.name}
-                      </p>
-                      <p className="mt-1 text-[12px] text-gray-3">
-                        파일을 다운로드할 수 있습니다.
-                      </p>
-                    </div>
-                    <a
-                      href={attachment.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="shrink-0 rounded-[8px] bg-main-1 px-4 py-2 text-[13px] font-semibold text-white-1"
-                    >
-                      내려받기
-                    </a>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <DetailAttachmentList
+              attachments={materialDetail.attachments}
+              className="mt-8"
+            />
             <div className="my-20 h-px w-full bg-[#5D6475]" />
           </>
         ) : null}
@@ -263,7 +237,7 @@ export default function MaterialDetailSection({
           initialComments={getMockCommonSpaceMaterialComments(materialId)}
         />
 
-        <div className="mt-8 grid gap-4 md:grid-cols-2">
+        <div className="mt-29 grid gap-4 md:grid-cols-2">
           <div className="space-y-6">
             <div className="flex items-center gap-3">
               <Image
@@ -281,7 +255,7 @@ export default function MaterialDetailSection({
                   partId,
                   previousMaterial.id,
                 )}
-                className="block rounded-[14px] bg-gray-6 px-5 py-8 text-[18px] font-medium text-white-1 transition-shadow hover:shadow-[0_0_6px_#828797]"
+                className="block truncate rounded-[14px] bg-gray-6 px-5 py-8 text-[18px] font-medium text-white-1 transition-shadow hover:shadow-[0_0_6px_#828797]"
               >
                 {previousMaterial.title}
               </Link>
@@ -305,8 +279,11 @@ export default function MaterialDetailSection({
             </div>
             {nextMaterial ? (
               <Link
-                href={buildCommonSpaceMaterialDetailHref(partId, nextMaterial.id)}
-                className="block rounded-[14px] bg-gray-6 px-5 py-8 text-right text-[18px] font-medium text-white-1 transition-shadow hover:shadow-[0_0_6px_#828797]"
+                href={buildCommonSpaceMaterialDetailHref(
+                  partId,
+                  nextMaterial.id,
+                )}
+                className="block truncate rounded-[14px] bg-gray-6 px-5 py-8 text-right text-[18px] font-medium text-white-1 transition-shadow hover:shadow-[0_0_6px_#828797]"
               >
                 {nextMaterial.title}
               </Link>

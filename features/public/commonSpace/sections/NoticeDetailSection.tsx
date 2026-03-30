@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import DetailAttachmentList from "../components/DetailAttachmentList";
 import {
   buildCommonSpaceHref,
   buildCommonSpaceNoticeDetailHref,
@@ -197,7 +198,7 @@ export default function NoticeDetailSection({
           </div>
         </div>
 
-        <div className="my-15 h-px w-full bg-[#5D6475]" />
+        <div className="my-15 h-px w-full bg-gray-4" />
 
         <div className="mt-8 space-y-7">
           {noticeDetail.bodyImageSrc ? (
@@ -208,7 +209,7 @@ export default function NoticeDetailSection({
                 width={920}
                 height={520}
                 quality={90}
-                className="w-full object-cover"
+                className="h-auto max-h-[520px] w-auto max-w-full object-contain"
               />
             </div>
           ) : null}
@@ -220,38 +221,11 @@ export default function NoticeDetailSection({
 
         {noticeDetail.attachments.length > 0 ? (
           <>
-            <div className="mt-8 rounded-[12px] bg-[#484D5A] px-6 py-5">
-              <p className="text-[16px] font-semibold text-white-1">
-                첨부파일 ({noticeDetail.attachments.length}개)
-              </p>
-
-              <div className="mt-4 space-y-3">
-                {noticeDetail.attachments.map((attachment) => (
-                  <div
-                    key={attachment.id}
-                    className="flex items-center justify-between gap-4 rounded-[10px] bg-[#5A6070] px-4 py-3"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-[15px] font-medium text-white-1">
-                        {attachment.name}
-                      </p>
-                      <p className="mt-1 text-[12px] text-gray-3">
-                        파일을 다운로드할 수 있습니다.
-                      </p>
-                    </div>
-                    <a
-                      href={attachment.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="shrink-0 rounded-[8px] bg-main-1 px-4 py-2 text-[13px] font-semibold text-white-1"
-                    >
-                      내려받기
-                    </a>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="my-20 h-px w-full bg-[#5D6475]" />
+            <DetailAttachmentList
+              attachments={noticeDetail.attachments}
+              className="mt-8"
+            />
+            <div className="my-20 h-px w-full bg-gray-5" />
           </>
         ) : null}
         <NoticeCommentsSection
@@ -278,7 +252,7 @@ export default function NoticeDetailSection({
                   partId,
                   previousNotice.id,
                 )}
-                className="block rounded-[14px] bg-gray-6 px-5 py-8 text-[18px] font-medium text-white-1 hover:shadow-[0_0_6px_#828797] transition-shadow"
+                className="block truncate rounded-[14px] bg-gray-6 px-5 py-8 text-[18px] font-medium text-white-1 hover:shadow-[0_0_6px_#828797] transition-shadow"
               >
                 {previousNotice.title}
               </Link>
@@ -303,7 +277,7 @@ export default function NoticeDetailSection({
             {nextNotice ? (
               <Link
                 href={buildCommonSpaceNoticeDetailHref(partId, nextNotice.id)}
-                className="block rounded-[14px] bg-gray-6 px-5 py-8 text-right text-[18px] font-medium text-white-1 hover:shadow-[0_0_6px_#828797] transition-shadow"
+                className="block truncate rounded-[14px] bg-gray-6 px-5 py-8 text-right text-[18px] font-medium text-white-1 hover:shadow-[0_0_6px_#828797] transition-shadow"
               >
                 {nextNotice.title}
               </Link>
