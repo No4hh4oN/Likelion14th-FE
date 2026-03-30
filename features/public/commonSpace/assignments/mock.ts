@@ -1,11 +1,15 @@
 import {
   mapCommonSpacePartIdToAssignmentTrack,
+  toCommonSpaceAssignmentDetailItem,
   toCommonSpaceAssignmentListItem,
 } from "./adapter";
 import type {
+  CommonSpaceAssignmentDetailItem,
   CommonSpaceAssignmentListQuery,
   CommonSpaceAssignmentMySubmissionApiResponse,
   CommonSpaceAssignmentProjectListApiItem,
+  CommonSpaceAssignmentSubmissionMutationResult,
+  CommonSpaceAssignmentSubmissionRequest,
 } from "./types";
 
 /**
@@ -168,6 +172,83 @@ export const COMMON_SPACE_ASSIGNMENT_MOCK_SUBMISSION_BY_PROJECT_ID: Record<
 };
 
 /**
+ * 레이아웃 검증용 과제 상세 mock 응답이다.
+ */
+export const COMMON_SPACE_ASSIGNMENT_MOCK_DETAIL_BY_PROJECT_ID: Record<
+  number,
+  CommonSpaceAssignmentDetailItem
+> = {
+  1001: {
+    ...toCommonSpaceAssignmentDetailItem(
+      {
+        projectId: 1001,
+        title: "공통 세션 3주차 : 협업을 위한 기초 세팅법",
+        description:
+          "안녕하세요!\n오늘은 팀 과제에서 맞춰야 하는 기본 협업 규칙입니다.\n\n과제 제출 전에 아래 예시와 첨부파일을 꼭 확인해 주세요. 브랜치 전략, PR 작성 방식, 커밋 메시지 규칙을 모두 포함하고 있습니다.\n\n과제 세부 내용\n1. 개인 저장소를 먼저 세팅할 것\n2. 팀 저장소와 브랜치를 연결할 것\n\n두 가지 개념을 제출물에서 반드시 확인할 수 있게 정리해 주세요.",
+        track: null,
+        startDate: "2026-02-25T11:17:22",
+        endDate: "2026-03-04T23:59:59",
+        status: "ACTIVE",
+        files: [
+          {
+            fileId: 1,
+            originalFileName: "3주차 과제 제출 예시.pdf",
+            fileUrl: "https://example.com/files/assignment-week3-example.pdf",
+          },
+          {
+            fileId: 2,
+            originalFileName:
+              "3주차 과제 제출 예시 업로드 가이드/브랜치-PR-커밋-메시지-양식.pdf",
+            fileUrl:
+              "https://example.com/files/assignment-week3-upload-guide.pdf",
+          },
+        ],
+      },
+      COMMON_SPACE_ASSIGNMENT_MOCK_SUBMISSION_BY_PROJECT_ID[1001],
+      new Date("2026-03-02T12:00:00"),
+    ),
+    authorName: "윤혜원 (14기 운영진)",
+    authorDescription: "멋쟁이사자처럼 삼육대학교 24학번",
+    bodyImageSrc: "/images/commonSpace/default.webp",
+    bodyImageAlt: "과제 상세 예시 이미지",
+    displayNowAt: "2026-03-02T12:00:00",
+  },
+  1002: {
+    ...toCommonSpaceAssignmentDetailItem(
+      {
+        projectId: 1002,
+        title: "공통 세션 2주차 : 떠먹여주는 기초 코딩",
+        description:
+          "기초 코딩 과제를 제출하고 평가를 확인할 수 있습니다.\n반려된 경우 수정 후 다시 제출해 주세요.",
+        track: null,
+        startDate: "2026-02-20T11:17:22",
+        endDate: "2026-03-01T23:59:59",
+        status: "ACTIVE",
+        files: [
+          {
+            fileId: 3,
+            originalFileName: "2주차 과제 안내.pdf",
+            fileUrl: "https://example.com/files/assignment-week2-guide.pdf",
+          },
+        ],
+      },
+      COMMON_SPACE_ASSIGNMENT_MOCK_SUBMISSION_BY_PROJECT_ID[1002],
+      new Date("2026-03-02T12:00:00"),
+    ),
+    authorName: "윤혜원 (14기 운영진)",
+    authorDescription: "멋쟁이사자처럼 삼육대학교 24학번",
+    displayNowAt: "2026-03-02T12:00:00",
+  },
+};
+
+/**
+ * mock 업로드 파일명을 기반으로 제출 파일 URL을 생성한다.
+ */
+function buildMockCommonSpaceAssignmentSubmissionUrl(file: File) {
+  return `https://example.com/submissions/${encodeURIComponent(file.name)}`;
+}
+
+/**
  * 현재 파트에 해당하는 mock 과제 목록 응답을 반환한다.
  */
 export function getMockCommonSpaceAssignmentProjects(
@@ -210,4 +291,90 @@ export function getMockCommonSpaceAssignmentList(
       ),
     ),
   };
+}
+
+/**
+ * 단일 과제 상세 mock 데이터를 반환한다.
+ */
+export function getMockCommonSpaceAssignmentDetail(projectId: number) {
+  if (COMMON_SPACE_ASSIGNMENT_MOCK_DETAIL_BY_PROJECT_ID[projectId]) {
+    return COMMON_SPACE_ASSIGNMENT_MOCK_DETAIL_BY_PROJECT_ID[projectId];
+  }
+
+  const project = COMMON_SPACE_ASSIGNMENT_MOCK_PROJECTS.find(
+    (item) => item.id === projectId,
+  );
+
+  if (!project) {
+    return null;
+  }
+
+  return toCommonSpaceAssignmentDetailItem(
+    {
+      projectId: project.id,
+      title: project.title,
+      description: project.description,
+      track: project.track,
+      startDate: project.startDate,
+      endDate: project.deadline,
+      status: project.status,
+      files: [],
+    },
+    getMockCommonSpaceAssignmentMySubmission(project.id),
+    new Date("2026-03-02T12:00:00"),
+  );
+}
+
+/**
+ * mock 제출 데이터를 최초 제출 상태로 갱신한다.
+ */
+export function submitMockCommonSpaceAssignment(
+  projectId: number,
+  payload: CommonSpaceAssignmentSubmissionRequest,
+) {
+  const selectedFile = payload.files[0];
+
+  COMMON_SPACE_ASSIGNMENT_MOCK_SUBMISSION_BY_PROJECT_ID[projectId] = {
+    submitted: true,
+    submissionId: Date.now(),
+    content: payload.request.content,
+    status: "PENDING",
+    feedback: undefined,
+    fileUrl: selectedFile
+      ? buildMockCommonSpaceAssignmentSubmissionUrl(selectedFile)
+      : undefined,
+    submittedAt: new Date().toISOString(),
+  };
+
+  return {
+    message: "과제가 제출되었습니다.",
+  } satisfies CommonSpaceAssignmentSubmissionMutationResult;
+}
+
+/**
+ * mock 제출 데이터를 수정 제출 상태로 갱신한다.
+ */
+export function updateMockCommonSpaceAssignmentSubmission(
+  projectId: number,
+  payload: CommonSpaceAssignmentSubmissionRequest,
+) {
+  const previousSubmission =
+    COMMON_SPACE_ASSIGNMENT_MOCK_SUBMISSION_BY_PROJECT_ID[projectId];
+  const selectedFile = payload.files[0];
+
+  COMMON_SPACE_ASSIGNMENT_MOCK_SUBMISSION_BY_PROJECT_ID[projectId] = {
+    submitted: true,
+    submissionId: previousSubmission?.submissionId ?? Date.now(),
+    content: payload.request.content,
+    status: "PENDING",
+    feedback: undefined,
+    fileUrl: selectedFile
+      ? buildMockCommonSpaceAssignmentSubmissionUrl(selectedFile)
+      : previousSubmission?.fileUrl,
+    submittedAt: new Date().toISOString(),
+  };
+
+  return {
+    message: "과제가 수정 제출되었습니다.",
+  } satisfies CommonSpaceAssignmentSubmissionMutationResult;
 }

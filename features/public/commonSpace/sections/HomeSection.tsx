@@ -1,14 +1,26 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import AssignmentCard from "../components/AssignmentCard";
 import NoticeCard from "../components/NoticeCard";
+import { buildCommonSpaceAssignmentDetailHref } from "../config";
 import type { AssignmentItem } from "../types";
+
+/**
+ * 홈 섹션에서 사용하는 과제 프리뷰 카드 데이터다.
+ */
+type HomeAssignmentItem = AssignmentItem & {
+  /** 상세 이동에 사용할 과제 식별자 */
+  id: number;
+};
 
 /**
  * 공통 공간 메인 홈 섹션을 렌더링한다.
  */
 export default function HomeSection() {
+  const router = useRouter();
+
   /**
    * 세션 자료 썸네일이 없을 때 사용할 기본 이미지 경로다.
    */
@@ -66,8 +78,9 @@ export default function HomeSection() {
   /**
    * 과제 카드 컴포넌트의 상태별 UI를 검증하기 위한 임시 과제 데이터다.
    */
-  const assignmentItems: AssignmentItem[] = [
+  const assignmentItems: HomeAssignmentItem[] = [
     {
+      id: 1001,
       title: "공통 세션 3주차 : 협업을 위한 기초 세팅법",
       deadline: "마감 2026-03-04",
       statusLabel: "미제출",
@@ -76,6 +89,7 @@ export default function HomeSection() {
       bodyMessage: "아직 과제를 제출하지 않았습니다.",
     },
     {
+      id: 1002,
       title: "공통 세션 2주차 : 떠먹여주는 기초 코딩",
       deadline: "마감 2026-03-01",
       statusLabel: "제출함",
@@ -88,6 +102,7 @@ export default function HomeSection() {
       canResubmit: true,
     },
     {
+      id: 1003,
       title: "공통 세션 1주차 : 숨쉬는법진짜쉽다",
       deadline: "마감 2026-03-01",
       statusLabel: "제출함",
@@ -96,6 +111,7 @@ export default function HomeSection() {
       submissionFileName: "숨쉬는중.mp4",
     },
     {
+      id: 1004,
       title: "공통 세션 OT : 자기소개 카드 만들기",
       deadline: "마감 2026-02-24",
       statusLabel: "제출함",
@@ -106,6 +122,7 @@ export default function HomeSection() {
         "전달하고 싶은 정보가 명확하게 정리되어 있어서 읽기 쉬웠습니다.\n타이포 위계도 잘 잡혀 있고, 컬러 사용도 안정적입니다.\n\n다음 제출부터는 텍스트와 아이콘 사이 간격만 조금 더 정리해보면 완성도가 더 올라갈 것 같습니다.",
     },
     {
+      id: 1005,
       title: "공통 세션 0주차 : OT 출석 인증",
       deadline: "마감 2026-02-20",
       statusLabel: "마감",
@@ -114,6 +131,13 @@ export default function HomeSection() {
       bodyMessage: "제출 기간이 종료되었습니다.",
     },
   ];
+
+  /**
+   * 홈 과제 프리뷰 카드 클릭 시 과제 상세 화면으로 이동한다.
+   */
+  function handleAssignmentClick(assignmentId: number) {
+    router.push(buildCommonSpaceAssignmentDetailHref("all", assignmentId));
+  }
 
   return (
     <section className="flex flex-col gap-28.5">
@@ -215,7 +239,11 @@ export default function HomeSection() {
 
         <ul className="mt-16.75 flex flex-col gap-6">
           {assignmentItems.map((item, index) => (
-            <AssignmentCard key={`${item.title}-${index}`} assignment={item} />
+            <AssignmentCard
+              key={`${item.title}-${index}`}
+              assignment={item}
+              onClick={() => handleAssignmentClick(item.id)}
+            />
           ))}
         </ul>
       </section>
