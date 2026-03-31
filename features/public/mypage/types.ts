@@ -214,3 +214,51 @@ export type ProjectListItem = {
   deadline: string;
   status: string;
 };
+
+export type CalendarTrack = Exclude<UserTrack, "ETC"> | "COMMON";
+export type CalendarTrackFilter = CalendarTrack | "ALL";
+
+export type CalendarEventSummary = {
+  id: number;
+  title: string;
+  content: string;
+  track: CalendarTrack | string;
+  startAt: string;
+  endAt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CalendarListResponse = {
+  events: CalendarEventSummary[];
+  from: string;
+  to: string;
+  filterTrack?: CalendarTrack | string;
+};
+
+export type CalendarEventDetail = {
+  id: number;
+  userId: number;
+  title: string;
+  content: string;
+  track: CalendarTrack | string;
+  status: "ACTIVE" | "DELETED" | string;
+  startAt: string;
+  endAt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type UpsertCalendarEventRequest = {
+  title: string;
+  content: string;
+  track: CalendarTrack;
+  startAt: string;
+  endAt: string;
+};
+
+export type CalendarMutationResponse = {
+  result: string;
+  eventId: number;
+  timestamp: string;
+};

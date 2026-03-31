@@ -1,6 +1,10 @@
 import { apiClient, clearAccessToken } from "@/lib/axios";
 import type {
   ApplicationHistoryApiResponse,
+  CalendarEventDetail,
+  CalendarListResponse,
+  CalendarMutationResponse,
+  CalendarTrack,
   DashboardItem,
   MyPageUserApiResponse,
   NoticeCategory,
@@ -11,6 +15,7 @@ import type {
   UpdateMyProfileImageResponse,
   UpdateMyProfileRequest,
   UpdateMyProfileResponse,
+  UpsertCalendarEventRequest,
   UserTrack,
   WithdrawMeResponse,
 } from "./types";
@@ -150,5 +155,77 @@ export async function getProjectList(
   const response = await apiClient.get<ProjectListItem[]>("/projects", {
     params,
   });
+  return response.data;
+}
+
+type GetCalendarEventsParams = {
+  from: string;
+  to: string;
+  track?: CalendarTrack;
+};
+
+/**
+ * 마이페이지 캘린더에 표시할 일정을 조회합니다.
+ */
+export async function getCalendarEvents(
+  params: GetCalendarEventsParams,
+): Promise<CalendarListResponse> {
+  const response = await apiClient.get<CalendarListResponse>("/calendar", {
+    params,
+  });
+  return response.data;
+}
+
+/**
+ * 운영진이 수정할 일정 상세를 조회합니다.
+ * @param eventId 일정 Id
+ */
+export async function getCalendarEventDetail(
+  eventId: number,
+): Promise<CalendarEventDetail> {
+  const response = await apiClient.get<CalendarEventDetail>(
+    `/calendar/${eventId}`,
+  );
+  return response.data;
+}
+
+/**
+ * 운영진 일정 생성 요청을 보냅니다.
+ */
+export async function createCalendarEvent(
+  payload: UpsertCalendarEventRequest,
+): Promise<CalendarMutationResponse> {
+  const response = await apiClient.post<CalendarMutationResponse>(
+    "/calendar",
+    payload,
+  );
+  return response.data;
+}
+
+/**
+ * 운영진 일정 수정 요청을 보냅니다.
+ * @param eventId 일정 Id
+ */
+export async function updateCalendarEvent(
+  eventId: number,
+  payload: UpsertCalendarEventRequest,
+): Promise<CalendarMutationResponse> {
+  const response = await apiClient.put<CalendarMutationResponse>(
+    `/calendar/${eventId}`,
+    payload,
+  );
+  return response.data;
+}
+
+/**
+ * 운영진 일정 삭제 요청을 보냅니다.
+ * @param eventId 일정 Id
+ */
+export async function deleteCalendarEvent(
+  eventId: number,
+): Promise<CalendarMutationResponse> {
+  const response = await apiClient.delete<CalendarMutationResponse>(
+    `/calendar/${eventId}`,
+  );
   return response.data;
 }
