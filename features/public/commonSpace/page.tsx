@@ -14,6 +14,8 @@ import {
   resolveCommonSpaceMaterialId,
   resolveCommonSpaceNoticeId,
   resolveCommonSpacePartId,
+  resolveCommonSpaceQnaId,
+  resolveCommonSpaceQnaMode,
   resolveCommonSpaceSectionId,
 } from "./config";
 import HomeSection from "./sections/HomeSection";
@@ -23,6 +25,9 @@ import MaterialDetailSection from "./sections/MaterialDetailSection";
 import MaterialSection from "./sections/MaterialSection";
 import NoticeDetailSection from "./sections/NoticeDetailSection";
 import NoticeSection from "./sections/NoticeSection";
+import QnaDetailSection from "./sections/QnaDetailSection";
+import QnaSection from "./sections/QnaSection";
+import QnaWriteSection from "./sections/QnaWriteSection";
 
 export default function CommonSpacePage() {
   const searchParams = useSearchParams();
@@ -39,6 +44,8 @@ export default function CommonSpacePage() {
   const activeMaterialId = resolveCommonSpaceMaterialId(
     searchParams.get("materialId"),
   );
+  const activeQnaId = resolveCommonSpaceQnaId(searchParams.get("qnaId"));
+  const activeQnaMode = resolveCommonSpaceQnaMode(searchParams.get("qnaMode"));
   const activeSection = getCommonSpaceSection(activePart, activeSectionId);
   const pageTitle = getCommonSpaceHeading(activePart);
 
@@ -119,12 +126,18 @@ export default function CommonSpacePage() {
               partId={activePart.id}
               materialId={activeMaterialId}
             />
+          ) : activeSectionId === "qna" && activeQnaMode === "write" ? (
+            <QnaWriteSection partId={activePart.id} />
+          ) : activeSectionId === "qna" && activeQnaId ? (
+            <QnaDetailSection partId={activePart.id} qnaId={activeQnaId} />
           ) : activeSectionId === "notices" ? (
             <NoticeSection partId={activePart.id} />
           ) : activeSectionId === "materials" ? (
             <MaterialSection partId={activePart.id} />
           ) : activeSectionId === "assignments" ? (
             <AssignmentSection partId={activePart.id} />
+          ) : activeSectionId === "qna" ? (
+            <QnaSection partId={activePart.id} />
           ) : activeSection ? (
             <CommonSpaceDetailSection
               part={activePart}

@@ -2,24 +2,36 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import {
+  commonSpaceAssignmentMockDataSource,
+} from "../assignments/source";
+import type {
+  CommonSpaceAssignmentListItem,
+  CommonSpaceAssignmentSubmissionRequest,
+} from "../assignments/types";
 import AssignmentCard from "../components/AssignmentCard";
 import NoticeCard from "../components/NoticeCard";
 import { buildCommonSpaceAssignmentDetailHref } from "../config";
-import type { AssignmentItem } from "../types";
 
 /**
- * 홈 섹션에서 사용하는 과제 프리뷰 카드 데이터다.
+ * 홈 섹션이 현재 사용할 과제 데이터 소스다.
+ * 실 API 연결 시 mock 대신 api data source로 교체하면 된다.
  */
-type HomeAssignmentItem = AssignmentItem & {
-  /** 상세 이동에 사용할 과제 식별자 */
-  id: number;
-};
+const commonSpaceAssignmentDataSource = commonSpaceAssignmentMockDataSource;
 
 /**
  * 공통 공간 메인 홈 섹션을 렌더링한다.
  */
 export default function HomeSection() {
   const router = useRouter();
+
+  /**
+   * 홈 하단에 노출할 과제 프리뷰 목록이다.
+   */
+  const [assignmentItems, setAssignmentItems] = useState<
+    CommonSpaceAssignmentListItem[]
+  >([]);
 
   /**
    * 세션 자료 썸네일이 없을 때 사용할 기본 이미지 경로다.
@@ -75,68 +87,73 @@ export default function HomeSection() {
     },
   ];
 
-  /**
-   * 과제 카드 컴포넌트의 상태별 UI를 검증하기 위한 임시 과제 데이터다.
-   */
-  const assignmentItems: HomeAssignmentItem[] = [
-    {
-      id: 1001,
-      title: "공통 세션 3주차 : 협업을 위한 기초 세팅법",
-      deadline: "마감 2026-03-04",
-      statusLabel: "미제출",
-      submissionState: "notSubmitted",
-      reviewState: "hidden",
-      bodyMessage: "아직 과제를 제출하지 않았습니다.",
-    },
-    {
-      id: 1002,
-      title: "공통 세션 2주차 : 떠먹여주는 기초 코딩",
-      deadline: "마감 2026-03-01",
-      statusLabel: "제출함",
-      submissionState: "rejected",
-      reviewState: "published",
-      submissionFileName:
-        "경동나비앤보일러공학과 24학번 윤혜원 2주차(공통) 과제 제출.jpg",
-      reviewContent:
-        "열라면 순두부 물의 양은 좀 주의하셔야하는데요. 순두부에서 물이 나오기 때문에 열라면 1개당 기본 물양 500ml 보다 적게 넣어주셔야 합니다.\n저는 라면 2개 기준으로 500ml 넣었습니다. (원래는 1,000ml넣어야 함) 저는 자극적인거 좋아하는 편이라 딱 좋았어요.\n\n원 레시피도 국물의 양은 많지 않은 레시피인데 물이 제가 끓인 정도의 자작함을 보시고 국물이 더 많기를 원하시면 600-700ml 정도 조절해서 넣어주세요.\n\n제가 해먹은 레시피는 라면 두개 기준 레시피이기 때문에 ★라면 1개 끓일때는 물을 반으로 하면 너무 쫄아버리니 350ml-400ml 정도 넣어주세요★",
-      canResubmit: true,
-    },
-    {
-      id: 1003,
-      title: "공통 세션 1주차 : 숨쉬는법진짜쉽다",
-      deadline: "마감 2026-03-01",
-      statusLabel: "제출함",
-      submissionState: "submitted",
-      reviewState: "pending",
-      submissionFileName: "숨쉬는중.mp4",
-    },
-    {
-      id: 1004,
-      title: "공통 세션 OT : 자기소개 카드 만들기",
-      deadline: "마감 2026-02-24",
-      statusLabel: "제출함",
-      submissionState: "submitted",
-      reviewState: "published",
-      submissionFileName: "자기소개카드_윤혜원.png",
-      reviewContent:
-        "전달하고 싶은 정보가 명확하게 정리되어 있어서 읽기 쉬웠습니다.\n타이포 위계도 잘 잡혀 있고, 컬러 사용도 안정적입니다.\n\n다음 제출부터는 텍스트와 아이콘 사이 간격만 조금 더 정리해보면 완성도가 더 올라갈 것 같습니다.",
-    },
-    {
-      id: 1005,
-      title: "공통 세션 0주차 : OT 출석 인증",
-      deadline: "마감 2026-02-20",
-      statusLabel: "마감",
-      submissionState: "closed",
-      reviewState: "hidden",
-      bodyMessage: "제출 기간이 종료되었습니다.",
-    },
-  ];
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadHomeAssignmentItems() {
+      try {
+        const response = await commonSpaceAssignmentDataSource.getList({
+          partId: "all",
+        });
+
+        if (!isMounted) {
+          return;
+        }
+
+        setAssignmentItems(response.items);
+      } catch {
+        if (!isMounted) {
+          return;
+        }
+
+        setAssignmentItems([]);
+      }
+    }
+
+    loadHomeAssignmentItems();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   /**
    * 홈 과제 프리뷰 카드 클릭 시 과제 상세 화면으로 이동한다.
    */
   function handleAssignmentClick(assignmentId: number) {
     router.push(buildCommonSpaceAssignmentDetailHref("all", assignmentId));
+  }
+
+  /**
+   * 홈 과제 프리뷰 카드에서 제출/재제출 후 최신 상태를 다시 불러온다.
+   */
+  async function handleAssignmentSubmit(
+    assignmentId: number,
+    submissionState: CommonSpaceAssignmentListItem["submissionState"],
+    file: File,
+  ) {
+    const submissionPayload = {
+      request: {},
+      files: [file],
+    } satisfies CommonSpaceAssignmentSubmissionRequest;
+
+    if (submissionState === "rejected") {
+      await commonSpaceAssignmentDataSource.updateSubmission(
+        assignmentId,
+        submissionPayload,
+      );
+    } else {
+      await commonSpaceAssignmentDataSource.submit(
+        assignmentId,
+        submissionPayload,
+      );
+    }
+
+    const nextAssignmentItems = await commonSpaceAssignmentDataSource.getList({
+      partId: "all",
+    });
+
+    setAssignmentItems(nextAssignmentItems.items);
   }
 
   return (
@@ -243,6 +260,9 @@ export default function HomeSection() {
               key={`${item.title}-${index}`}
               assignment={item}
               onClick={() => handleAssignmentClick(item.id)}
+              onSubmitFile={(file) =>
+                handleAssignmentSubmit(item.id, item.submissionState, file)
+              }
             />
           ))}
         </ul>
