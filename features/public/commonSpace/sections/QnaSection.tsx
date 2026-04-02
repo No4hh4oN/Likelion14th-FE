@@ -1,0 +1,369 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import NoticeCard from "../components/NoticeCard";
+import QnaCard from "../components/QnaCard";
+import {
+  buildCommonSpaceNoticeDetailHref,
+  buildCommonSpaceQnaDetailHref,
+  buildCommonSpaceQnaWriteHref,
+} from "../config";
+import {
+  COMMON_SPACE_QNA_EMPTY_TITLE_BY_PART,
+  COMMON_SPACE_QNA_STATUS_MESSAGE,
+  DEFAULT_COMMON_SPACE_QNA_PAGE_SIZE,
+} from "../qna/constants";
+import { commonSpaceQnaMockDataSource } from "../qna/source";
+import type {
+  CommonSpaceQnaListItem,
+  CommonSpaceQnaLoadState,
+} from "../qna/types";
+import { commonSpaceNoticeMockDataSource } from "../notices/source";
+import type { CommonSpaceNoticeListItem } from "../notices/types";
+import type { CommonSpacePartId } from "../types";
+
+type QnaSectionProps = {
+  partId: CommonSpacePartId;
+};
+
+/**
+ * 검색 입력창 placeholder 문구다.
+ */
+const QNA_SEARCH_PLACEHOLDER = "검색어를 입력하세요. (최대 10자)";
+
+/**
+ * 검색어 최대 글자 수다.
+ */
+const QNA_SEARCH_MAX_LENGTH = 10;
+
+/**
+ * 질문 작성 버튼 라벨이다.
+ */
+const QNA_CREATE_BUTTON_LABEL = "질문 글 작성하기";
+
+/**
+ * 질의응답 섹션이 현재 사용할 데이터 소스다.
+ * 실 API 연결 시 mock 대신 api data source로 교체하면 된다.
+ */
+const commonSpaceQnaDataSource = commonSpaceQnaMockDataSource;
+
+/**
+ * 질의응답 섹션 목록과 상단 pinned 공지를 함께 불러온다.
+ */
+async function getQnaSectionData() {
+  const [qnaResponse, noticeResponse] = await Promise.all([
+    commonSpaceQnaDataSource.getList({
+      partId: "all",
+      page: 0,
+      size: 100,
+    }),
+    commonSpaceNoticeMockDataSource.getList({
+      partId: "all",
+      page: 0,
+      size: 100,
+    }),
+  ]);
+
+  return {
+    qnaItems: qnaResponse.items,
+    pinnedNoticeItem: noticeResponse.items.find((item) => item.isPinned) ?? null,
+  };
+}
+
+/**
+ * 질의응답 목록 섹션을 렌더링한다.
+ */
+export default function QnaSection({ partId }: QnaSectionProps) {
+  const router = useRouter();
+
+  /**
+   * 화면에 표시할 질문 목록 상태다.
+   */
+  const [qnaItems, setQnaItems] = useState<CommonSpaceQnaListItem[]>([]);
+
+  /**
+   * 섹션 상단에 고정 노출할 pinned 공지다.
+   */
+  const [pinnedNoticeItem, setPinnedNoticeItem] =
+    useState<CommonSpaceNoticeListItem | null>(null);
+
+  /**
+   * 질의응답 목록 비동기 로드 상태다.
+   */
+  const [loadState, setLoadState] = useState<CommonSpaceQnaLoadState>("idle");
+
+  /**
+   * 입력창에 보이는 검색어다.
+   */
+  const [searchInput, setSearchInput] = useState("");
+
+  /**
+   * 실제 검색에 적용된 검색어다.
+   */
+  const [searchKeyword, setSearchKeyword] = useState("");
+
+  /**
+   * 현재 선택된 페이지 번호다. UI에서는 1부터 시작한다.
+   */
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadQnaItems() {
+      setLoadState("loading");
+      setSearchInput("");
+      setSearchKeyword("");
+      setCurrentPage(1);
+
+      try {
+        const nextSectionData = await getQnaSectionData();
+
+        if (!isMounted) {
+          return;
+        }
+
+        setQnaItems(nextSectionData.qnaItems);
+        setPinnedNoticeItem(nextSectionData.pinnedNoticeItem);
+        setLoadState(nextSectionData.qnaItems.length > 0 ? "success" : "empty");
+      } catch {
+        if (!isMounted) {
+          return;
+        }
+
+        setQnaItems([]);
+        setPinnedNoticeItem(null);
+        setLoadState("error");
+      }
+    }
+
+    loadQnaItems();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  /**
+   * 검색어를 정규화한 값이다.
+   */
+  const normalizedSearchKeyword = searchKeyword.trim().toLowerCase();
+
+  /**
+   * 현재 검색 조건을 반영한 질문 목록이다.
+   */
+  const filteredQnaItems = qnaItems.filter((item) =>
+    normalizedSearchKeyword
+      ? item.title.toLowerCase().includes(normalizedSearchKeyword)
+      : true,
+  );
+
+  /**
+   * 검색 결과 기준 전체 페이지 수다.
+   */
+  const totalPages =
+    Math.ceil(filteredQnaItems.length / DEFAULT_COMMON_SPACE_QNA_PAGE_SIZE) || 1;
+
+  /**
+   * 필터링 결과를 기준으로 보정한 현재 페이지 번호다.
+   */
+  const resolvedCurrentPage = Math.min(currentPage, totalPages);
+
+  /**
+   * 현재 페이지에 노출할 질문 목록이다.
+   */
+  const paginatedQnaItems = filteredQnaItems.slice(
+    (resolvedCurrentPage - 1) * DEFAULT_COMMON_SPACE_QNA_PAGE_SIZE,
+    resolvedCurrentPage * DEFAULT_COMMON_SPACE_QNA_PAGE_SIZE,
+  );
+
+  /**
+   * 검색 폼 제출을 처리한다.
+   */
+  function handleSearchSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSearchKeyword(searchInput.trim());
+    setCurrentPage(1);
+  }
+
+  /**
+   * 상단 pinned 공지 상세 화면으로 이동한다.
+   */
+  function handlePinnedNoticeClick(noticeId: number) {
+    router.push(buildCommonSpaceNoticeDetailHref(partId, noticeId));
+  }
+
+  /**
+   * 질의응답 상세 화면으로 이동한다.
+   */
+  function handleQnaClick(qnaId: number) {
+    router.push(buildCommonSpaceQnaDetailHref(partId, qnaId));
+  }
+
+  /**
+   * 질문 작성 버튼의 임시 클릭 처리다.
+   * 추후 질문 작성 화면 디자인이 들어오면 여기서 연결한다.
+   */
+  function handleCreateQuestionClick() {
+    router.push(buildCommonSpaceQnaWriteHref(partId));
+  }
+
+  /**
+   * 로딩/에러/빈 상태에서 보여줄 안내 문구다.
+   */
+  const statusMessage =
+    loadState === "empty"
+      ? COMMON_SPACE_QNA_EMPTY_TITLE_BY_PART[partId]
+      : loadState !== "success" && loadState !== "idle"
+        ? COMMON_SPACE_QNA_STATUS_MESSAGE[loadState]
+        : null;
+
+  /**
+   * 검색 결과가 비어 있는지 여부다.
+   */
+  const isSearchResultEmpty =
+    loadState === "success" && filteredQnaItems.length === 0;
+
+  /**
+   * 페이지 버튼 목록이다.
+   */
+  const pageNumbers = Array.from(
+    { length: totalPages },
+    (_, index) => index + 1,
+  );
+
+  return (
+    <section className="pb-16">
+      <div className="space-y-4">
+        {pinnedNoticeItem ? (
+          <NoticeCard
+            title={pinnedNoticeItem.title}
+            pinned
+            isNew={pinnedNoticeItem.isNew}
+            onClick={() => handlePinnedNoticeClick(pinnedNoticeItem.id)}
+          />
+        ) : null}
+
+        {statusMessage ? (
+          <div className="rounded-[18px] border border-gray-6 bg-[#202329] px-6 py-14 text-center">
+            <p className="text-[18px] font-medium text-gray-3">{statusMessage}</p>
+          </div>
+        ) : (
+          <>
+            <ul className="mt-10 flex flex-col gap-6">
+              {paginatedQnaItems.map((item) => (
+                <li key={item.id}>
+                  <QnaCard
+                    questionPartId={item.questionPartId}
+                    answerState={item.answerState}
+                    title={item.title}
+                    isSecret={item.isSecret}
+                    onClick={() => handleQnaClick(item.id)}
+                  />
+                </li>
+              ))}
+            </ul>
+
+            {isSearchResultEmpty ? (
+              <div className="rounded-[18px] border border-gray-6 bg-[#202329] px-6 py-14 text-center">
+                <p className="text-[18px] font-medium text-gray-3">
+                  검색 결과가 없습니다.
+                </p>
+              </div>
+            ) : null}
+          </>
+        )}
+      </div>
+
+      <div className="mt-16 flex flex-wrap items-end justify-between gap-6">
+        <form onSubmit={handleSearchSubmit} className="flex flex-wrap items-center gap-4">
+          <input
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+            maxLength={QNA_SEARCH_MAX_LENGTH}
+            placeholder={QNA_SEARCH_PLACEHOLDER}
+            className="h-[52px] w-[280px] rounded-[8px] bg-[#F4F4F4] px-4 text-[14px] text-[#1F1F1F] placeholder:text-[#A0A3AE] focus:outline-none"
+          />
+          <button
+            type="submit"
+            className="h-[52px] min-w-[90px] rounded-[8px] bg-black px-6 text-[16px] font-semibold text-white-1"
+          >
+            검색
+          </button>
+        </form>
+
+        <button
+          type="button"
+          onClick={handleCreateQuestionClick}
+          className="h-[52px] rounded-[8px] bg-main-1 px-8 text-[16px] font-semibold text-white-1"
+        >
+          {QNA_CREATE_BUTTON_LABEL}
+        </button>
+      </div>
+
+      <nav
+        aria-label="질의응답 페이지네이션"
+        className="mt-11 flex items-center justify-between text-[24px] text-gray-4"
+      >
+        <div className="flex gap-5 -mr-3.25">
+          <button
+            type="button"
+            onClick={() => setCurrentPage(1)}
+            disabled={resolvedCurrentPage === 1}
+            className="cursor-pointer disabled:cursor-auto disabled:opacity-40"
+          >
+            &laquo;
+          </button>
+          <button
+            type="button"
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={resolvedCurrentPage === 1}
+            className="cursor-pointer disabled:cursor-auto disabled:opacity-40"
+          >
+            &lsaquo;
+          </button>
+        </div>
+
+        <div className="flex justify-center gap-17.25">
+          {pageNumbers.map((pageNumber) => (
+            <button
+              key={pageNumber}
+              type="button"
+              onClick={() => setCurrentPage(pageNumber)}
+              className={
+                pageNumber === resolvedCurrentPage
+                  ? "font-semibold text-white-1"
+                  : "cursor-pointer text-gray-4"
+              }
+              aria-current={pageNumber === resolvedCurrentPage ? "page" : undefined}
+            >
+              {pageNumber}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex gap-5 -ml-3.25">
+          <button
+            type="button"
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={resolvedCurrentPage === totalPages}
+            className="cursor-pointer disabled:cursor-auto disabled:opacity-40"
+          >
+            &rsaquo;
+          </button>
+          <button
+            type="button"
+            onClick={() => setCurrentPage(totalPages)}
+            disabled={resolvedCurrentPage === totalPages}
+            className="cursor-pointer disabled:cursor-auto disabled:opacity-40"
+          >
+            &raquo;
+          </button>
+        </div>
+      </nav>
+    </section>
+  );
+}
