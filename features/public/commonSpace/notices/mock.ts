@@ -2,6 +2,7 @@ import {
   DEFAULT_COMMON_SPACE_NOTICE_PAGE,
   DEFAULT_COMMON_SPACE_NOTICE_PAGE_SIZE,
 } from "./constants";
+import { isCommonSpaceNoticeNew } from "./adapter";
 import type {
   CommonSpaceNoticeCommentItem,
   CommonSpaceNoticeDetailItem,
@@ -393,13 +394,19 @@ export function getMockCommonSpaceNoticeList(
   const page = query.page ?? DEFAULT_COMMON_SPACE_NOTICE_PAGE;
   const size = query.size ?? DEFAULT_COMMON_SPACE_NOTICE_PAGE_SIZE;
   const partId = query.partId ?? "all";
+  const now = new Date();
 
   const filteredItems = COMMON_SPACE_NOTICE_MOCK_ITEMS.filter(
     (item) => item.partId === partId,
   );
 
   const startIndex = page * size;
-  const items = filteredItems.slice(startIndex, startIndex + size);
+  const items = filteredItems
+    .slice(startIndex, startIndex + size)
+    .map((item) => ({
+      ...item,
+      isNew: isCommonSpaceNoticeNew(item.createdAt, now),
+    }));
 
   return {
     items,

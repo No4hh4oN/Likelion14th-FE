@@ -126,7 +126,7 @@ export type CommonSpaceNoticeListItem = {
   hasAttachments: boolean;
   /** 고정 공지 여부 */
   isPinned: boolean;
-  /** 신규 공지 여부 */
+  /** 생성일 기준 1주일 이내인지 여부를 프론트에서 계산한 값 */
   isNew: boolean;
 };
 
