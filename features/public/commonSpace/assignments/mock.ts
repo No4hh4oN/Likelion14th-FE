@@ -298,7 +298,23 @@ export function getMockCommonSpaceAssignmentList(
  */
 export function getMockCommonSpaceAssignmentDetail(projectId: number) {
   if (COMMON_SPACE_ASSIGNMENT_MOCK_DETAIL_BY_PROJECT_ID[projectId]) {
-    return COMMON_SPACE_ASSIGNMENT_MOCK_DETAIL_BY_PROJECT_ID[projectId];
+    const storedDetail = COMMON_SPACE_ASSIGNMENT_MOCK_DETAIL_BY_PROJECT_ID[projectId];
+    const project = COMMON_SPACE_ASSIGNMENT_MOCK_PROJECTS.find(
+      (item) => item.id === projectId,
+    );
+
+    if (!project) {
+      return storedDetail;
+    }
+
+    return {
+      ...storedDetail,
+      assignment: toCommonSpaceAssignmentListItem(
+        project,
+        getMockCommonSpaceAssignmentMySubmission(projectId),
+        new Date(storedDetail.displayNowAt ?? "2026-03-02T12:00:00"),
+      ),
+    };
   }
 
   const project = COMMON_SPACE_ASSIGNMENT_MOCK_PROJECTS.find(

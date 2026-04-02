@@ -7,6 +7,7 @@ import type {
 
 export const DEFAULT_COMMON_SPACE_PART: CommonSpacePartId = "all";
 export const DEFAULT_COMMON_SPACE_SECTION: CommonSpaceSectionId = "home";
+const DEFAULT_COMMON_SPACE_QNA_MODE = "list";
 
 const NOTICE_SECTION: CommonSpaceDetailSection = {
   id: "notices",
@@ -243,6 +244,41 @@ export function buildCommonSpaceAssignmentDetailHref(
 }
 
 /**
+ * 질의응답 상세 화면으로 이동할 href를 생성한다.
+ */
+export function buildCommonSpaceQnaDetailHref(
+  partId: CommonSpacePartId,
+  qnaId: number,
+) {
+  const params = new URLSearchParams();
+
+  if (partId !== DEFAULT_COMMON_SPACE_PART) {
+    params.set("part", partId);
+  }
+
+  params.set("section", "qna");
+  params.set("qnaId", String(qnaId));
+
+  return `/14/commonSpace?${params.toString()}`;
+}
+
+/**
+ * 질의응답 작성 화면으로 이동할 href를 생성한다.
+ */
+export function buildCommonSpaceQnaWriteHref(partId: CommonSpacePartId) {
+  const params = new URLSearchParams();
+
+  if (partId !== DEFAULT_COMMON_SPACE_PART) {
+    params.set("part", partId);
+  }
+
+  params.set("section", "qna");
+  params.set("qnaMode", "write");
+
+  return `/14/commonSpace?${params.toString()}`;
+}
+
+/**
  * 상세 식별자 query 값을 숫자로 정규화한다.
  */
 function resolveCommonSpaceDetailId(value: string | null) {
@@ -273,6 +309,20 @@ export function resolveCommonSpaceMaterialId(value: string | null) {
  */
 export function resolveCommonSpaceAssignmentId(value: string | null) {
   return resolveCommonSpaceDetailId(value);
+}
+
+/**
+ * 질의응답 식별자 query 값을 숫자로 정규화한다.
+ */
+export function resolveCommonSpaceQnaId(value: string | null) {
+  return resolveCommonSpaceDetailId(value);
+}
+
+/**
+ * 질의응답 화면 모드를 정규화한다.
+ */
+export function resolveCommonSpaceQnaMode(value: string | null) {
+  return value === "write" ? "write" : DEFAULT_COMMON_SPACE_QNA_MODE;
 }
 
 export function getCommonSpaceHeading(part: CommonSpacePart) {
