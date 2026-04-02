@@ -144,7 +144,7 @@ export default function CommonSpacePage() {
               section={activeSection}
             />
           ) : (
-            <HomeSection />
+            <HomeSection partId={activePart.id} />
           )}
         </main>
 
