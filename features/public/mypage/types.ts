@@ -34,7 +34,7 @@ export type MyPageUserApiResponse = {
     department: string;
     studentNo: string;
     grade: number;
-    enrollment: string; //재학 상태 TODO: enum값 물어보기 (ENROLLED | )
+    enrollment: string; //재학 상태 (ENROLLED | LEAVE)
     birthDate: string; //2026-02-23
     phone: string; //01012345678
     status: string; //TODO: enum값 물어보기 (ACTIVE | )
