@@ -50,7 +50,7 @@ export default function UserInfo({
   const isStaff = role === "STAFF";
   const myPageHref = "/14/mypage";
   const rolePageLabel = isStaff ? "운영진 페이지" : "아기사자 페이지";
-  const rolePageHref = isStaff ? "/admin" : "/14/home";
+  const rolePageHref = isStaff ? "/admin" : "/14/commonSpace";
 
   const handleLogout = async () => {
     if (isLoggingOut) {
