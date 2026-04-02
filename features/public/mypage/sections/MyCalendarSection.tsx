@@ -41,6 +41,7 @@ import type {
 
 /** 우측 요약 카드에 노출할 최대 일정 개수입니다. */
 const MAX_EVENT_LIST_SIZE = 5;
+const MAX_CALENDAR_TOOLTIP_ITEMS = 2;
 
 /** 일정 생성 및 수정에 사용할 트랙 옵션 목록입니다. */
 const CALENDAR_TRACK_OPTIONS: { value: CalendarTrack; label: string }[] = [
@@ -116,7 +117,9 @@ type MyCalendarSectionProps = {
 /**
  * 문자열이 캘린더 API에서 허용하는 트랙 값인지 검사합니다.
  */
-function isCalendarTrack(value: string | null | undefined): value is CalendarTrack {
+function isCalendarTrack(
+  value: string | null | undefined,
+): value is CalendarTrack {
   return (
     value === "FRONTEND" ||
     value === "BACKEND" ||
@@ -244,7 +247,9 @@ function mapCalendarSummaryToScheduleEvent(
 /**
  * 과제 API 응답을 마감일 전용 캘린더 항목으로 변환합니다.
  */
-function mapProjectToHomeworkEvent(project: ProjectListItem): HomeworkEventItem | null {
+function mapProjectToHomeworkEvent(
+  project: ProjectListItem,
+): HomeworkEventItem | null {
   const dateParts = parseCalendarDateParts(project.deadline);
 
   if (!dateParts) {
@@ -485,13 +490,34 @@ export default function MyCalendarSection({ user }: MyCalendarSectionProps) {
     [formState.content, formState.endAt, formState.startAt, formState.title],
   );
 
-  const scheduleDateKeys = useMemo(() => {
-    return new Set(
-      scheduleItems.flatMap((item) =>
-        getDateKeysBetween(item.startDaySerial, item.endDaySerial),
-      ),
-    );
+  const scheduleItemsByDateKey = useMemo(() => {
+    const groupedItems = new Map<string, ScheduleEventItem[]>();
+
+    scheduleItems.forEach((item) => {
+      getDateKeysBetween(item.startDaySerial, item.endDaySerial).forEach(
+        (dateKey) => {
+          const existingItems = groupedItems.get(dateKey);
+
+          if (existingItems) {
+            existingItems.push(item);
+            return;
+          }
+
+          groupedItems.set(dateKey, [item]);
+        },
+      );
+    });
+
+    groupedItems.forEach((items) => {
+      items.sort((a, b) => toTimestamp(a.startAt) - toTimestamp(b.startAt));
+    });
+
+    return groupedItems;
   }, [scheduleItems]);
+
+  const scheduleDateKeys = useMemo(() => {
+    return new Set(scheduleItemsByDateKey.keys());
+  }, [scheduleItemsByDateKey]);
 
   const homeworkDateKeys = useMemo(
     () => new Set(homeworkItems.map((item) => item.dateKey)),
@@ -624,9 +650,7 @@ export default function MyCalendarSection({ user }: MyCalendarSectionProps) {
     const normalizedEndAt = toApiDateTimeValue(formState.endAt);
 
     if (normalizedStartAt > normalizedEndAt) {
-      setManagementErrorMessage(
-        "종료 일시는 시작 일시보다 빠를 수 없습니다.",
-      );
+      setManagementErrorMessage("종료 일시는 시작 일시보다 빠를 수 없습니다.");
       setManagementSuccessMessage("");
       return;
     }
@@ -704,14 +728,11 @@ export default function MyCalendarSection({ user }: MyCalendarSectionProps) {
   return (
     <div className="space-y-8">
       <section>
-        <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h3 className="text-[24px] font-bold text-white">
               멋쟁이사자처럼 일정
             </h3>
-            <p className="mt-1 text-[12px] text-white/55">
-              운영진이 등록한 일정과 과제 마감일을 한 번에 확인할 수 있습니다.
-            </p>
           </div>
 
           {isStaff ? (
@@ -796,6 +817,18 @@ export default function MyCalendarSection({ user }: MyCalendarSectionProps) {
                   return <span key={`empty-${index}`} className="h-8" />;
                 }
 
+                const scheduleTooltipItems = cell.dateKey
+                  ? (scheduleItemsByDateKey.get(cell.dateKey) ?? [])
+                  : [];
+                const hasScheduleTooltip = scheduleTooltipItems.length > 0;
+                const tooltipItems = scheduleTooltipItems.slice(
+                  0,
+                  MAX_CALENDAR_TOOLTIP_ITEMS,
+                );
+                const extraTooltipItemCount = Math.max(
+                  0,
+                  scheduleTooltipItems.length - MAX_CALENDAR_TOOLTIP_ITEMS,
+                );
                 const markerClassName =
                   cell.marker === "today"
                     ? "bg-main-1 text-white"
@@ -813,13 +846,74 @@ export default function MyCalendarSection({ user }: MyCalendarSectionProps) {
                       : cell.weekdayIndex === 6
                         ? "text-[#FF7F7F]"
                         : "";
+                const rowIndex = Math.floor(index / 7);
+                const shouldShowTooltipBelow = rowIndex < 2;
+                const tooltipVerticalClassName = shouldShowTooltipBelow
+                  ? "top-full mt-2"
+                  : "bottom-full mb-2";
+                const tooltipHorizontalClassName =
+                  cell.weekdayIndex <= 1
+                    ? "left-0"
+                    : cell.weekdayIndex >= 5
+                      ? "right-0"
+                      : "left-1/2 -translate-x-1/2";
+                const tooltipArrowVerticalClassName = shouldShowTooltipBelow
+                  ? "-top-1.5"
+                  : "-bottom-1.5";
+                const tooltipArrowHorizontalClassName =
+                  cell.weekdayIndex <= 1
+                    ? "left-3"
+                    : cell.weekdayIndex >= 5
+                      ? "right-3"
+                      : "left-1/2 -translate-x-1/2";
 
                 return (
                   <span
                     key={cell.dateKey}
-                    className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full text-[13px] font-medium ${markerClassName} ${weekdayTextClassName}`}
+                    className={`group relative mx-auto flex h-8 w-8 items-center justify-center ${hasScheduleTooltip ? "cursor-help" : ""}`}
+                    tabIndex={hasScheduleTooltip ? 0 : undefined}
+                    aria-describedby={
+                      hasScheduleTooltip
+                        ? `calendar-schedule-tooltip-${cell.dateKey}`
+                        : undefined
+                    }
                   >
-                    {cell.day}
+                    <span
+                      className={`flex h-8 w-8 items-center justify-center rounded-full text-[13px] font-medium transition-shadow group-focus-within:ring-2 group-focus-within:ring-[#82D29B]/60 ${markerClassName} ${weekdayTextClassName}`}
+                    >
+                      {cell.day}
+                    </span>
+                    {hasScheduleTooltip ? (
+                      <span
+                        id={`calendar-schedule-tooltip-${cell.dateKey}`}
+                        role="tooltip"
+                        className={`pointer-events-none invisible absolute z-20 w-[200px] rounded-[10px] border border-[#82D29B]/35 bg-[#262B34]/96 px-3 py-2 text-left opacity-0 shadow-[0_12px_30px_rgba(0,0,0,0.34)] transition-all duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 lg:w-[220px] ${tooltipVerticalClassName} ${tooltipHorizontalClassName}`}
+                      >
+                        <span
+                          className={`absolute h-3 w-3 rotate-45 border border-[#82D29B]/35 bg-[#262B34]/96 ${tooltipArrowVerticalClassName} ${tooltipArrowHorizontalClassName}`}
+                        />
+                        <span className="relative block">
+                          {tooltipItems.map((item, tooltipIndex) => (
+                            <span
+                              key={item.id}
+                              className={`block ${tooltipIndex > 0 ? "mt-2 border-t border-white/10 pt-2" : ""}`}
+                            >
+                              <span className="line-clamp-1 block text-[11px] font-semibold text-white">
+                                {item.title}
+                              </span>
+                              <span className="mt-1 line-clamp-2 block break-words text-[10px] leading-[1.45] text-white/72">
+                                {item.content.trim() || "설명이 없습니다."}
+                              </span>
+                            </span>
+                          ))}
+                          {extraTooltipItemCount > 0 ? (
+                            <span className="mt-2 block border-t border-white/10 pt-2 text-[10px] font-medium text-[#99E0B0]">
+                              외 {extraTooltipItemCount}개 일정
+                            </span>
+                          ) : null}
+                        </span>
+                      </span>
+                    ) : null}
                   </span>
                 );
               })}
@@ -891,12 +985,9 @@ export default function MyCalendarSection({ user }: MyCalendarSectionProps) {
                       key={eventItem.id}
                       className="rounded-[5px] bg-white/20 px-3 py-2 text-[12px] text-white/85"
                     >
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex justify-between items-center gap-3">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-white/70">
-                              {formatMonthDay(eventItem.startParts)}
-                            </span>
                             <span
                               className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${getTrackBadgeClassName(
                                 eventItem.track,
@@ -915,11 +1006,8 @@ export default function MyCalendarSection({ user }: MyCalendarSectionProps) {
                             )}
                           </p>
                         </div>
-                        <span className="shrink-0 text-[11px] text-white/70">
-                          {formatDday(
-                            eventItem.startDaySerial,
-                            todayDaySerial,
-                          )}
+                        <span className="shrink-0 text-[16px] text-white/70">
+                          {formatDday(eventItem.startDaySerial, todayDaySerial)}
                         </span>
                       </div>
                     </li>
@@ -952,7 +1040,7 @@ export default function MyCalendarSection({ user }: MyCalendarSectionProps) {
                       key={eventItem.id}
                       className="rounded-[5px] bg-white/20 px-3 py-2 text-[12px] text-white/85"
                     >
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
                           <span className="text-white/70">
                             {formatMonthDay(eventItem.dateParts)}
@@ -964,7 +1052,7 @@ export default function MyCalendarSection({ user }: MyCalendarSectionProps) {
                             과제 마감일
                           </p>
                         </div>
-                        <span className="shrink-0 text-[11px] text-white/70">
+                        <span className="shrink-0 text-[16px] text-white/70">
                           {formatDday(eventItem.daySerial, todayDaySerial)}
                         </span>
                       </div>
