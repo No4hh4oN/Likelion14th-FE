@@ -408,3 +408,50 @@ export type UpsertAdminNoticeResponse = {
   createdAt?: string;
   updatedAt?: string;
 };
+
+export type AdminCalendarTrack =
+  | "FRONTEND"
+  | "BACKEND"
+  | "AI_ML"
+  | "PM_DESIGN"
+  | "COMMON";
+
+export type AdminCalendarTrackFilter = AdminCalendarTrack | "ALL";
+
+export type AdminCalendarEventSummary = {
+  id: number;
+  title: string;
+  content: string;
+  track: AdminCalendarTrack | string;
+  startAt: string;
+  endAt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AdminCalendarListResponse = {
+  events: AdminCalendarEventSummary[];
+  from: string;
+  to: string;
+  filterTrack?: AdminCalendarTrack | string;
+};
+
+export type AdminCalendarListQuery = {
+  from: string;
+  to: string;
+  track?: AdminCalendarTrack;
+};
+
+export type CreateAdminCalendarEventRequest = {
+  title: string;
+  content: string;
+  track: AdminCalendarTrack;
+  startAt: string;
+  endAt: string;
+};
+
+export type AdminCalendarMutationResponse = {
+  result: string;
+  eventId: number;
+  timestamp: string;
+};

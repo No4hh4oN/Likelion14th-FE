@@ -35,6 +35,10 @@ import type {
   AdminNoticeDetailResponse,
   CreateAdminNoticeRequest,
   UpsertAdminNoticeResponse,
+  AdminCalendarListQuery,
+  AdminCalendarListResponse,
+  CreateAdminCalendarEventRequest,
+  AdminCalendarMutationResponse,
 } from "./type";
 
 export async function getAdminApplications(
@@ -314,6 +318,44 @@ export async function deleteAdminNoticeFile(
 ): Promise<string> {
   const response = await apiClient.delete<string>(
     `/notice/${noticeId}/files/${fileId}`,
+  );
+  return response.data;
+}
+
+/**
+ * 운영진 일정 목록을 조회합니다.
+ */
+export async function getAdminCalendarEvents(
+  query: AdminCalendarListQuery,
+): Promise<AdminCalendarListResponse> {
+  const response = await apiClient.get<AdminCalendarListResponse>("/calendar", {
+    params: query,
+  });
+  return response.data;
+}
+
+/**
+ * 운영진이 새 일정을 생성합니다.
+ */
+export async function createAdminCalendarEvent(
+  payload: CreateAdminCalendarEventRequest,
+): Promise<AdminCalendarMutationResponse> {
+  const response = await apiClient.post<AdminCalendarMutationResponse>(
+    "/calendar",
+    payload,
+  );
+  return response.data;
+}
+
+/**
+ * 운영진이 일정을 삭제합니다.
+ * @param eventId 일정 Id
+ */
+export async function deleteAdminCalendarEvent(
+  eventId: number,
+): Promise<AdminCalendarMutationResponse> {
+  const response = await apiClient.delete<AdminCalendarMutationResponse>(
+    `/calendar/${eventId}`,
   );
   return response.data;
 }

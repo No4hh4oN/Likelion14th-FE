@@ -13,6 +13,7 @@ type StaffTasksShellProps = {
 
 const NAV_ITEMS = [
   { href: "/admin/staff-tasks", label: "업무 개요" },
+  { href: "/admin/staff-tasks/calendar", label: "일정 관리" },
   { href: "/admin/staff-tasks/notices", label: "공지사항 관리" },
   { href: "/admin/users", label: "사용자 관리" },
 ];
