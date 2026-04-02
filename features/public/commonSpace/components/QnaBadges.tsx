@@ -71,7 +71,7 @@ export function QnaAnswerStateBadge({
   return (
     <span
       className={clsx(
-        "inline-flex h-[34px] shrink-0 items-center whitespace-nowrap rounded-full px-4 text-[16px] font-semibold leading-none",
+        "inline-flex h-[34px] shrink-0 items-center whitespace-nowrap rounded-full px-3 text-[16px] font-semibold leading-none",
         QNA_ANSWER_STATE_BADGE_CLASS_NAME_BY_ID[answerState],
         className,
       )}

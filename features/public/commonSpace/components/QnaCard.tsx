@@ -81,7 +81,7 @@ export default function QnaCard({
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center justify-between gap-6 rounded-[14px] bg-linear-to-r from-[#484D5A] to-[#303136] px-7 py-6 text-left text-white-1 transition-shadow hover:shadow-[0_0_12px_white]"
+      className="flex w-full items-center justify-between gap-6 rounded-[14px] bg-linear-to-r from-[#484D5A] to-[#303136] px-8 py-7 text-left text-white-1 transition-shadow cursor-pointer hover:shadow-[0_0_12px_white]"
       aria-label={`${title} 질문 열기`}
     >
       <div className="flex min-w-0 flex-1 items-center gap-3">

@@ -67,7 +67,8 @@ async function getQnaSectionData() {
 
   return {
     qnaItems: qnaResponse.items,
-    pinnedNoticeItem: noticeResponse.items.find((item) => item.isPinned) ?? null,
+    pinnedNoticeItem:
+      noticeResponse.items.find((item) => item.isPinned) ?? null,
   };
 }
 
@@ -163,7 +164,8 @@ export default function QnaSection({ partId }: QnaSectionProps) {
    * 검색 결과 기준 전체 페이지 수다.
    */
   const totalPages =
-    Math.ceil(filteredQnaItems.length / DEFAULT_COMMON_SPACE_QNA_PAGE_SIZE) || 1;
+    Math.ceil(filteredQnaItems.length / DEFAULT_COMMON_SPACE_QNA_PAGE_SIZE) ||
+    1;
 
   /**
    * 필터링 결과를 기준으로 보정한 현재 페이지 번호다.
@@ -247,7 +249,9 @@ export default function QnaSection({ partId }: QnaSectionProps) {
 
         {statusMessage ? (
           <div className="rounded-[18px] border border-gray-6 bg-[#202329] px-6 py-14 text-center">
-            <p className="text-[18px] font-medium text-gray-3">{statusMessage}</p>
+            <p className="text-[18px] font-medium text-gray-3">
+              {statusMessage}
+            </p>
           </div>
         ) : (
           <>
@@ -277,7 +281,10 @@ export default function QnaSection({ partId }: QnaSectionProps) {
       </div>
 
       <div className="mt-16 flex flex-wrap items-end justify-between gap-6">
-        <form onSubmit={handleSearchSubmit} className="flex flex-wrap items-center gap-4">
+        <form
+          onSubmit={handleSearchSubmit}
+          className="flex flex-wrap items-center gap-4"
+        >
           <input
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
@@ -287,7 +294,7 @@ export default function QnaSection({ partId }: QnaSectionProps) {
           />
           <button
             type="submit"
-            className="h-[52px] min-w-[90px] rounded-[8px] bg-black px-6 text-[16px] font-semibold text-white-1"
+            className="h-[52px] min-w-[90px] rounded-[8px] bg-black px-6 text-[16px] font-semibold cursor-pointer text-white-1"
           >
             검색
           </button>
@@ -296,7 +303,7 @@ export default function QnaSection({ partId }: QnaSectionProps) {
         <button
           type="button"
           onClick={handleCreateQuestionClick}
-          className="h-[52px] rounded-[8px] bg-main-1 px-8 text-[16px] font-semibold text-white-1"
+          className="h-[52px] rounded-[8px] bg-main-1 px-8 text-[16px] font-semibold cursor-pointer text-white-1"
         >
           {QNA_CREATE_BUTTON_LABEL}
         </button>
@@ -336,7 +343,9 @@ export default function QnaSection({ partId }: QnaSectionProps) {
                   ? "font-semibold text-white-1"
                   : "cursor-pointer text-gray-4"
               }
-              aria-current={pageNumber === resolvedCurrentPage ? "page" : undefined}
+              aria-current={
+                pageNumber === resolvedCurrentPage ? "page" : undefined
+              }
             >
               {pageNumber}
             </button>
