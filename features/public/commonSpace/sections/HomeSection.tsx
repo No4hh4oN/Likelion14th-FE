@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  commonSpaceAssignmentMockDataSource,
+  commonSpaceAssignmentApiDataSource,
 } from "../assignments/source";
 import type {
   CommonSpaceAssignmentListItem,
@@ -19,11 +19,15 @@ import {
   buildCommonSpaceNoticeDetailHref,
 } from "../config";
 import {
-  commonSpaceMaterialMockDataSource,
+  commonSpaceMaterialApiDataSource,
   hydrateCommonSpaceMaterialSummaries,
 } from "../materials/source";
 import type { CommonSpaceMaterialListItem } from "../materials/types";
-import { commonSpaceNoticeMockDataSource } from "../notices/source";
+import {
+  commonSpaceNoticeApiDataSource,
+  excludeCommonSpacePinnedNoticeItems,
+  getCommonSpacePinnedNoticeItems,
+} from "../notices/source";
 import type { CommonSpaceNoticeListItem } from "../notices/types";
 import type { CommonSpacePartId } from "../types";
 
@@ -33,8 +37,8 @@ type HomeSectionProps = {
 };
 
 type HomeSectionData = {
-  /** 상단 고정 공지 카드에 노출할 pinned 공지 */
-  pinnedNoticeItem: CommonSpaceNoticeListItem | null;
+  /** 상단 고정 공지 카드에 노출할 pinned 공지 목록 */
+  pinnedNoticeItems: CommonSpaceNoticeListItem[];
   /** 공지 프리뷰 목록 */
   noticeItems: CommonSpaceNoticeListItem[];
   /** 세션 자료 프리뷰 목록 */
@@ -70,28 +74,23 @@ const HOME_ASSIGNMENT_PREVIEW_LIMIT = 3;
 
 /**
  * 홈 섹션이 현재 사용할 공지 데이터 소스다.
- * 실 API 연결 시 mock 대신 api data source로 교체하면 된다.
  */
-const commonSpaceNoticeDataSource = commonSpaceNoticeMockDataSource;
+const commonSpaceNoticeDataSource = commonSpaceNoticeApiDataSource;
 
 /**
  * 홈 섹션이 현재 사용할 세션 자료 데이터 소스다.
- * 실 API 연결 시 mock 대신 api data source로 교체하면 된다.
  */
-const commonSpaceMaterialDataSource = commonSpaceMaterialMockDataSource;
+const commonSpaceMaterialDataSource = commonSpaceMaterialApiDataSource;
 
 /**
  * 홈 섹션이 현재 사용할 과제 데이터 소스다.
- * 실 API 연결 시 mock 대신 api data source로 교체하면 된다.
  */
-const commonSpaceAssignmentDataSource = commonSpaceAssignmentMockDataSource;
+const commonSpaceAssignmentDataSource = commonSpaceAssignmentApiDataSource;
 
 /**
  * 홈에서 과제 프리뷰용 최신 과제 3개를 추린다.
  */
-function getHomePreviewAssignmentItems(
-  items: CommonSpaceAssignmentListItem[],
-) {
+function getHomePreviewAssignmentItems(items: CommonSpaceAssignmentListItem[]) {
   return [...items]
     .sort(
       (leftItem, rightItem) =>
@@ -105,35 +104,36 @@ function getHomePreviewAssignmentItems(
  * 홈 섹션에 필요한 공지/자료/과제 프리뷰 데이터를 함께 불러온다.
  */
 async function getHomeSectionData(partId: CommonSpacePartId): Promise<HomeSectionData> {
-  const [noticeResponse, materialResponse, assignmentResponse] = await Promise.all([
-    commonSpaceNoticeDataSource.getList({
-      partId,
-      page: 0,
-      size: 100,
-    }),
-    commonSpaceMaterialDataSource.getList({
-      partId,
-      page: 0,
-      size: 100,
-    }),
-    commonSpaceAssignmentDataSource.getList({
-      partId,
-    }),
-  ]);
+  const [noticeResponse, materialResponse, assignmentResponse, pinnedNoticeItems] =
+    await Promise.all([
+      commonSpaceNoticeDataSource.getList({
+        partId,
+        page: 0,
+        size: 100,
+      }),
+      commonSpaceMaterialDataSource.getList({
+        partId,
+        page: 0,
+        size: 100,
+      }),
+      commonSpaceAssignmentDataSource.getList({
+        partId,
+      }),
+      getCommonSpacePinnedNoticeItems(partId),
+    ]);
   const hydratedMaterialItems = await hydrateCommonSpaceMaterialSummaries(
     commonSpaceMaterialDataSource,
     materialResponse.items,
   );
-  const pinnedNoticeItem =
-    noticeResponse.items.find((item) => item.isPinned) ?? null;
-  const noticeItems = noticeResponse.items
-    .filter((item) => !item.isPinned)
-    .slice(0, HOME_NOTICE_PREVIEW_LIMIT);
+  const noticeItems = excludeCommonSpacePinnedNoticeItems(
+    noticeResponse.items,
+    pinnedNoticeItems,
+  ).slice(0, HOME_NOTICE_PREVIEW_LIMIT);
   const materialItems = hydratedMaterialItems.slice(0, HOME_MATERIAL_PREVIEW_LIMIT);
   const assignmentItems = getHomePreviewAssignmentItems(assignmentResponse.items);
 
   return {
-    pinnedNoticeItem,
+    pinnedNoticeItems,
     noticeItems,
     materialItems,
     assignmentItems,
@@ -149,8 +149,9 @@ export default function HomeSection({ partId }: HomeSectionProps) {
   /**
    * 홈 상단에 노출할 pinned 공지 카드 데이터다.
    */
-  const [pinnedNoticeItem, setPinnedNoticeItem] =
-    useState<CommonSpaceNoticeListItem | null>(null);
+  const [pinnedNoticeItems, setPinnedNoticeItems] = useState<
+    CommonSpaceNoticeListItem[]
+  >([]);
 
   /**
    * 홈 전체 공지 프리뷰 목록이다.
@@ -182,7 +183,7 @@ export default function HomeSection({ partId }: HomeSectionProps) {
           return;
         }
 
-        setPinnedNoticeItem(nextHomeSectionData.pinnedNoticeItem);
+        setPinnedNoticeItems(nextHomeSectionData.pinnedNoticeItems);
         setNoticeItems(nextHomeSectionData.noticeItems);
         setMaterialItems(nextHomeSectionData.materialItems);
         setAssignmentItems(nextHomeSectionData.assignmentItems);
@@ -191,7 +192,7 @@ export default function HomeSection({ partId }: HomeSectionProps) {
           return;
         }
 
-        setPinnedNoticeItem(null);
+        setPinnedNoticeItems([]);
         setNoticeItems([]);
         setMaterialItems([]);
         setAssignmentItems([]);
@@ -252,7 +253,7 @@ export default function HomeSection({ partId }: HomeSectionProps) {
     }
 
     const nextHomeSectionData = await getHomeSectionData(partId);
-    setPinnedNoticeItem(nextHomeSectionData.pinnedNoticeItem);
+    setPinnedNoticeItems(nextHomeSectionData.pinnedNoticeItems);
     setNoticeItems(nextHomeSectionData.noticeItems);
     setMaterialItems(nextHomeSectionData.materialItems);
     setAssignmentItems(nextHomeSectionData.assignmentItems);
@@ -281,13 +282,18 @@ export default function HomeSection({ partId }: HomeSectionProps) {
 
   return (
     <section className="flex flex-col gap-28.5">
-      {pinnedNoticeItem ? (
-        <NoticeCard
-          title={pinnedNoticeItem.title}
-          pinned
-          isNew={pinnedNoticeItem.isNew}
-          onClick={() => handleNoticeClick(pinnedNoticeItem.id)}
-        />
+      {pinnedNoticeItems.length > 0 ? (
+        <div className="space-y-4">
+          {pinnedNoticeItems.map((item) => (
+            <NoticeCard
+              key={item.id}
+              title={item.title}
+              pinned
+              isNew={item.isNew}
+              onClick={() => handleNoticeClick(item.id)}
+            />
+          ))}
+        </div>
       ) : null}
 
       <div className="grid gap-10 lg:grid-cols-2">

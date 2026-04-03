@@ -3,18 +3,20 @@
 
 import Image from "next/image";
 import { useEffect, useId, useRef, useState } from "react";
-import { getMockCommonSpaceNoticeComments } from "../notices/mock";
 import type {
   CommonSpaceNoticeCommentImage,
   CommonSpaceNoticeCommentItem,
 } from "../notices/types";
 
 type NoticeCommentsSectionProps = {
+  /** 댓글이 속한 게시글 식별자 */
   noticeId: number;
   /** 현재 사용자가 댓글을 작성할 수 있는지 여부 */
   canWriteComment?: boolean;
   /** 외부에서 주입할 초기 댓글 목록 */
   initialComments?: CommonSpaceNoticeCommentItem[];
+  /** 댓글 입력이 막혀 있을 때 보여줄 안내 문구 */
+  blockedMessage?: string;
 };
 
 /**
@@ -77,11 +79,15 @@ function NoticeCommentImageDialog({
 /**
  * 공지 상세 하단의 댓글 작성/목록/이미지 미리보기 레이아웃을 렌더링한다.
  */
-export default function NoticeCommentsSection({
-  noticeId,
-  canWriteComment = true,
-  initialComments,
-}: NoticeCommentsSectionProps) {
+export default function NoticeCommentsSection(
+  props: NoticeCommentsSectionProps,
+) {
+  const {
+    canWriteComment = true,
+    initialComments,
+    blockedMessage = "댓글을 작성할 수 없습니다.",
+  } = props;
+
   const fileInputId = useId();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const draftTextareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -89,8 +95,8 @@ export default function NoticeCommentsSection({
   /**
    * 현재 공지에 달린 댓글 목록이다.
    */
-  const [comments, setComments] = useState<CommonSpaceNoticeCommentItem[]>(() =>
-    initialComments ?? getMockCommonSpaceNoticeComments(noticeId),
+  const [comments, setComments] = useState<CommonSpaceNoticeCommentItem[]>(
+    initialComments ?? [],
   );
 
   /**
@@ -331,7 +337,7 @@ export default function NoticeCommentsSection({
         </div>
       ) : (
         <div className="rounded-[12px] bg-[#5A6070] px-6 py-8 text-center text-[14px] text-gray-4">
-          아기사자는 답변을 작성할 수 없습니다.
+          {blockedMessage}
         </div>
       )}
 

@@ -13,13 +13,13 @@ import {
   COMMON_SPACE_ASSIGNMENT_STATUS_MESSAGE,
   DEFAULT_COMMON_SPACE_ASSIGNMENT_PAGE_SIZE,
 } from "../assignments/constants";
-import { commonSpaceAssignmentMockDataSource } from "../assignments/source";
+import { commonSpaceAssignmentApiDataSource } from "../assignments/source";
 import type {
   CommonSpaceAssignmentListItem,
   CommonSpaceAssignmentLoadState,
   CommonSpaceAssignmentSubmissionRequest,
 } from "../assignments/types";
-import { commonSpaceNoticeMockDataSource } from "../notices/source";
+import { getCommonSpacePinnedNoticeItems } from "../notices/source";
 import type { CommonSpaceNoticeListItem } from "../notices/types";
 import type { CommonSpacePartId } from "../types";
 
@@ -41,26 +41,22 @@ const ASSIGNMENT_SEARCH_MAX_LENGTH = 10;
  * 과제 섹션이 현재 사용할 데이터 소스다.
  * 실 API 연결 시 mock 대신 api data source로 교체하면 된다.
  */
-const commonSpaceAssignmentDataSource = commonSpaceAssignmentMockDataSource;
+const commonSpaceAssignmentDataSource = commonSpaceAssignmentApiDataSource;
 
 /**
  * 과제 섹션 목록과 상단 pinned 공지를 함께 불러온다.
  */
 async function getAssignmentSectionData(partId: CommonSpacePartId) {
-  const [assignmentResponse, noticeResponse] = await Promise.all([
+  const [assignmentResponse, pinnedNoticeItems] = await Promise.all([
     commonSpaceAssignmentDataSource.getList({
       partId,
     }),
-    commonSpaceNoticeMockDataSource.getList({
-      partId,
-      page: 0,
-      size: 100,
-    }),
+    getCommonSpacePinnedNoticeItems(partId),
   ]);
 
   return {
     assignmentItems: assignmentResponse.items,
-    pinnedNoticeItem: noticeResponse.items.find((item) => item.isPinned) ?? null,
+    pinnedNoticeItems,
   };
 }
 
@@ -78,10 +74,11 @@ export default function AssignmentSection({ partId }: AssignmentSectionProps) {
   >([]);
 
   /**
-   * 섹션 상단에 고정 노출할 pinned 공지다.
+   * 섹션 상단에 고정 노출할 pinned 공지 목록이다.
    */
-  const [pinnedNoticeItem, setPinnedNoticeItem] =
-    useState<CommonSpaceNoticeListItem | null>(null);
+  const [pinnedNoticeItems, setPinnedNoticeItems] = useState<
+    CommonSpaceNoticeListItem[]
+  >([]);
 
   /**
    * 과제 목록 비동기 로드 상태다.
@@ -121,9 +118,12 @@ export default function AssignmentSection({ partId }: AssignmentSectionProps) {
         }
 
         setAssignmentItems(nextSectionData.assignmentItems);
-        setPinnedNoticeItem(nextSectionData.pinnedNoticeItem);
+        setPinnedNoticeItems(nextSectionData.pinnedNoticeItems);
         setLoadState(
-          nextSectionData.assignmentItems.length > 0 ? "success" : "empty",
+          nextSectionData.assignmentItems.length > 0 ||
+            nextSectionData.pinnedNoticeItems.length > 0
+            ? "success"
+            : "empty",
         );
       } catch {
         if (!isMounted) {
@@ -131,7 +131,7 @@ export default function AssignmentSection({ partId }: AssignmentSectionProps) {
         }
 
         setAssignmentItems([]);
-        setPinnedNoticeItem(null);
+        setPinnedNoticeItems([]);
         setLoadState("error");
       }
     }
@@ -229,9 +229,12 @@ export default function AssignmentSection({ partId }: AssignmentSectionProps) {
     const nextSectionData = await getAssignmentSectionData(partId);
 
     setAssignmentItems(nextSectionData.assignmentItems);
-    setPinnedNoticeItem(nextSectionData.pinnedNoticeItem);
+    setPinnedNoticeItems(nextSectionData.pinnedNoticeItems);
     setLoadState(
-      nextSectionData.assignmentItems.length > 0 ? "success" : "empty",
+      nextSectionData.assignmentItems.length > 0 ||
+        nextSectionData.pinnedNoticeItems.length > 0
+        ? "success"
+        : "empty",
     );
   }
 
@@ -249,7 +252,9 @@ export default function AssignmentSection({ partId }: AssignmentSectionProps) {
    * 검색 결과가 비어 있는지 여부다.
    */
   const isSearchResultEmpty =
-    loadState === "success" && filteredAssignmentItems.length === 0;
+    loadState === "success" &&
+    filteredAssignmentItems.length === 0 &&
+    pinnedNoticeItems.length === 0;
 
   /**
    * 페이지 버튼 목록이다.
@@ -262,14 +267,15 @@ export default function AssignmentSection({ partId }: AssignmentSectionProps) {
   return (
     <section className="pb-16">
       <div className="space-y-4">
-        {pinnedNoticeItem ? (
+        {pinnedNoticeItems.map((item) => (
           <NoticeCard
-            title={pinnedNoticeItem.title}
+            key={item.id}
+            title={item.title}
             pinned
-            isNew={pinnedNoticeItem.isNew}
-            onClick={() => handlePinnedNoticeClick(pinnedNoticeItem.id)}
+            isNew={item.isNew}
+            onClick={() => handlePinnedNoticeClick(item.id)}
           />
-        ) : null}
+        ))}
 
         {statusMessage ? (
           <div className="rounded-[18px] border border-gray-6 bg-[#202329] px-6 py-14 text-center">

@@ -8,9 +8,11 @@ import {
 } from "./mock";
 import type {
   CommonSpaceNoticeDetailItem,
+  CommonSpaceNoticeListItem,
   CommonSpaceNoticeListQuery,
   CommonSpaceNoticeListResult,
 } from "./types";
+import type { CommonSpacePartId } from "../types";
 
 /**
  * 전체 공지 섹션이 의존할 데이터 소스 계약이다.
@@ -50,3 +52,31 @@ export const commonSpaceNoticeMockDataSource: CommonSpaceNoticeDataSource = {
     return getMockCommonSpaceNoticeDetail(noticeId);
   },
 };
+
+/**
+ * pinned 공지 API 명세가 준비되기 전까지 사용할 임시 pinned 공지 목록을 조회한다.
+ * 추후 백엔드 스펙이 추가되면 이 함수만 실 API 기준으로 교체하면 된다.
+ */
+export async function getCommonSpacePinnedNoticeItems(
+  partId: CommonSpacePartId,
+): Promise<CommonSpaceNoticeListItem[]> {
+  const response = await commonSpaceNoticeMockDataSource.getList({
+    partId,
+    page: 0,
+    size: 100,
+  });
+
+  return response.items.filter((item) => item.isPinned);
+}
+
+/**
+ * 일반 공지 목록에서 별도로 상단에 노출한 pinned 공지를 제외한다.
+ */
+export function excludeCommonSpacePinnedNoticeItems(
+  items: CommonSpaceNoticeListItem[],
+  pinnedItems: CommonSpaceNoticeListItem[],
+) {
+  const pinnedItemIds = new Set(pinnedItems.map((item) => item.id));
+
+  return items.filter((item) => !pinnedItemIds.has(item.id));
+}

@@ -9,8 +9,7 @@ import {
   buildCommonSpaceMaterialDetailHref,
 } from "../config";
 import NoticeCommentsSection from "../components/NoticeCommentsSection";
-import { getMockCommonSpaceMaterialComments } from "../materials/mock";
-import { commonSpaceMaterialMockDataSource } from "../materials/source";
+import { commonSpaceMaterialApiDataSource } from "../materials/source";
 import type {
   CommonSpaceMaterialDetailItem,
   CommonSpaceMaterialListItem,
@@ -50,10 +49,14 @@ export default function MaterialDetailSection({
   materialId,
 }: MaterialDetailSectionProps) {
   /**
-   * 현재 사용자가 댓글을 작성할 수 있는지 여부를 흉내내는 임시 값이다.
-   * 추후 게시글 댓글 권한과 사용자 역할 정보를 연결해 교체한다.
+   * 세션 자료 댓글 API 명세가 준비되기 전까지는 댓글 입력을 막아둔다.
    */
-  const CAN_WRITE_MATERIAL_COMMENT = true;
+  const CAN_WRITE_MATERIAL_COMMENT = false;
+
+  /**
+   * 댓글 API 준비 전 안내 문구다.
+   */
+  const MATERIAL_COMMENT_BLOCKED_MESSAGE = "댓글 기능 준비 중입니다.";
 
   /**
    * 현재 세션 자료 상세 데이터다.
@@ -80,15 +83,15 @@ export default function MaterialDetailSection({
     async function loadMaterialDetail() {
       setLoadState("loading");
 
-      try {
-        const [detailResponse, listResponse] = await Promise.all([
-          commonSpaceMaterialMockDataSource.getDetail(materialId),
-          commonSpaceMaterialMockDataSource.getList({
-            partId,
-            page: 0,
-            size: 100,
-          }),
-        ]);
+        try {
+          const [detailResponse, listResponse] = await Promise.all([
+            commonSpaceMaterialApiDataSource.getDetail(materialId),
+            commonSpaceMaterialApiDataSource.getList({
+              partId,
+              page: 0,
+              size: 100,
+            }),
+          ]);
 
         if (!isMounted) {
           return;
@@ -234,7 +237,8 @@ export default function MaterialDetailSection({
           key={`material-comments-${materialId}`}
           noticeId={materialId}
           canWriteComment={CAN_WRITE_MATERIAL_COMMENT}
-          initialComments={getMockCommonSpaceMaterialComments(materialId)}
+          initialComments={[]}
+          blockedMessage={MATERIAL_COMMENT_BLOCKED_MESSAGE}
         />
 
         <div className="mt-29 grid gap-4 md:grid-cols-2">

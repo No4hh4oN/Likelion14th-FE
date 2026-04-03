@@ -10,7 +10,11 @@ import {
   COMMON_SPACE_NOTICE_STATUS_MESSAGE,
   DEFAULT_COMMON_SPACE_NOTICE_PAGE_SIZE,
 } from "../notices/constants";
-import { commonSpaceNoticeMockDataSource } from "../notices/source";
+import {
+  commonSpaceNoticeApiDataSource,
+  excludeCommonSpacePinnedNoticeItems,
+  getCommonSpacePinnedNoticeItems,
+} from "../notices/source";
 import type {
   CommonSpaceNoticeListItem,
   CommonSpaceNoticeLoadState,
@@ -44,6 +48,13 @@ export default function NoticeSection({ partId }: NoticeSectionProps) {
   );
 
   /**
+   * 섹션 상단에 고정 노출할 pinned 공지 목록이다.
+   */
+  const [pinnedNoticeItems, setPinnedNoticeItems] = useState<
+    CommonSpaceNoticeListItem[]
+  >([]);
+
+  /**
    * 공지 목록 비동기 로드 상태다.
    */
   const [loadState, setLoadState] =
@@ -74,24 +85,33 @@ export default function NoticeSection({ partId }: NoticeSectionProps) {
       setCurrentPage(1);
 
       try {
-        const response = await commonSpaceNoticeMockDataSource.getList({
-          partId,
-          page: 0,
-          size: 100,
-        });
+        const [response, nextPinnedNoticeItems] = await Promise.all([
+          commonSpaceNoticeApiDataSource.getList({
+            partId,
+            page: 0,
+            size: 100,
+          }),
+          getCommonSpacePinnedNoticeItems(partId),
+        ]);
 
         if (!isMounted) {
           return;
         }
 
         setNoticeItems(response.items);
-        setLoadState(response.items.length > 0 ? "success" : "empty");
+        setPinnedNoticeItems(nextPinnedNoticeItems);
+        setLoadState(
+          response.items.length > 0 || nextPinnedNoticeItems.length > 0
+            ? "success"
+            : "empty",
+        );
       } catch {
         if (!isMounted) {
           return;
         }
 
         setNoticeItems([]);
+        setPinnedNoticeItems([]);
         setLoadState("error");
       }
     }
@@ -111,23 +131,22 @@ export default function NoticeSection({ partId }: NoticeSectionProps) {
   /**
    * 현재 검색 조건을 반영한 공지 목록이다.
    */
-  const filteredNoticeItems = noticeItems.filter((item) =>
+  const filteredNoticeItems = excludeCommonSpacePinnedNoticeItems(
+    noticeItems,
+    pinnedNoticeItems,
+  ).filter((item) =>
     normalizedSearchKeyword
       ? item.title.toLowerCase().includes(normalizedSearchKeyword)
       : true,
   );
 
   /**
-   * 상단에 고정 노출할 pinned 공지다.
+   * 현재 검색 조건을 반영한 pinned 공지 목록이다.
    */
-  const pinnedNoticeItem =
-    filteredNoticeItems.find((item) => item.isPinned) ?? null;
-
-  /**
-   * pinned 공지를 제외한 일반 공지 목록이다.
-   */
-  const regularNoticeItems = filteredNoticeItems.filter(
-    (item) => !item.isPinned,
+  const filteredPinnedNoticeItems = pinnedNoticeItems.filter((item) =>
+    normalizedSearchKeyword
+      ? item.title.toLowerCase().includes(normalizedSearchKeyword)
+      : true,
   );
 
   /**
@@ -135,7 +154,7 @@ export default function NoticeSection({ partId }: NoticeSectionProps) {
    */
   const totalPages =
     Math.ceil(
-      regularNoticeItems.length / DEFAULT_COMMON_SPACE_NOTICE_PAGE_SIZE,
+      filteredNoticeItems.length / DEFAULT_COMMON_SPACE_NOTICE_PAGE_SIZE,
     ) || 1;
 
   /**
@@ -146,7 +165,7 @@ export default function NoticeSection({ partId }: NoticeSectionProps) {
   /**
    * 현재 페이지에 노출할 일반 공지 목록이다.
    */
-  const paginatedNoticeItems = regularNoticeItems.slice(
+  const paginatedNoticeItems = filteredNoticeItems.slice(
     (resolvedCurrentPage - 1) * DEFAULT_COMMON_SPACE_NOTICE_PAGE_SIZE,
     resolvedCurrentPage * DEFAULT_COMMON_SPACE_NOTICE_PAGE_SIZE,
   );
@@ -181,7 +200,9 @@ export default function NoticeSection({ partId }: NoticeSectionProps) {
    * 검색 결과가 비어 있는지 여부다.
    */
   const isSearchResultEmpty =
-    loadState === "success" && filteredNoticeItems.length === 0;
+    loadState === "success" &&
+    filteredNoticeItems.length === 0 &&
+    filteredPinnedNoticeItems.length === 0;
 
   /**
    * 페이지 버튼 목록이다.
@@ -193,22 +214,23 @@ export default function NoticeSection({ partId }: NoticeSectionProps) {
 
   return (
     <section className="pb-16">
-      {statusMessage ? (
-        <div className="rounded-[18px] border border-gray-6 bg-[#202329] px-6 py-14 text-center">
-          <p className="text-[18px] font-medium text-gray-3">{statusMessage}</p>
-        </div>
-      ) : (
-        <>
-          <div className="space-y-4">
-            {pinnedNoticeItem ? (
-              <NoticeCard
-                title={pinnedNoticeItem.title}
-                pinned
-                isNew={pinnedNoticeItem.isNew}
-                onClick={() => handleNoticeClick(pinnedNoticeItem.id)}
-              />
-            ) : null}
+      <div className="space-y-4">
+        {filteredPinnedNoticeItems.map((item) => (
+          <NoticeCard
+            key={item.id}
+            title={item.title}
+            pinned
+            isNew={item.isNew}
+            onClick={() => handleNoticeClick(item.id)}
+          />
+        ))}
 
+        {statusMessage ? (
+          <div className="rounded-[18px] border border-gray-6 bg-[#202329] px-6 py-14 text-center">
+            <p className="text-[18px] font-medium text-gray-3">{statusMessage}</p>
+          </div>
+        ) : (
+          <>
             <ul className="mt-10 space-y-4">
               {paginatedNoticeItems.map((item) => (
                 <li key={item.id}>
@@ -228,93 +250,91 @@ export default function NoticeSection({ partId }: NoticeSectionProps) {
                 </p>
               </div>
             ) : null}
-          </div>
+          </>
+        )}
+      </div>
 
-          <form
-            onSubmit={handleSearchSubmit}
-            className="mt-29 flex flex-wrap items-center gap-4"
+      <form
+        onSubmit={handleSearchSubmit}
+        className="mt-29 flex flex-wrap items-center gap-4"
+      >
+        <input
+          value={searchInput}
+          onChange={(event) => setSearchInput(event.target.value)}
+          maxLength={NOTICE_SEARCH_MAX_LENGTH}
+          placeholder={NOTICE_SEARCH_PLACEHOLDER}
+          className="h-[52px] w-[280px] rounded-[8px] bg-[#F4F4F4] px-4 text-[14px] text-[#1F1F1F] placeholder:text-[#A0A3AE] focus:outline-none"
+        />
+        <button
+          type="submit"
+          className="h-[52px] min-w-[90px] rounded-[8px] bg-black px-6 text-[16px] font-semibold text-white-1"
+        >
+          검색
+        </button>
+      </form>
+
+      <nav
+        aria-label="전체 공지 페이지네이션"
+        className="mt-29 flex items-center justify-between text-[24px] text-gray-4"
+      >
+        <div className="flex gap-5 -mr-3.25">
+          <button
+            type="button"
+            onClick={() => setCurrentPage(1)}
+            disabled={resolvedCurrentPage === 1}
+            className="disabled:opacity-40 disabled:cursor-auto cursor-pointer"
           >
-            <input
-              value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-              maxLength={NOTICE_SEARCH_MAX_LENGTH}
-              placeholder={NOTICE_SEARCH_PLACEHOLDER}
-              className="h-[52px] w-[280px] rounded-[8px] bg-[#F4F4F4] px-4 text-[14px] text-[#1F1F1F] placeholder:text-[#A0A3AE] focus:outline-none"
-            />
+            &laquo;
+          </button>
+          <button
+            type="button"
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={resolvedCurrentPage === 1}
+            className="disabled:opacity-40 disabled:cursor-auto cursor-pointer"
+          >
+            &lsaquo;
+          </button>
+        </div>
+
+        <div className="flex justify-center gap-17.25">
+          {pageNumbers.map((pageNumber) => (
             <button
-              type="submit"
-              className="h-[52px] min-w-[90px] rounded-[8px] bg-black px-6 text-[16px] font-semibold text-white-1"
+              key={pageNumber}
+              type="button"
+              onClick={() => setCurrentPage(pageNumber)}
+              className={
+                pageNumber === resolvedCurrentPage
+                  ? "font-semibold text-white-1"
+                  : "text-gray-4 cursor-pointer"
+              }
+              aria-current={pageNumber === resolvedCurrentPage ? "page" : undefined}
             >
-              검색
+              {pageNumber}
             </button>
-          </form>
+          ))}
+        </div>
 
-          <nav
-            aria-label="전체 공지 페이지네이션"
-            className="mt-29 flex items-center justify-between text-[24px] text-gray-4"
+        <div className="flex gap-5 -ml-3.25">
+          <button
+            type="button"
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={resolvedCurrentPage === totalPages}
+            className="disabled:opacity-40 disabled:cursor-auto cursor-pointer"
           >
-            <div className="flex gap-5 -mr-3.25">
-              <button
-                type="button"
-                onClick={() => setCurrentPage(1)}
-                disabled={resolvedCurrentPage === 1}
-                className="disabled:opacity-40 disabled:cursor-auto cursor-pointer"
-              >
-                &laquo;
-              </button>
-              <button
-                type="button"
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={resolvedCurrentPage === 1}
-                className="disabled:opacity-40 disabled:cursor-auto cursor-pointer"
-              >
-                &lsaquo;
-              </button>
-            </div>
-
-            <div className="flex justify-center gap-17.25">
-              {pageNumbers.map((pageNumber) => (
-                <button
-                  key={pageNumber}
-                  type="button"
-                  onClick={() => setCurrentPage(pageNumber)}
-                  className={
-                    pageNumber === resolvedCurrentPage
-                      ? "font-semibold text-white-1"
-                      : "text-gray-4 cursor-pointer"
-                  }
-                  aria-current={
-                    pageNumber === resolvedCurrentPage ? "page" : undefined
-                  }
-                >
-                  {pageNumber}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex gap-5 -ml-3.25">
-              <button
-                type="button"
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
-                disabled={resolvedCurrentPage === totalPages}
-                className="disabled:opacity-40 disabled:cursor-auto cursor-pointer"
-              >
-                &rsaquo;
-              </button>
-              <button
-                type="button"
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={resolvedCurrentPage === totalPages}
-                className="disabled:opacity-40 disabled:cursor-auto cursor-pointer"
-              >
-                &raquo;
-              </button>
-            </div>
-          </nav>
-        </>
-      )}
+            &rsaquo;
+          </button>
+          <button
+            type="button"
+            onClick={() => setCurrentPage(totalPages)}
+            disabled={resolvedCurrentPage === totalPages}
+            className="disabled:opacity-40 disabled:cursor-auto cursor-pointer"
+          >
+            &raquo;
+          </button>
+        </div>
+      </nav>
     </section>
   );
 }

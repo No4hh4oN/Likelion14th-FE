@@ -13,7 +13,7 @@ import {
   buildCommonSpaceQnaDetailHref,
 } from "../config";
 import { getRenderableCommonSpaceQnaHtml } from "../qna/html";
-import { commonSpaceQnaMockDataSource } from "../qna/source";
+import { commonSpaceQnaApiDataSource } from "../qna/source";
 import type {
   CommonSpaceQnaAnswerMutationRequest,
   CommonSpaceQnaDetailItem,
@@ -44,7 +44,7 @@ type QnaViewerInfo = {
  * 질의응답 상세 섹션이 현재 사용할 데이터 소스다.
  * 실 API 연결 시 mock 대신 api data source로 교체하면 된다.
  */
-const commonSpaceQnaDataSource = commonSpaceQnaMockDataSource;
+const commonSpaceQnaDataSource = commonSpaceQnaApiDataSource;
 
 /**
  * 프로필 조회 실패 시 사용할 기본 사용자 정보다.

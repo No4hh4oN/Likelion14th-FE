@@ -14,12 +14,12 @@ import {
   COMMON_SPACE_QNA_STATUS_MESSAGE,
   DEFAULT_COMMON_SPACE_QNA_PAGE_SIZE,
 } from "../qna/constants";
-import { commonSpaceQnaMockDataSource } from "../qna/source";
+import { commonSpaceQnaApiDataSource } from "../qna/source";
 import type {
   CommonSpaceQnaListItem,
   CommonSpaceQnaLoadState,
 } from "../qna/types";
-import { commonSpaceNoticeMockDataSource } from "../notices/source";
+import { getCommonSpacePinnedNoticeItems } from "../notices/source";
 import type { CommonSpaceNoticeListItem } from "../notices/types";
 import type { CommonSpacePartId } from "../types";
 
@@ -46,29 +46,24 @@ const QNA_CREATE_BUTTON_LABEL = "질문 글 작성하기";
  * 질의응답 섹션이 현재 사용할 데이터 소스다.
  * 실 API 연결 시 mock 대신 api data source로 교체하면 된다.
  */
-const commonSpaceQnaDataSource = commonSpaceQnaMockDataSource;
+const commonSpaceQnaDataSource = commonSpaceQnaApiDataSource;
 
 /**
  * 질의응답 섹션 목록과 상단 pinned 공지를 함께 불러온다.
  */
-async function getQnaSectionData() {
-  const [qnaResponse, noticeResponse] = await Promise.all([
+async function getQnaSectionData(partId: CommonSpacePartId) {
+  const [qnaResponse, pinnedNoticeItems] = await Promise.all([
     commonSpaceQnaDataSource.getList({
       partId: "all",
       page: 0,
       size: 100,
     }),
-    commonSpaceNoticeMockDataSource.getList({
-      partId: "all",
-      page: 0,
-      size: 100,
-    }),
+    getCommonSpacePinnedNoticeItems(partId),
   ]);
 
   return {
     qnaItems: qnaResponse.items,
-    pinnedNoticeItem:
-      noticeResponse.items.find((item) => item.isPinned) ?? null,
+    pinnedNoticeItems,
   };
 }
 
@@ -84,10 +79,11 @@ export default function QnaSection({ partId }: QnaSectionProps) {
   const [qnaItems, setQnaItems] = useState<CommonSpaceQnaListItem[]>([]);
 
   /**
-   * 섹션 상단에 고정 노출할 pinned 공지다.
+   * 섹션 상단에 고정 노출할 pinned 공지 목록이다.
    */
-  const [pinnedNoticeItem, setPinnedNoticeItem] =
-    useState<CommonSpaceNoticeListItem | null>(null);
+  const [pinnedNoticeItems, setPinnedNoticeItems] = useState<
+    CommonSpaceNoticeListItem[]
+  >([]);
 
   /**
    * 질의응답 목록 비동기 로드 상태다.
@@ -119,22 +115,27 @@ export default function QnaSection({ partId }: QnaSectionProps) {
       setCurrentPage(1);
 
       try {
-        const nextSectionData = await getQnaSectionData();
+        const nextSectionData = await getQnaSectionData(partId);
 
         if (!isMounted) {
           return;
         }
 
         setQnaItems(nextSectionData.qnaItems);
-        setPinnedNoticeItem(nextSectionData.pinnedNoticeItem);
-        setLoadState(nextSectionData.qnaItems.length > 0 ? "success" : "empty");
+        setPinnedNoticeItems(nextSectionData.pinnedNoticeItems);
+        setLoadState(
+          nextSectionData.qnaItems.length > 0 ||
+            nextSectionData.pinnedNoticeItems.length > 0
+            ? "success"
+            : "empty",
+        );
       } catch {
         if (!isMounted) {
           return;
         }
 
         setQnaItems([]);
-        setPinnedNoticeItem(null);
+        setPinnedNoticeItems([]);
         setLoadState("error");
       }
     }
@@ -144,7 +145,7 @@ export default function QnaSection({ partId }: QnaSectionProps) {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [partId]);
 
   /**
    * 검색어를 정규화한 값이다.
@@ -225,7 +226,9 @@ export default function QnaSection({ partId }: QnaSectionProps) {
    * 검색 결과가 비어 있는지 여부다.
    */
   const isSearchResultEmpty =
-    loadState === "success" && filteredQnaItems.length === 0;
+    loadState === "success" &&
+    filteredQnaItems.length === 0 &&
+    pinnedNoticeItems.length === 0;
 
   /**
    * 페이지 버튼 목록이다.
@@ -238,14 +241,15 @@ export default function QnaSection({ partId }: QnaSectionProps) {
   return (
     <section className="pb-16">
       <div className="space-y-4">
-        {pinnedNoticeItem ? (
+        {pinnedNoticeItems.map((item) => (
           <NoticeCard
-            title={pinnedNoticeItem.title}
+            key={item.id}
+            title={item.title}
             pinned
-            isNew={pinnedNoticeItem.isNew}
-            onClick={() => handlePinnedNoticeClick(pinnedNoticeItem.id)}
+            isNew={item.isNew}
+            onClick={() => handlePinnedNoticeClick(item.id)}
           />
-        ) : null}
+        ))}
 
         {statusMessage ? (
           <div className="rounded-[18px] border border-gray-6 bg-[#202329] px-6 py-14 text-center">

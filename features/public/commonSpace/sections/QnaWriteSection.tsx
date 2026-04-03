@@ -11,7 +11,7 @@ import {
   extractCommonSpaceQnaTextContent,
   normalizeCommonSpaceQnaHtml,
 } from "../qna/html";
-import { commonSpaceQnaMockDataSource } from "../qna/source";
+import { commonSpaceQnaApiDataSource } from "../qna/source";
 import type {
   CommonSpaceQnaQuestionMutationRequest,
   CommonSpaceQnaQuestionPartId,
@@ -70,7 +70,7 @@ type QnaWriteColorButtonProps = {
  * 질문 작성 섹션이 현재 사용할 데이터 소스다.
  * 실 API 연결 시 mock 대신 api data source로 교체하면 된다.
  */
-const commonSpaceQnaDataSource = commonSpaceQnaMockDataSource;
+const commonSpaceQnaDataSource = commonSpaceQnaApiDataSource;
 
 /**
  * 질문 트랙 선택 옵션 목록이다.

@@ -9,7 +9,7 @@ import {
   buildCommonSpaceAssignmentDetailHref,
   buildCommonSpaceHref,
 } from "../config";
-import { commonSpaceAssignmentMockDataSource } from "../assignments/source";
+import { commonSpaceAssignmentApiDataSource } from "../assignments/source";
 import type {
   CommonSpaceAssignmentDetailItem,
   CommonSpaceAssignmentListItem,
@@ -27,7 +27,7 @@ type AssignmentDetailSectionProps = {
  * 과제 상세 섹션이 현재 사용할 데이터 소스다.
  * 실 API 연결 시 mock 대신 api data source로 교체하면 된다.
  */
-const commonSpaceAssignmentDataSource = commonSpaceAssignmentMockDataSource;
+const commonSpaceAssignmentDataSource = commonSpaceAssignmentApiDataSource;
 
 /**
  * 과제 상세 날짜 문자열을 화면용 형식으로 변환한다.
