@@ -86,7 +86,7 @@ const NOTICE_CARD_TITLE_CLASS_NAME_BY_DISPLAY_VARIANT: Record<
 > = {
   section:
     "min-w-0 truncate text-[20px] leading-[1.25] font-bold text-white-1 md:text-[24px] cursor-pointer",
-  home: "min-w-0 flex-1 text-[20px] leading-[1.27] font-bold text-white-1 cursor-pointer",
+  home: "min-w-0 flex-1 truncate text-[20px] leading-[1.27] font-bold text-white-1 cursor-pointer",
 };
 
 /**
