@@ -68,8 +68,17 @@ export type AttendanceItem = {
   loginId: string;
   name: string;
   studentNo: string;
-  status: AttendanceStatus;
+  status: AttendanceStatus | null;
   profileImageUrl: string | null;
+};
+
+export type AttendanceSaveRequest = {
+  checkedAt: string;
+  attendanceDate: string;
+  users: Array<{
+    loginId: string;
+    status: AttendanceStatus;
+  }>;
 };
 
 export type ProjectUpsertRequest = {

@@ -1,6 +1,7 @@
 ﻿import { apiClient } from "@/lib/axios";
 import type {
   AttendanceItem,
+  AttendanceSaveRequest,
   ProjectDetail,
   ProjectListItem,
   ProjectStatusItem,
@@ -117,7 +118,7 @@ export async function getAttendance(params: {
   return response.data;
 }
 
-export async function saveAttendance(payload: unknown): Promise<string> {
+export async function saveAttendance(payload: AttendanceSaveRequest): Promise<string> {
   const response = await apiClient.post<string>("/attendance", payload);
   return response.data;
 }
