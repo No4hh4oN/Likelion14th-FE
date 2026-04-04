@@ -3,7 +3,10 @@
 
 import Image from "next/image";
 import { useEffect, useId, useRef, useState } from "react";
+import { getMyProfile } from "@/features/public/mypage/api";
+import type { MyPageUserApiResponse } from "@/features/public/mypage/types";
 import type {
+  CommonSpaceNoticeCommentCreateRequest,
   CommonSpaceNoticeCommentImage,
   CommonSpaceNoticeCommentItem,
 } from "../notices/types";
@@ -13,36 +16,72 @@ type NoticeCommentsSectionProps = {
   noticeId: number;
   /** 현재 사용자가 댓글을 작성할 수 있는지 여부 */
   canWriteComment?: boolean;
-  /** 외부에서 주입할 초기 댓글 목록 */
+  /** 외부에서 주입할 댓글 목록 */
   initialComments?: CommonSpaceNoticeCommentItem[];
+  /** 댓글 등록 처리 핸들러 */
+  onSubmitComment?: (
+    payload: CommonSpaceNoticeCommentCreateRequest,
+  ) => Promise<void>;
   /** 댓글 입력이 막혀 있을 때 보여줄 안내 문구 */
   blockedMessage?: string;
 };
 
-/**
- * 댓글 작성자명을 표시할 기본 문자열이다.
- */
-const NOTICE_COMMENT_AUTHOR_NAME = "제희중 (14기 아기사자)";
+type NoticeCommentDraftImageItem = CommonSpaceNoticeCommentImage & {
+  /** 실제 업로드할 파일 객체 */
+  file: File;
+};
+
+type NoticeCommentViewerInfo = {
+  /** 현재 사용자 이름 */
+  name: string;
+  /** 현재 사용자 부가 정보 */
+  description: string;
+  /** 현재 사용자 프로필 이미지 경로 */
+  profileImageSrc: string;
+  /** 현재 사용자 프로필 이미지 대체 텍스트 */
+  profileImageAlt: string;
+};
 
 /**
- * 댓글 작성자 부가 설명 문자열이다.
+ * 프로필 조회 실패 시 사용할 기본 사용자 정보다.
  */
-const NOTICE_COMMENT_AUTHOR_DESCRIPTION = "삼육대학교 24학번";
-
-/**
- * 댓글 작성자 기본 프로필 이미지 경로다.
- */
-const NOTICE_COMMENT_AUTHOR_PROFILE_IMAGE_SRC = "/images/defaultProf.webp";
-
-/**
- * 댓글 작성자 기본 프로필 이미지 대체 텍스트다.
- */
-const NOTICE_COMMENT_AUTHOR_PROFILE_IMAGE_ALT = "댓글 작성자 프로필 사진";
+const DEFAULT_NOTICE_COMMENT_VIEWER_INFO: NoticeCommentViewerInfo = {
+  name: "아기사자",
+  description: "멋쟁이사자처럼 삼육대학교",
+  profileImageSrc: "/images/defaultProf.webp",
+  profileImageAlt: "댓글 작성자 프로필 사진",
+};
 
 /**
  * 댓글 입력창이 자동으로 늘어날 최대 높이다.
  */
 const NOTICE_COMMENT_TEXTAREA_MAX_HEIGHT = 220;
+
+/**
+ * 마이페이지 프로필 응답을 댓글 작성자 표시용 데이터로 변환한다.
+ */
+function toNoticeCommentViewerInfo(
+  profile: MyPageUserApiResponse | null,
+): NoticeCommentViewerInfo {
+  if (!profile) {
+    return DEFAULT_NOTICE_COMMENT_VIEWER_INFO;
+  }
+
+  const name = profile.homepage.name || DEFAULT_NOTICE_COMMENT_VIEWER_INFO.name;
+  const description = profile.homepage.studentNo
+    ? `${profile.homepage.department} ${profile.homepage.studentNo}`
+    : profile.homepage.department || DEFAULT_NOTICE_COMMENT_VIEWER_INFO.description;
+  const profileImageSrc =
+    profile.homepage.profileImage?.url ||
+    DEFAULT_NOTICE_COMMENT_VIEWER_INFO.profileImageSrc;
+
+  return {
+    name,
+    description,
+    profileImageSrc,
+    profileImageAlt: `${name} 프로필 사진`,
+  };
+}
 
 /**
  * 댓글 이미지 미리보기 확대 모달을 렌더링한다.
@@ -85,19 +124,19 @@ export default function NoticeCommentsSection(
   const {
     canWriteComment = true,
     initialComments,
+    onSubmitComment,
     blockedMessage = "댓글을 작성할 수 없습니다.",
   } = props;
 
   const fileInputId = useId();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const draftTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const draftImagesRef = useRef<NoticeCommentDraftImageItem[]>([]);
 
   /**
-   * 현재 공지에 달린 댓글 목록이다.
+   * 현재 화면에 렌더링할 댓글 목록이다.
    */
-  const [comments, setComments] = useState<CommonSpaceNoticeCommentItem[]>(
-    initialComments ?? [],
-  );
+  const comments = initialComments ?? [];
 
   /**
    * 작성 중인 댓글 본문이다.
@@ -107,15 +146,27 @@ export default function NoticeCommentsSection(
   /**
    * 작성 중인 댓글에 첨부한 이미지 목록이다.
    */
-  const [draftImages, setDraftImages] = useState<
-    CommonSpaceNoticeCommentImage[]
-  >([]);
+  const [draftImages, setDraftImages] = useState<NoticeCommentDraftImageItem[]>(
+    [],
+  );
+
+  /**
+   * 댓글 제출 진행 여부다.
+   */
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   /**
    * 모달에 띄운 댓글 이미지다.
    */
   const [activePreviewImage, setActivePreviewImage] =
     useState<CommonSpaceNoticeCommentImage | null>(null);
+
+  /**
+   * 현재 사용자 표시 정보다.
+   */
+  const [viewerInfo, setViewerInfo] = useState<NoticeCommentViewerInfo>(
+    DEFAULT_NOTICE_COMMENT_VIEWER_INFO,
+  );
 
   /**
    * 댓글 입력창 높이를 현재 입력 길이에 맞춰 조정한다.
@@ -140,6 +191,15 @@ export default function NoticeCommentsSection(
   }
 
   /**
+   * 작성 중인 첨부 이미지 URL을 정리한다.
+   */
+  function clearDraftImages(images: NoticeCommentDraftImageItem[]) {
+    images.forEach((image) => {
+      URL.revokeObjectURL(image.src);
+    });
+  }
+
+  /**
    * 댓글 본문 입력값 변경을 처리한다.
    */
   function handleDraftContentChange(
@@ -151,6 +211,36 @@ export default function NoticeCommentsSection(
   useEffect(() => {
     resizeDraftTextarea();
   }, [draftContent]);
+
+  useEffect(() => {
+    draftImagesRef.current = draftImages;
+  }, [draftImages]);
+
+  useEffect(() => {
+    return () => {
+      clearDraftImages(draftImagesRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadViewerInfo() {
+      const profile = await getMyProfile().catch(() => null);
+
+      if (!isMounted) {
+        return;
+      }
+
+      setViewerInfo(toNoticeCommentViewerInfo(profile));
+    }
+
+    loadViewerInfo();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   /**
    * 댓글 이미지 파일 선택을 처리한다.
@@ -166,6 +256,7 @@ export default function NoticeCommentsSection(
       id: `${Date.now()}-${index}`,
       src: URL.createObjectURL(file),
       alt: file.name,
+      file,
     }));
 
     setDraftImages((prev) => [...prev, ...nextImages]);
@@ -176,33 +267,46 @@ export default function NoticeCommentsSection(
    * 작성 중인 첨부 이미지를 제거한다.
    */
   function handleRemoveDraftImage(imageId: string) {
-    setDraftImages((prev) => prev.filter((image) => image.id !== imageId));
+    setDraftImages((prev) => {
+      const targetImage = prev.find((image) => image.id === imageId);
+
+      if (targetImage) {
+        URL.revokeObjectURL(targetImage.src);
+      }
+
+      return prev.filter((image) => image.id !== imageId);
+    });
   }
 
   /**
    * 댓글 등록을 처리한다.
    */
-  function handleSubmitComment() {
-    if (draftContent.trim() === "" && draftImages.length === 0) {
+  async function handleSubmitComment() {
+    if (
+      isSubmitting ||
+      !onSubmitComment ||
+      (draftContent.trim() === "" && draftImages.length === 0)
+    ) {
       return;
     }
 
-    const nextComment: CommonSpaceNoticeCommentItem = {
-      id: Date.now(),
-      authorName: NOTICE_COMMENT_AUTHOR_NAME,
-      authorDescription: NOTICE_COMMENT_AUTHOR_DESCRIPTION,
-      profileImageSrc: NOTICE_COMMENT_AUTHOR_PROFILE_IMAGE_SRC,
-      profileImageAlt: NOTICE_COMMENT_AUTHOR_PROFILE_IMAGE_ALT,
-      content: draftContent.trim(),
-      images: draftImages,
-    };
+    setIsSubmitting(true);
 
-    setComments((prev) => [nextComment, ...prev]);
-    setDraftContent("");
-    setDraftImages([]);
+    try {
+      await onSubmitComment({
+        content: draftContent.trim(),
+        files: draftImages.map((image) => image.file),
+      });
 
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+      clearDraftImages(draftImages);
+      setDraftContent("");
+      setDraftImages([]);
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -214,11 +318,9 @@ export default function NoticeCommentsSection(
             <Image
               src={
                 comment.profileImageSrc ??
-                NOTICE_COMMENT_AUTHOR_PROFILE_IMAGE_SRC
+                DEFAULT_NOTICE_COMMENT_VIEWER_INFO.profileImageSrc
               }
-              alt={
-                comment.profileImageAlt ?? `${comment.authorName} 프로필 사진`
-              }
+              alt={comment.profileImageAlt ?? `${comment.authorName} 프로필 사진`}
               width={48}
               height={48}
               className="mt-1 h-12 w-12 shrink-0 rounded-full object-cover"
@@ -229,9 +331,11 @@ export default function NoticeCommentsSection(
                 <p className="text-[16px] font-semibold text-white-1">
                   {comment.authorName}
                 </p>
-                <p className="text-[14px] text-gray-4">
-                  {comment.authorDescription}
-                </p>
+                {comment.authorDescription ? (
+                  <p className="text-[14px] text-gray-4">
+                    {comment.authorDescription}
+                  </p>
+                ) : null}
               </div>
 
               <p className="mt-3 whitespace-pre-line text-[15px] leading-[1.7] text-white-1">
@@ -245,7 +349,7 @@ export default function NoticeCommentsSection(
                       key={image.id}
                       type="button"
                       onClick={() => setActivePreviewImage(image)}
-                      className="relative h-[84px] w-[84px] overflow-hidden rounded-[10px] bg-[#5A6070] cursor-pointer"
+                      className="relative h-[84px] w-[84px] cursor-pointer overflow-hidden rounded-[10px] bg-[#5A6070]"
                     >
                       <img
                         src={image.src}
@@ -265,9 +369,7 @@ export default function NoticeCommentsSection(
       </div>
       {canWriteComment ? (
         <div className="rounded-[14px] bg-gray-6 px-9 py-8">
-          <p className="text-[20px] font-bold text-white-1">
-            {NOTICE_COMMENT_AUTHOR_NAME}
-          </p>
+          <p className="text-[20px] font-bold text-white-1">{viewerInfo.name}</p>
 
           <textarea
             ref={draftTextareaRef}
@@ -293,7 +395,7 @@ export default function NoticeCommentsSection(
                   <button
                     type="button"
                     onClick={() => handleRemoveDraftImage(image.id)}
-                    className="absolute cursor-pointer right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-[12px] font-semibold text-white-1"
+                    className="absolute right-1 top-1 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full bg-black/60 text-[12px] font-semibold text-white-1"
                     aria-label="첨부 이미지 삭제"
                   >
                     ×
@@ -329,9 +431,14 @@ export default function NoticeCommentsSection(
             <button
               type="button"
               onClick={handleSubmitComment}
-              className="rounded-[8px] bg-main-1 px-7 py-5 text-[18px] font-semibold text-white-1"
+              disabled={
+                isSubmitting ||
+                !onSubmitComment ||
+                (draftContent.trim() === "" && draftImages.length === 0)
+              }
+              className="rounded-[8px] bg-main-1 px-7 py-5 text-[18px] font-semibold text-white-1 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              등록하기
+              {isSubmitting ? "등록 중..." : "등록하기"}
             </button>
           </div>
         </div>
