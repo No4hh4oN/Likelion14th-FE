@@ -104,8 +104,8 @@ function getHomePreviewAssignmentItems(items: CommonSpaceAssignmentListItem[]) {
  * 홈 섹션에 필요한 공지/자료/과제 프리뷰 데이터를 함께 불러온다.
  */
 async function getHomeSectionData(partId: CommonSpacePartId): Promise<HomeSectionData> {
-  const [noticeResponse, materialResponse, assignmentResponse, pinnedNoticeItems] =
-    await Promise.all([
+  const [noticeResult, materialResult, assignmentResult, pinnedResult] =
+    await Promise.allSettled([
       commonSpaceNoticeDataSource.getList({
         partId,
         page: 0,
@@ -121,16 +121,29 @@ async function getHomeSectionData(partId: CommonSpacePartId): Promise<HomeSectio
       }),
       getCommonSpacePinnedNoticeItems(partId),
     ]);
-  const hydratedMaterialItems = await hydrateCommonSpaceMaterialSummaries(
-    commonSpaceMaterialDataSource,
-    materialResponse.items,
-  );
-  const noticeItems = excludeCommonSpacePinnedNoticeItems(
-    noticeResponse.items,
-    pinnedNoticeItems,
-  ).slice(0, HOME_NOTICE_PREVIEW_LIMIT);
-  const materialItems = hydratedMaterialItems.slice(0, HOME_MATERIAL_PREVIEW_LIMIT);
-  const assignmentItems = getHomePreviewAssignmentItems(assignmentResponse.items);
+
+  const pinnedNoticeItems =
+    pinnedResult.status === "fulfilled" ? pinnedResult.value : [];
+  const noticeItems =
+    noticeResult.status === "fulfilled"
+      ? excludeCommonSpacePinnedNoticeItems(
+          noticeResult.value.items,
+          pinnedNoticeItems,
+        ).slice(0, HOME_NOTICE_PREVIEW_LIMIT)
+      : [];
+  const materialItems =
+    materialResult.status === "fulfilled"
+      ? (
+          await hydrateCommonSpaceMaterialSummaries(
+            commonSpaceMaterialDataSource,
+            materialResult.value.items,
+          )
+        ).slice(0, HOME_MATERIAL_PREVIEW_LIMIT)
+      : [];
+  const assignmentItems =
+    assignmentResult.status === "fulfilled"
+      ? getHomePreviewAssignmentItems(assignmentResult.value.items)
+      : [];
 
   return {
     pinnedNoticeItems,
