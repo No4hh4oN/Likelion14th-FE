@@ -1,4 +1,5 @@
 import {
+  createCommonSpaceNoticeComment,
   getCommonSpaceNoticeDetail,
   getCommonSpaceNoticeList,
 } from "./api";
@@ -7,6 +8,7 @@ import {
   getMockCommonSpaceNoticeList,
 } from "./mock";
 import type {
+  CommonSpaceNoticeCommentCreateRequest,
   CommonSpaceNoticeDetailItem,
   CommonSpaceNoticeListItem,
   CommonSpaceNoticeListQuery,
@@ -27,6 +29,13 @@ export type CommonSpaceNoticeDataSource = {
    * 공지 상세를 조회한다.
    */
   getDetail(noticeId: number): Promise<CommonSpaceNoticeDetailItem | null>;
+  /**
+   * 공지 댓글을 작성한다.
+   */
+  createComment(
+    noticeId: number,
+    payload: CommonSpaceNoticeCommentCreateRequest,
+  ): Promise<void>;
 };
 
 /**
@@ -38,6 +47,9 @@ export const commonSpaceNoticeApiDataSource: CommonSpaceNoticeDataSource = {
   },
   async getDetail(noticeId) {
     return getCommonSpaceNoticeDetail(noticeId);
+  },
+  async createComment(noticeId, payload) {
+    await createCommonSpaceNoticeComment(noticeId, payload);
   },
 };
 
@@ -51,22 +63,28 @@ export const commonSpaceNoticeMockDataSource: CommonSpaceNoticeDataSource = {
   async getDetail(noticeId) {
     return getMockCommonSpaceNoticeDetail(noticeId);
   },
+  async createComment() {
+    return;
+  },
 };
 
 /**
- * pinned 공지 API 명세가 준비되기 전까지 사용할 임시 pinned 공지 목록을 조회한다.
- * 추후 백엔드 스펙이 추가되면 이 함수만 실 API 기준으로 교체하면 된다.
+ * 상단 배너에 사용할 pinned 공지 목록을 조회한다.
  */
 export async function getCommonSpacePinnedNoticeItems(
   partId: CommonSpacePartId,
 ): Promise<CommonSpaceNoticeListItem[]> {
-  const response = await commonSpaceNoticeMockDataSource.getList({
-    partId,
-    page: 0,
-    size: 100,
-  });
+  try {
+    const response = await commonSpaceNoticeApiDataSource.getList({
+      partId,
+      page: 0,
+      size: 100,
+    });
 
-  return response.items.filter((item) => item.isPinned);
+    return response.items.filter((item) => item.isPinned);
+  } catch {
+    return [];
+  }
 }
 
 /**

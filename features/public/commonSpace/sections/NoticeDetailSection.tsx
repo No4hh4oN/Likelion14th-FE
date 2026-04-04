@@ -11,6 +11,7 @@ import {
 import NoticeCommentsSection from "../components/NoticeCommentsSection";
 import { commonSpaceNoticeApiDataSource } from "../notices/source";
 import type {
+  CommonSpaceNoticeCommentCreateRequest,
   CommonSpaceNoticeDetailItem,
   CommonSpaceNoticeListItem,
   CommonSpaceNoticeLoadState,
@@ -42,22 +43,34 @@ function formatNoticeDateTime(value: string) {
 }
 
 /**
+ * 공지 상세 섹션에 필요한 상세/목록 데이터를 함께 불러온다.
+ */
+async function getNoticeDetailSectionData(
+  noticeId: number,
+  partId: CommonSpacePartId,
+) {
+  const [detailResponse, listResponse] = await Promise.all([
+    commonSpaceNoticeApiDataSource.getDetail(noticeId),
+    commonSpaceNoticeApiDataSource.getList({
+      partId,
+      page: 0,
+      size: 100,
+    }),
+  ]);
+
+  return {
+    noticeDetail: detailResponse,
+    noticeItems: listResponse.items,
+  };
+}
+
+/**
  * 공지 상세 레이아웃을 렌더링한다.
  */
 export default function NoticeDetailSection({
   partId,
   noticeId,
 }: NoticeDetailSectionProps) {
-  /**
-   * 공지 댓글 API 명세가 준비되기 전까지는 댓글 입력을 막아둔다.
-   */
-  const CAN_WRITE_NOTICE_COMMENT = false;
-
-  /**
-   * 댓글 API 준비 전 안내 문구다.
-   */
-  const NOTICE_COMMENT_BLOCKED_MESSAGE = "댓글 기능 준비 중입니다.";
-
   /**
    * 현재 공지 상세 데이터다.
    */
@@ -83,23 +96,16 @@ export default function NoticeDetailSection({
     async function loadNoticeDetail() {
       setLoadState("loading");
 
-        try {
-          const [detailResponse, listResponse] = await Promise.all([
-            commonSpaceNoticeApiDataSource.getDetail(noticeId),
-            commonSpaceNoticeApiDataSource.getList({
-              partId,
-              page: 0,
-              size: 100,
-            }),
-          ]);
+      try {
+        const nextSectionData = await getNoticeDetailSectionData(noticeId, partId);
 
         if (!isMounted) {
           return;
         }
 
-        setNoticeDetail(detailResponse);
-        setNoticeItems(listResponse.items);
-        setLoadState(detailResponse ? "success" : "empty");
+        setNoticeDetail(nextSectionData.noticeDetail);
+        setNoticeItems(nextSectionData.noticeItems);
+        setLoadState(nextSectionData.noticeDetail ? "success" : "empty");
       } catch {
         if (!isMounted) {
           return;
@@ -117,6 +123,20 @@ export default function NoticeDetailSection({
       isMounted = false;
     };
   }, [noticeId, partId]);
+
+  /**
+   * 댓글 등록 이후 상세/목록 상태를 새로 불러온다.
+   */
+  async function handleSubmitComment(
+    payload: CommonSpaceNoticeCommentCreateRequest,
+  ) {
+    await commonSpaceNoticeApiDataSource.createComment(noticeId, payload);
+
+    const nextSectionData = await getNoticeDetailSectionData(noticeId, partId);
+    setNoticeDetail(nextSectionData.noticeDetail);
+    setNoticeItems(nextSectionData.noticeItems);
+    setLoadState(nextSectionData.noticeDetail ? "success" : "empty");
+  }
 
   /**
    * 현재 공지의 목록 내 위치다.
@@ -235,9 +255,9 @@ export default function NoticeDetailSection({
         <NoticeCommentsSection
           key={noticeId}
           noticeId={noticeId}
-          canWriteComment={CAN_WRITE_NOTICE_COMMENT}
-          initialComments={[]}
-          blockedMessage={NOTICE_COMMENT_BLOCKED_MESSAGE}
+          canWriteComment
+          initialComments={noticeDetail.comments}
+          onSubmitComment={handleSubmitComment}
         />
 
         <div className="mt-8 grid gap-4 md:grid-cols-2">

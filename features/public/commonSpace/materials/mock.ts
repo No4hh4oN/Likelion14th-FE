@@ -193,6 +193,26 @@ export const COMMON_SPACE_MATERIAL_MOCK_ITEMS: CommonSpaceMaterialListItem[] = [
 ];
 
 /**
+ * 세션 자료별 댓글 레이아웃 검증용 mock 데이터다.
+ */
+export const COMMON_SPACE_MATERIAL_MOCK_COMMENTS_BY_ID: Record<
+  number,
+  CommonSpaceNoticeCommentItem[]
+> = {
+  1001: [
+    {
+      id: 1,
+      authorName: "윤혜원 (14기 운영진)",
+      authorDescription: "경동나비엔보일러공학과 24학번",
+      profileImageSrc: "/images/defaultProf.webp",
+      profileImageAlt: "윤혜원 프로필 사진",
+      content: "세션 자료는 본문 링크와 첨부파일 둘 다 확인해 주세요.",
+      images: [],
+    },
+  ],
+};
+
+/**
  * 세션 자료 상세 레이아웃 검증용 mock 상세 데이터다.
  */
 export const COMMON_SPACE_MATERIAL_MOCK_DETAIL_BY_ID: Record<
@@ -220,6 +240,7 @@ export const COMMON_SPACE_MATERIAL_MOCK_DETAIL_BY_ID: Record<
       },
     ],
     hasAttachments: true,
+    comments: getMockCommonSpaceMaterialComments(1001),
   },
   1002: {
     id: 1002,
@@ -247,27 +268,8 @@ export const COMMON_SPACE_MATERIAL_MOCK_DETAIL_BY_ID: Record<
       },
     ],
     hasAttachments: true,
+    comments: getMockCommonSpaceMaterialComments(1002),
   },
-};
-
-/**
- * 세션 자료별 댓글 레이아웃 검증용 mock 데이터다.
- */
-export const COMMON_SPACE_MATERIAL_MOCK_COMMENTS_BY_ID: Record<
-  number,
-  CommonSpaceNoticeCommentItem[]
-> = {
-  1001: [
-    {
-      id: 1,
-      authorName: "윤혜원 (14기 운영진)",
-      authorDescription: "경동나비엔보일러공학과 24학번",
-      profileImageSrc: "/images/defaultProf.webp",
-      profileImageAlt: "윤혜원 프로필 사진",
-      content: "세션 자료는 본문 링크와 첨부파일 둘 다 확인해 주세요.",
-      images: [],
-    },
-  ],
 };
 
 /**
@@ -299,6 +301,7 @@ function createFallbackMockMaterialDetail(
         ]
       : [],
     hasAttachments: item.hasAttachments,
+    comments: getMockCommonSpaceMaterialComments(item.id),
   };
 }
 

@@ -1,4 +1,9 @@
 import type { CommonSpacePartId } from "../types";
+import type {
+  CommonSpaceNoticeCommentApiItem,
+  CommonSpaceNoticeCommentCreateRequest,
+  CommonSpaceNoticeCommentItem,
+} from "../notices/types";
 
 /**
  * 세션 자료 목록 조회 API에서 사용하는 카테고리 값이다.
@@ -28,6 +33,8 @@ export type CommonSpaceMaterialSummaryApiItem = {
   noticeId: number;
   /** 자료 제목 */
   title: string;
+  /** 상단 고정 자료 여부 */
+  pinned: boolean;
   /** 자료 카테고리 */
   category: CommonSpaceMaterialApiCategory | string;
   /** 자료 대상 파트 */
@@ -36,6 +43,8 @@ export type CommonSpaceMaterialSummaryApiItem = {
   createdAt: string;
   /** 첨부파일 개수 */
   fileCount: number;
+  /** 목록 대표 이미지 URL */
+  thumbnailImageUrl?: string;
 };
 
 /**
@@ -80,6 +89,8 @@ export type CommonSpaceMaterialApiItem = {
   noticePart: CommonSpaceMaterialApiPart | string;
   /** 게시글 상태 */
   status: CommonSpaceMaterialApiStatus | string;
+  /** 상단 고정 자료 여부 */
+  pinned: boolean;
   /** 생성 시각 */
   createdAt: string;
   /** 수정 시각 */
@@ -94,7 +105,15 @@ export type CommonSpaceMaterialDetailApiResponse = {
   notice: CommonSpaceMaterialApiItem;
   /** 첨부파일 목록 */
   files: CommonSpaceMaterialFileApiItem[];
+  /** 댓글 목록 */
+  comments: CommonSpaceNoticeCommentApiItem[];
 };
+
+/**
+ * 세션 자료 댓글 생성에 사용하는 요청 타입이다.
+ */
+export type CommonSpaceMaterialCommentCreateRequest =
+  CommonSpaceNoticeCommentCreateRequest;
 
 /**
  * 세션 자료 목록 조회에 사용하는 화면용 쿼리 타입이다.
@@ -178,6 +197,8 @@ export type CommonSpaceMaterialDetailItem = {
   attachments: CommonSpaceMaterialAttachment[];
   /** 첨부파일 존재 여부 */
   hasAttachments: boolean;
+  /** 댓글 목록 */
+  comments: CommonSpaceNoticeCommentItem[];
 };
 
 /**

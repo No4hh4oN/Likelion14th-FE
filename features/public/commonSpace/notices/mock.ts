@@ -239,107 +239,6 @@ export const COMMON_SPACE_NOTICE_MOCK_ITEMS: CommonSpaceNoticeListItem[] = [
 ];
 
 /**
- * 공지 상세 레이아웃 검증용 mock 상세 데이터다.
- */
-export const COMMON_SPACE_NOTICE_MOCK_DETAIL_BY_ID: Record<
-  number,
-  CommonSpaceNoticeDetailItem
-> = {
-  101: {
-    id: 101,
-    title: "3/11 5주차 공통 세션 예정입니다.",
-    authorName: "윤혜원",
-    authorDescription: "멋쟁이사자처럼 삼육대학교 24학번",
-    content:
-      "레시피\n\n재료: 진짬뽕 5봉지, 썰은 소고기, 미역국(또는 냉동된 된장국), 반쪽 계란(개당 4등분)\n1. 냄비에 소고기 미역국 500ml(기본 진짬뽕 물 양 550ml)와 된장국을 넣고 색이 날 때까지 고기를 넣고 한번 볶습니다.\n2. 미역국이 끓으면 분말스프를 넣고 감칠맛을 더합니다.\n3. 육수가 끓기 전에 면 사리를 부어 면이 탄력을 살리도록 천천히 끓여 줍니다.\n4. 쫄깃한 면 위에 미역과 소고기를 얹습니다.\n\n그냥 집에서 끓인 미역국으로 만들어도 되는 것 같지만 저는 집에 미역국이 있어서 기존 국물 레시피 그대로 끓였고 그대로 넣어서 스프가 미역국이랑 잘 어울리더라고요! 면이랑 계란이 포인트라 입맛 없을 때 진짜 좋아요.\n\n만약 미역국 대신 김칫국이나 라면국물이 강하면 불리니까 추천하지는 않고요. 두부나 콩나물만 얹어 먹어도 괜찮더라고요. 전체적으로 입맛 없을 때 한 그릇으로도 충분히 배부른 조합이었습니다.",
-    bodyImageSrc: "/images/commonSpace/default.webp",
-    bodyImageAlt: "공지 본문 예시 이미지",
-    partId: "all",
-    status: "ACTIVE",
-    createdAt: "2026-03-25T10:00:00",
-    updatedAt: "2026-03-25T10:00:00",
-    attachments: [
-      {
-        id: 9001,
-        name: "5주차_공통세션_안내.pdf",
-        url: "https://example.com/files/common-session-week5.pdf",
-      },
-    ],
-    hasAttachments: true,
-  },
-  102: {
-    id: 102,
-    title: "세션의 규칙을 안내드립니다. (첨부파일 참조)",
-    authorName: "운영진",
-    authorDescription: "멋쟁이사자처럼 삼육대학교",
-    content:
-      "세션 참여 규칙과 출결 기준을 다시 안내드립니다.\n첨부된 가이드 문서를 함께 확인해 주세요.",
-    partId: "all",
-    status: "ACTIVE",
-    createdAt: "2026-03-24T15:00:00",
-    updatedAt: "2026-03-24T15:00:00",
-    attachments: [
-      {
-        id: 9002,
-        name: "세션_운영_가이드.pdf",
-        url: "https://example.com/files/session-guide.pdf",
-      },
-    ],
-    hasAttachments: true,
-  },
-  201: {
-    id: 201,
-    title: "프론트엔드 2주차 세션 공지",
-    authorName: "프론트엔드 운영진",
-    authorDescription: "멋쟁이사자처럼 삼육대학교",
-    content:
-      "프론트엔드 2주차 세션은 React 상태 관리 기초를 다룹니다.\n사전 과제와 세션 링크를 확인해 주세요.",
-    partId: "front-end",
-    status: "ACTIVE",
-    createdAt: "2026-03-24T13:30:00",
-    updatedAt: "2026-03-24T13:30:00",
-    attachments: [
-      {
-        id: 9201,
-        name: "frontend-week2.pdf",
-        url: "https://example.com/files/frontend-week2.pdf",
-      },
-    ],
-    hasAttachments: true,
-  },
-};
-
-/**
- * 상세 mock이 없는 공지에 대한 기본 상세 데이터를 만든다.
- */
-function createFallbackMockNoticeDetail(
-  item: CommonSpaceNoticeListItem,
-): CommonSpaceNoticeDetailItem {
-  return {
-    id: item.id,
-    title: item.title,
-    authorName: "운영진",
-    authorDescription: "멋쟁이사자처럼 삼육대학교",
-    content:
-      "상세 본문은 추후 API 연결 시 실제 데이터로 교체됩니다.\n현재는 공지 상세 레이아웃 검증용 기본 문구를 표시하고 있습니다.",
-    partId: item.partId,
-    status: "ACTIVE",
-    createdAt: item.createdAt,
-    updatedAt: item.createdAt,
-    attachments: item.hasAttachments
-      ? [
-          {
-            id: item.id * 10,
-            name: `${item.title}.pdf`,
-            url: `https://example.com/files/notice-${item.id}.pdf`,
-          },
-        ]
-      : [],
-    hasAttachments: item.hasAttachments,
-  };
-}
-
-/**
  * 공지별 댓글 레이아웃 검증용 mock 데이터다.
  */
 export const COMMON_SPACE_NOTICE_MOCK_COMMENTS_BY_ID: Record<
@@ -384,6 +283,111 @@ export const COMMON_SPACE_NOTICE_MOCK_COMMENTS_BY_ID: Record<
     },
   ],
 };
+
+/**
+ * 공지 상세 레이아웃 검증용 mock 상세 데이터다.
+ */
+export const COMMON_SPACE_NOTICE_MOCK_DETAIL_BY_ID: Record<
+  number,
+  CommonSpaceNoticeDetailItem
+> = {
+  101: {
+    id: 101,
+    title: "3/11 5주차 공통 세션 예정입니다.",
+    authorName: "윤혜원",
+    authorDescription: "멋쟁이사자처럼 삼육대학교 24학번",
+    content:
+      "레시피\n\n재료: 진짬뽕 5봉지, 썰은 소고기, 미역국(또는 냉동된 된장국), 반쪽 계란(개당 4등분)\n1. 냄비에 소고기 미역국 500ml(기본 진짬뽕 물 양 550ml)와 된장국을 넣고 색이 날 때까지 고기를 넣고 한번 볶습니다.\n2. 미역국이 끓으면 분말스프를 넣고 감칠맛을 더합니다.\n3. 육수가 끓기 전에 면 사리를 부어 면이 탄력을 살리도록 천천히 끓여 줍니다.\n4. 쫄깃한 면 위에 미역과 소고기를 얹습니다.\n\n그냥 집에서 끓인 미역국으로 만들어도 되는 것 같지만 저는 집에 미역국이 있어서 기존 국물 레시피 그대로 끓였고 그대로 넣어서 스프가 미역국이랑 잘 어울리더라고요! 면이랑 계란이 포인트라 입맛 없을 때 진짜 좋아요.\n\n만약 미역국 대신 김칫국이나 라면국물이 강하면 불리니까 추천하지는 않고요. 두부나 콩나물만 얹어 먹어도 괜찮더라고요. 전체적으로 입맛 없을 때 한 그릇으로도 충분히 배부른 조합이었습니다.",
+    bodyImageSrc: "/images/commonSpace/default.webp",
+    bodyImageAlt: "공지 본문 예시 이미지",
+    partId: "all",
+    status: "ACTIVE",
+    createdAt: "2026-03-25T10:00:00",
+    updatedAt: "2026-03-25T10:00:00",
+    attachments: [
+      {
+        id: 9001,
+        name: "5주차_공통세션_안내.pdf",
+        url: "https://example.com/files/common-session-week5.pdf",
+      },
+    ],
+    hasAttachments: true,
+    comments: getMockCommonSpaceNoticeComments(101),
+  },
+  102: {
+    id: 102,
+    title: "세션의 규칙을 안내드립니다. (첨부파일 참조)",
+    authorName: "운영진",
+    authorDescription: "멋쟁이사자처럼 삼육대학교",
+    content:
+      "세션 참여 규칙과 출결 기준을 다시 안내드립니다.\n첨부된 가이드 문서를 함께 확인해 주세요.",
+    partId: "all",
+    status: "ACTIVE",
+    createdAt: "2026-03-24T15:00:00",
+    updatedAt: "2026-03-24T15:00:00",
+    attachments: [
+      {
+        id: 9002,
+        name: "세션_운영_가이드.pdf",
+        url: "https://example.com/files/session-guide.pdf",
+      },
+    ],
+    hasAttachments: true,
+    comments: getMockCommonSpaceNoticeComments(102),
+  },
+  201: {
+    id: 201,
+    title: "프론트엔드 2주차 세션 공지",
+    authorName: "프론트엔드 운영진",
+    authorDescription: "멋쟁이사자처럼 삼육대학교",
+    content:
+      "프론트엔드 2주차 세션은 React 상태 관리 기초를 다룹니다.\n사전 과제와 세션 링크를 확인해 주세요.",
+    partId: "front-end",
+    status: "ACTIVE",
+    createdAt: "2026-03-24T13:30:00",
+    updatedAt: "2026-03-24T13:30:00",
+    attachments: [
+      {
+        id: 9201,
+        name: "frontend-week2.pdf",
+        url: "https://example.com/files/frontend-week2.pdf",
+      },
+    ],
+    hasAttachments: true,
+    comments: getMockCommonSpaceNoticeComments(201),
+  },
+};
+
+/**
+ * 상세 mock이 없는 공지에 대한 기본 상세 데이터를 만든다.
+ */
+function createFallbackMockNoticeDetail(
+  item: CommonSpaceNoticeListItem,
+): CommonSpaceNoticeDetailItem {
+  return {
+    id: item.id,
+    title: item.title,
+    authorName: "운영진",
+    authorDescription: "멋쟁이사자처럼 삼육대학교",
+    content:
+      "상세 본문은 추후 API 연결 시 실제 데이터로 교체됩니다.\n현재는 공지 상세 레이아웃 검증용 기본 문구를 표시하고 있습니다.",
+    partId: item.partId,
+    status: "ACTIVE",
+    createdAt: item.createdAt,
+    updatedAt: item.createdAt,
+    attachments: item.hasAttachments
+      ? [
+          {
+            id: item.id * 10,
+            name: `${item.title}.pdf`,
+            url: `https://example.com/files/notice-${item.id}.pdf`,
+          },
+        ]
+      : [],
+    hasAttachments: item.hasAttachments,
+    comments: getMockCommonSpaceNoticeComments(item.id),
+  };
+}
 
 /**
  * 파트 필터와 페이지네이션을 적용해 mock 공지 목록 결과를 만든다.

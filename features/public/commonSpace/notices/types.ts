@@ -28,6 +28,8 @@ export type CommonSpaceNoticeSummaryApiItem = {
   noticeId: number;
   /** 공지 제목 */
   title: string;
+  /** 상단 고정 공지 여부 */
+  pinned: boolean;
   /** 공지 카테고리 */
   category: CommonSpaceNoticeApiCategory | string;
   /** 공지 대상 파트 */
@@ -36,6 +38,8 @@ export type CommonSpaceNoticeSummaryApiItem = {
   createdAt: string;
   /** 첨부파일 개수 */
   fileCount: number;
+  /** 목록 대표 이미지 URL */
+  thumbnailImageUrl?: string;
 };
 
 /**
@@ -80,10 +84,54 @@ export type CommonSpaceNoticeApiItem = {
   noticePart: CommonSpaceNoticeApiPart | string;
   /** 게시글 상태 */
   status: CommonSpaceNoticeApiStatus | string;
+  /** 상단 고정 공지 여부 */
+  pinned: boolean;
   /** 생성 시각 */
   createdAt: string;
   /** 수정 시각 */
   updatedAt: string;
+};
+
+/**
+ * 댓글 첨부파일 API 응답이다.
+ */
+export type CommonSpaceNoticeCommentFileApiItem = {
+  /** 파일 식별자 */
+  fileId: number;
+  /** 파일 URL */
+  fileUrl: string;
+  /** 원본 파일명 */
+  originalFileName: string;
+  /** 파일 확장자 */
+  fileExtension?: string;
+  /** MIME 타입 */
+  contentType?: string;
+  /** 파일 크기 */
+  fileSize?: number;
+  /** 업로드 시각 */
+  uploadedAt?: string;
+};
+
+/**
+ * 댓글 API의 단일 댓글 응답이다.
+ */
+export type CommonSpaceNoticeCommentApiItem = {
+  /** 댓글 식별자 */
+  commentId: number;
+  /** 작성자 식별자 */
+  userId: number;
+  /** 작성자명 */
+  userName: string;
+  /** 댓글 본문 */
+  content: string;
+  /** 댓글 상태 */
+  status: CommonSpaceNoticeApiStatus | string;
+  /** 생성 시각 */
+  createdAt: string;
+  /** 수정 시각 */
+  updatedAt: string;
+  /** 댓글 첨부파일 목록 */
+  files: CommonSpaceNoticeCommentFileApiItem[];
 };
 
 /**
@@ -94,6 +142,34 @@ export type CommonSpaceNoticeDetailApiResponse = {
   notice: CommonSpaceNoticeApiItem;
   /** 첨부파일 목록 */
   files: CommonSpaceNoticeFileApiItem[];
+  /** 댓글 목록 */
+  comments: CommonSpaceNoticeCommentApiItem[];
+};
+
+/**
+ * 공지 댓글 생성 API의 화면용 요청 타입이다.
+ */
+export type CommonSpaceNoticeCommentCreateRequest = {
+  /** 댓글 본문 */
+  content: string;
+  /** 첨부할 이미지 파일 목록 */
+  files: File[];
+};
+
+/**
+ * 공지 댓글 생성 API 응답이다.
+ */
+export type CommonSpaceNoticeCreateCommentApiResponse = {
+  /** 처리 결과 */
+  result: string;
+  /** 공지 식별자 */
+  noticeId: number;
+  /** 댓글 식별자 */
+  commentId: number;
+  /** 업로드된 파일 수 */
+  uploadedFileCount: number;
+  /** 생성 시각 */
+  createdAt: string;
 };
 
 /**
@@ -172,6 +248,8 @@ export type CommonSpaceNoticeDetailItem = {
   attachments: CommonSpaceNoticeAttachment[];
   /** 첨부파일 존재 여부 */
   hasAttachments: boolean;
+  /** 댓글 목록 */
+  comments: CommonSpaceNoticeCommentItem[];
 };
 
 /**
@@ -195,7 +273,7 @@ export type CommonSpaceNoticeCommentItem = {
   /** 작성자명 */
   authorName: string;
   /** 작성자 부가 정보 */
-  authorDescription: string;
+  authorDescription?: string;
   /** 작성자 프로필 이미지 경로 */
   profileImageSrc?: string;
   /** 작성자 프로필 이미지 대체 텍스트 */

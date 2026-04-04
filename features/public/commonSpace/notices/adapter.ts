@@ -7,6 +7,10 @@ import {
 import type {
   CommonSpaceNoticeApiPart,
   CommonSpaceNoticeAttachment,
+  CommonSpaceNoticeCommentApiItem,
+  CommonSpaceNoticeCommentFileApiItem,
+  CommonSpaceNoticeCommentImage,
+  CommonSpaceNoticeCommentItem,
   CommonSpaceNoticeDetailApiResponse,
   CommonSpaceNoticeDetailItem,
   CommonSpaceNoticeFileApiItem,
@@ -127,7 +131,7 @@ export function toCommonSpaceNoticeListItem(
     createdAt: item.createdAt,
     fileCount: item.fileCount,
     hasAttachments: item.fileCount > 0,
-    isPinned: false,
+    isPinned: item.pinned,
     isNew: isCommonSpaceNoticeNew(item.createdAt, now),
   };
 }
@@ -166,6 +170,59 @@ export function toCommonSpaceNoticeAttachment(
 }
 
 /**
+ * 댓글 첨부파일이 화면에 표시할 이미지인지 판별한다.
+ */
+export function isCommonSpaceNoticeCommentImageFile(
+  file: CommonSpaceNoticeCommentFileApiItem,
+) {
+  if (file.contentType?.startsWith("image/")) {
+    return true;
+  }
+
+  const normalizedExtension = file.fileExtension?.toLowerCase();
+
+  return (
+    normalizedExtension === "jpg" ||
+    normalizedExtension === "jpeg" ||
+    normalizedExtension === "png" ||
+    normalizedExtension === "webp" ||
+    normalizedExtension === "gif"
+  );
+}
+
+/**
+ * 댓글 첨부파일 API 응답을 화면용 이미지 아이템으로 변환한다.
+ */
+export function toCommonSpaceNoticeCommentImage(
+  file: CommonSpaceNoticeCommentFileApiItem,
+): CommonSpaceNoticeCommentImage {
+  return {
+    id: String(file.fileId),
+    src: file.fileUrl,
+    alt: file.originalFileName,
+  };
+}
+
+/**
+ * 댓글 API 응답을 화면용 댓글 아이템으로 변환한다.
+ */
+export function toCommonSpaceNoticeCommentItem(
+  item: CommonSpaceNoticeCommentApiItem,
+): CommonSpaceNoticeCommentItem {
+  return {
+    id: item.commentId,
+    authorName: item.userName,
+    authorDescription: undefined,
+    profileImageSrc: "/images/defaultProf.webp",
+    profileImageAlt: `${item.userName} 프로필 사진`,
+    content: item.content,
+    images: item.files
+      .filter(isCommonSpaceNoticeCommentImageFile)
+      .map(toCommonSpaceNoticeCommentImage),
+  };
+}
+
+/**
  * 공지 상세 API의 notice 객체를 화면용 상세 아이템으로 변환한다.
  */
 export function toCommonSpaceNoticeDetailItem(
@@ -184,5 +241,6 @@ export function toCommonSpaceNoticeDetailItem(
     updatedAt: notice.updatedAt,
     attachments,
     hasAttachments: attachments.length > 0,
+    comments: response.comments.map(toCommonSpaceNoticeCommentItem),
   };
 }

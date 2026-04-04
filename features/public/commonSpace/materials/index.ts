@@ -1,4 +1,8 @@
-export { getCommonSpaceMaterialDetail, getCommonSpaceMaterialList } from "./api";
+export {
+  createCommonSpaceMaterialComment,
+  getCommonSpaceMaterialDetail,
+  getCommonSpaceMaterialList,
+} from "./api";
 export {
   buildCommonSpaceMaterialListParams,
   mapCommonSpacePartIdToMaterialApiPart,
@@ -33,6 +37,7 @@ export type {
   CommonSpaceMaterialApiPart,
   CommonSpaceMaterialApiStatus,
   CommonSpaceMaterialAttachment,
+  CommonSpaceMaterialCommentCreateRequest,
   CommonSpaceMaterialDetailApiResponse,
   CommonSpaceMaterialDetailItem,
   CommonSpaceMaterialFileApiItem,

@@ -11,6 +11,7 @@ import {
 import NoticeCommentsSection from "../components/NoticeCommentsSection";
 import { commonSpaceMaterialApiDataSource } from "../materials/source";
 import type {
+  CommonSpaceMaterialCommentCreateRequest,
   CommonSpaceMaterialDetailItem,
   CommonSpaceMaterialListItem,
   CommonSpaceMaterialLoadState,
@@ -42,22 +43,34 @@ function formatMaterialDateTime(value: string) {
 }
 
 /**
+ * 세션 자료 상세 섹션에 필요한 상세/목록 데이터를 함께 불러온다.
+ */
+async function getMaterialDetailSectionData(
+  materialId: number,
+  partId: CommonSpacePartId,
+) {
+  const [detailResponse, listResponse] = await Promise.all([
+    commonSpaceMaterialApiDataSource.getDetail(materialId),
+    commonSpaceMaterialApiDataSource.getList({
+      partId,
+      page: 0,
+      size: 100,
+    }),
+  ]);
+
+  return {
+    materialDetail: detailResponse,
+    materialItems: listResponse.items,
+  };
+}
+
+/**
  * 세션 자료 상세 레이아웃을 렌더링한다.
  */
 export default function MaterialDetailSection({
   partId,
   materialId,
 }: MaterialDetailSectionProps) {
-  /**
-   * 세션 자료 댓글 API 명세가 준비되기 전까지는 댓글 입력을 막아둔다.
-   */
-  const CAN_WRITE_MATERIAL_COMMENT = false;
-
-  /**
-   * 댓글 API 준비 전 안내 문구다.
-   */
-  const MATERIAL_COMMENT_BLOCKED_MESSAGE = "댓글 기능 준비 중입니다.";
-
   /**
    * 현재 세션 자료 상세 데이터다.
    */
@@ -83,23 +96,16 @@ export default function MaterialDetailSection({
     async function loadMaterialDetail() {
       setLoadState("loading");
 
-        try {
-          const [detailResponse, listResponse] = await Promise.all([
-            commonSpaceMaterialApiDataSource.getDetail(materialId),
-            commonSpaceMaterialApiDataSource.getList({
-              partId,
-              page: 0,
-              size: 100,
-            }),
-          ]);
+      try {
+        const nextSectionData = await getMaterialDetailSectionData(materialId, partId);
 
         if (!isMounted) {
           return;
         }
 
-        setMaterialDetail(detailResponse);
-        setMaterialItems(listResponse.items);
-        setLoadState(detailResponse ? "success" : "empty");
+        setMaterialDetail(nextSectionData.materialDetail);
+        setMaterialItems(nextSectionData.materialItems);
+        setLoadState(nextSectionData.materialDetail ? "success" : "empty");
       } catch {
         if (!isMounted) {
           return;
@@ -117,6 +123,20 @@ export default function MaterialDetailSection({
       isMounted = false;
     };
   }, [materialId, partId]);
+
+  /**
+   * 댓글 등록 이후 상세/목록 상태를 새로 불러온다.
+   */
+  async function handleSubmitComment(
+    payload: CommonSpaceMaterialCommentCreateRequest,
+  ) {
+    await commonSpaceMaterialApiDataSource.createComment(materialId, payload);
+
+    const nextSectionData = await getMaterialDetailSectionData(materialId, partId);
+    setMaterialDetail(nextSectionData.materialDetail);
+    setMaterialItems(nextSectionData.materialItems);
+    setLoadState(nextSectionData.materialDetail ? "success" : "empty");
+  }
 
   /**
    * 현재 자료의 목록 내 위치다.
@@ -236,9 +256,9 @@ export default function MaterialDetailSection({
         <NoticeCommentsSection
           key={`material-comments-${materialId}`}
           noticeId={materialId}
-          canWriteComment={CAN_WRITE_MATERIAL_COMMENT}
-          initialComments={[]}
-          blockedMessage={MATERIAL_COMMENT_BLOCKED_MESSAGE}
+          canWriteComment
+          initialComments={materialDetail.comments}
+          onSubmitComment={handleSubmitComment}
         />
 
         <div className="mt-29 grid gap-4 md:grid-cols-2">

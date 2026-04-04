@@ -1,4 +1,5 @@
 import {
+  createCommonSpaceMaterialComment,
   getCommonSpaceMaterialDetail,
   getCommonSpaceMaterialList,
 } from "./api";
@@ -7,6 +8,7 @@ import {
   getMockCommonSpaceMaterialList,
 } from "./mock";
 import type {
+  CommonSpaceMaterialCommentCreateRequest,
   CommonSpaceMaterialDetailItem,
   CommonSpaceMaterialListQuery,
   CommonSpaceMaterialListResult,
@@ -27,6 +29,13 @@ export type CommonSpaceMaterialDataSource = {
    * 세션 자료 상세를 조회한다.
    */
   getDetail(materialId: number): Promise<CommonSpaceMaterialDetailItem | null>;
+  /**
+   * 세션 자료 댓글을 작성한다.
+   */
+  createComment(
+    materialId: number,
+    payload: CommonSpaceMaterialCommentCreateRequest,
+  ): Promise<void>;
 };
 
 /**
@@ -78,6 +87,9 @@ export const commonSpaceMaterialApiDataSource: CommonSpaceMaterialDataSource = {
   async getDetail(materialId) {
     return getCommonSpaceMaterialDetail(materialId);
   },
+  async createComment(materialId, payload) {
+    await createCommonSpaceMaterialComment(materialId, payload);
+  },
 };
 
 /**
@@ -89,5 +101,8 @@ export const commonSpaceMaterialMockDataSource: CommonSpaceMaterialDataSource = 
   },
   async getDetail(materialId) {
     return getMockCommonSpaceMaterialDetail(materialId);
+  },
+  async createComment() {
+    return;
   },
 };

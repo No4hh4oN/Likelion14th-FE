@@ -1,5 +1,9 @@
 import type { CommonSpacePartId } from "../types";
 import {
+  isCommonSpaceNoticeNew,
+  toCommonSpaceNoticeCommentItem,
+} from "../notices/adapter";
+import {
   COMMON_SPACE_MATERIAL_CATEGORY,
   DEFAULT_COMMON_SPACE_MATERIAL_PAGE,
   DEFAULT_COMMON_SPACE_MATERIAL_PAGE_SIZE,
@@ -97,12 +101,14 @@ export function toCommonSpaceMaterialListItem(
   return {
     id: item.noticeId,
     title: item.title,
+    thumbnailSrc: item.thumbnailImageUrl || undefined,
+    thumbnailAlt: item.thumbnailImageUrl ? `${item.title} 썸네일` : undefined,
     partId: mapMaterialApiPartToCommonSpacePartId(item.part),
     createdAt: item.createdAt,
     fileCount: item.fileCount,
     hasAttachments: item.fileCount > 0,
-    isPinned: false,
-    isNew: false,
+    isPinned: item.pinned,
+    isNew: isCommonSpaceNoticeNew(item.createdAt),
   };
 }
 
@@ -156,5 +162,6 @@ export function toCommonSpaceMaterialDetailItem(
     updatedAt: material.updatedAt,
     attachments,
     hasAttachments: attachments.length > 0,
+    comments: response.comments.map(toCommonSpaceNoticeCommentItem),
   };
 }
