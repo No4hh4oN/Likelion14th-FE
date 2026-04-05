@@ -5,6 +5,10 @@ import Image from "next/image";
 import { useEffect, useId, useRef, useState } from "react";
 import { getMyProfile } from "@/features/public/mypage/api";
 import type { MyPageUserApiResponse } from "@/features/public/mypage/types";
+import {
+  buildCommonSpaceViewerDisplayName,
+  DEFAULT_COMMON_SPACE_PROFILE_IMAGE_SRC,
+} from "../author";
 import type {
   CommonSpaceNoticeCommentCreateRequest,
   CommonSpaceNoticeCommentImage,
@@ -32,24 +36,15 @@ type NoticeCommentDraftImageItem = CommonSpaceNoticeCommentImage & {
 };
 
 type NoticeCommentViewerInfo = {
-  /** 현재 사용자 이름 */
-  name: string;
-  /** 현재 사용자 부가 정보 */
-  description: string;
-  /** 현재 사용자 프로필 이미지 경로 */
-  profileImageSrc: string;
-  /** 현재 사용자 프로필 이미지 대체 텍스트 */
-  profileImageAlt: string;
+  /** 작성창 상단에 표시할 현재 사용자명 */
+  displayName: string;
 };
 
 /**
  * 프로필 조회 실패 시 사용할 기본 사용자 정보다.
  */
 const DEFAULT_NOTICE_COMMENT_VIEWER_INFO: NoticeCommentViewerInfo = {
-  name: "아기사자",
-  description: "멋쟁이사자처럼 삼육대학교",
-  profileImageSrc: "/images/defaultProf.webp",
-  profileImageAlt: "댓글 작성자 프로필 사진",
+  displayName: "아기사자",
 };
 
 /**
@@ -67,19 +62,11 @@ function toNoticeCommentViewerInfo(
     return DEFAULT_NOTICE_COMMENT_VIEWER_INFO;
   }
 
-  const name = profile.homepage.name || DEFAULT_NOTICE_COMMENT_VIEWER_INFO.name;
-  const description = profile.homepage.studentNo
-    ? `${profile.homepage.department} ${profile.homepage.studentNo}`
-    : profile.homepage.department || DEFAULT_NOTICE_COMMENT_VIEWER_INFO.description;
-  const profileImageSrc =
-    profile.homepage.profileImage?.url ||
-    DEFAULT_NOTICE_COMMENT_VIEWER_INFO.profileImageSrc;
-
   return {
-    name,
-    description,
-    profileImageSrc,
-    profileImageAlt: `${name} 프로필 사진`,
+    displayName: buildCommonSpaceViewerDisplayName(
+      profile,
+      DEFAULT_NOTICE_COMMENT_VIEWER_INFO.displayName,
+    ),
   };
 }
 
@@ -318,7 +305,7 @@ export default function NoticeCommentsSection(
             <Image
               src={
                 comment.profileImageSrc ??
-                DEFAULT_NOTICE_COMMENT_VIEWER_INFO.profileImageSrc
+                DEFAULT_COMMON_SPACE_PROFILE_IMAGE_SRC
               }
               alt={comment.profileImageAlt ?? `${comment.authorName} 프로필 사진`}
               width={48}
@@ -369,7 +356,9 @@ export default function NoticeCommentsSection(
       </div>
       {canWriteComment ? (
         <div className="rounded-[14px] bg-gray-6 px-9 py-8">
-          <p className="text-[20px] font-bold text-white-1">{viewerInfo.name}</p>
+          <p className="text-[20px] font-bold text-white-1">
+            {viewerInfo.displayName}
+          </p>
 
           <textarea
             ref={draftTextareaRef}

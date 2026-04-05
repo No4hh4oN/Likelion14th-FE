@@ -5,6 +5,10 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getMyProfile } from "@/features/public/mypage/api";
 import type { MyPageUserApiResponse, UserRole } from "@/features/public/mypage/types";
+import {
+  buildCommonSpaceViewerDisplayName,
+  mapCommonSpaceAuthorLevelToLabel,
+} from "../author";
 import DetailAttachmentList from "../components/DetailAttachmentList";
 import QnaAnswersSection from "../components/QnaAnswersSection";
 import { QnaAnswerStateBadge, QnaPartBadge } from "../components/QnaBadges";
@@ -30,6 +34,8 @@ type QnaDetailSectionProps = {
 type QnaViewerInfo = {
   /** 현재 사용자 역할 */
   role: UserRole;
+  /** 작성창에 표시할 현재 사용자명 */
+  displayName: string;
   /** 현재 사용자 이름 */
   name: string;
   /** 현재 사용자 부가 정보 */
@@ -51,6 +57,7 @@ const commonSpaceQnaDataSource = commonSpaceQnaApiDataSource;
  */
 const DEFAULT_QNA_VIEWER_INFO: QnaViewerInfo = {
   role: "아기사자",
+  displayName: "아기사자",
   name: "아기사자",
   description: "멋쟁이사자처럼 삼육대학교",
   profileImageSrc: "/images/defaultProf.webp",
@@ -64,16 +71,14 @@ function mapRoleLevelToUserRole(
   level?: string,
   fallbackRole: UserRole = DEFAULT_QNA_VIEWER_INFO.role,
 ): UserRole {
-  if (level === "STAFF") {
-    return "운영진";
-  }
+  const levelLabel = mapCommonSpaceAuthorLevelToLabel(level);
 
-  if (level === "BABY_LION") {
-    return "아기사자";
-  }
-
-  if (level === "OUTSIDER") {
-    return "게스트";
+  if (
+    levelLabel === "운영진" ||
+    levelLabel === "아기사자" ||
+    levelLabel === "게스트"
+  ) {
+    return levelLabel;
   }
 
   return fallbackRole;
@@ -98,6 +103,10 @@ function toQnaViewerInfo(profile: MyPageUserApiResponse | null): QnaViewerInfo {
 
   return {
     role,
+    displayName: buildCommonSpaceViewerDisplayName(
+      profile,
+      DEFAULT_QNA_VIEWER_INFO.displayName,
+    ),
     name,
     description,
     profileImageSrc,
@@ -364,7 +373,7 @@ export default function QnaDetailSection({
           answers={qnaDetail.answers}
           canWriteAnswer={canWriteAnswer}
           onSubmitAnswer={handleSubmitAnswer}
-          writerName={`${viewerInfo.name} (${viewerInfo.role})`}
+          writerName={viewerInfo.displayName}
           writerDescription={viewerInfo.description}
           writerProfileImageSrc={viewerInfo.profileImageSrc}
           writerProfileImageAlt={viewerInfo.profileImageAlt}

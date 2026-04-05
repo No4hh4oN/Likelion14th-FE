@@ -282,19 +282,7 @@ export default function QnaAnswersSection({
 
       {canWriteAnswer ? (
         <div className="rounded-[14px] bg-gray-6 px-9 py-8">
-          <div className="flex items-center gap-4">
-            <Image
-              src={writerProfileImageSrc}
-              alt={writerProfileImageAlt}
-              width={48}
-              height={48}
-              className="h-12 w-12 shrink-0 rounded-full object-cover"
-            />
-            <div className="min-w-0">
-              <p className="text-[20px] font-bold text-white-1">{writerName}</p>
-              <p className="text-[14px] text-gray-4">{writerDescription}</p>
-            </div>
-          </div>
+          <p className="text-[20px] font-bold text-white-1">{writerName}</p>
 
           <textarea
             ref={draftTextareaRef}

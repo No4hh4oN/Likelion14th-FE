@@ -156,3 +156,29 @@ export function toCommonSpaceAuthorView(
     profileImageAlt: authorName ? `${authorName} 프로필 사진` : undefined,
   };
 }
+
+/**
+ * 내 프로필 응답을 댓글/답변 작성창에 사용할 간략 작성자명으로 변환한다.
+ */
+export function buildCommonSpaceViewerDisplayName(
+  profile: MyPageUserApiResponse | null,
+  fallbackName: string,
+) {
+  if (!profile) {
+    return fallbackName;
+  }
+
+  const activeRole = profile.roles.find((role) => role.active) ?? profile.roles[0];
+
+  return (
+    buildCommonSpaceAuthorName(
+      {
+        name: profile.homepage.name,
+        generation: activeRole?.generation,
+        level: activeRole?.level,
+      },
+      fallbackName,
+    ) ?? fallbackName
+  );
+}
+import type { MyPageUserApiResponse } from "@/features/public/mypage/types";
