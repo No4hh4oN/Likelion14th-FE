@@ -16,6 +16,7 @@ const COMMON_SPACE_QNA_ALLOWED_TAG_NAMES = new Set([
   "P",
   "S",
   "SPAN",
+  "STRIKE",
   "STRONG",
   "U",
   "UL",
@@ -87,6 +88,55 @@ function normalizeCommonSpaceQnaAlignment(value?: string | null) {
   return COMMON_SPACE_QNA_ALLOWED_TEXT_ALIGNMENTS.has(normalizedValue)
     ? normalizedValue
     : null;
+}
+
+/**
+ * HTML 렌더링에 사용할 굵기 값을 허용 목록 기준으로 정규화한다.
+ */
+function normalizeCommonSpaceQnaFontWeight(value?: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  const normalizedValue = value.trim().toLowerCase();
+  const numericFontWeight = Number(normalizedValue);
+
+  if (normalizedValue === "bold" || normalizedValue === "bolder") {
+    return "bold";
+  }
+
+  if (Number.isFinite(numericFontWeight) && numericFontWeight >= 600) {
+    return "bold";
+  }
+
+  return null;
+}
+
+/**
+ * HTML 렌더링에 사용할 취소선/밑줄 값을 허용 목록 기준으로 정규화한다.
+ */
+function normalizeCommonSpaceQnaTextDecoration(value?: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  const normalizedValue = value.trim().toLowerCase();
+  const hasUnderline = normalizedValue.includes("underline");
+  const hasLineThrough = normalizedValue.includes("line-through");
+
+  if (hasUnderline && hasLineThrough) {
+    return "underline line-through";
+  }
+
+  if (hasUnderline) {
+    return "underline";
+  }
+
+  if (hasLineThrough) {
+    return "line-through";
+  }
+
+  return null;
 }
 
 /**
@@ -165,7 +215,13 @@ function sanitizeCommonSpaceQnaNode(node: Node, document: Document) {
   }
 
   const normalizedTagName =
-    tagName === "B" ? "strong" : tagName === "FONT" ? "span" : tagName.toLowerCase();
+    tagName === "B"
+      ? "strong"
+      : tagName === "FONT"
+        ? "span"
+        : tagName === "STRIKE"
+          ? "s"
+          : tagName.toLowerCase();
   const sanitizedElement = document.createElement(normalizedTagName);
   const styleTokens: string[] = [];
   const alignment = normalizeCommonSpaceQnaAlignment(
@@ -174,6 +230,10 @@ function sanitizeCommonSpaceQnaNode(node: Node, document: Document) {
   const color = normalizeCommonSpaceQnaColorValue(
     tagName === "FONT" ? element.getAttribute("color") : element.style.color,
   );
+  const fontWeight = normalizeCommonSpaceQnaFontWeight(element.style.fontWeight);
+  const textDecoration = normalizeCommonSpaceQnaTextDecoration(
+    element.style.textDecorationLine || element.style.textDecoration,
+  );
 
   if (alignment) {
     styleTokens.push(`text-align:${alignment}`);
@@ -181,6 +241,14 @@ function sanitizeCommonSpaceQnaNode(node: Node, document: Document) {
 
   if (color) {
     styleTokens.push(`color:${color}`);
+  }
+
+  if (fontWeight) {
+    styleTokens.push(`font-weight:${fontWeight}`);
+  }
+
+  if (textDecoration) {
+    styleTokens.push(`text-decoration:${textDecoration}`);
   }
 
   if (styleTokens.length > 0) {
