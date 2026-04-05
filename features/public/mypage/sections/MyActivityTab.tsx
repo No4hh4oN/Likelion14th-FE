@@ -2,7 +2,16 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getNoticeList, getQnaList } from "../api";
+import {
+  buildCommonSpaceMaterialDetailHref,
+  buildCommonSpaceNoticeDetailHref,
+  buildCommonSpaceQnaDetailHref,
+} from "@/features/public/commonSpace/config";
+import { buildCommonSpaceViewerDisplayName } from "@/features/public/commonSpace/author";
+import { getCommonSpaceMaterialDetail } from "@/features/public/commonSpace/materials/api";
+import { getCommonSpaceNoticeDetail } from "@/features/public/commonSpace/notices/api";
+import { getCommonSpaceQnaDetail } from "@/features/public/commonSpace/qna/api";
+import { getMyProfile, getNoticeList, getQnaList } from "../api";
 import type { MyPageUser } from "../types";
 import MyCalendarSection from "./MyCalendarSection";
 
@@ -12,7 +21,7 @@ const POSTS_PAGE_SIZE = 6;
 /** 최근 활동을 넉넉히 가져오기 위한 최대 조회 크기입니다. */
 const MAX_FETCH_SIZE = 100;
 
-type ActivityPostCategory = "질의응답" | "커뮤니티";
+type ActivityPostCategory = "질의응답" | "전체 공지" | "세션 자료 공유";
 
 type ActivityPostItem = {
   id: string;
@@ -25,6 +34,50 @@ type ActivityPostItem = {
 type MyActivityTabProps = {
   user: MyPageUser;
 };
+
+/**
+ * 마이페이지 공지 목록 파트 값을 commonSpace 파트 식별자로 변환합니다.
+ */
+function mapActivityPartToCommonSpacePartId(
+  part?: string | null,
+): "all" | "front-end" | "back-end" | "ai-ml" | "pm-design" {
+  if (part === "FRONTEND") {
+    return "front-end";
+  }
+
+  if (part === "BACKEND") {
+    return "back-end";
+  }
+
+  if (part === "AI_ML") {
+    return "ai-ml";
+  }
+
+  if (part === "PM_DESIGN") {
+    return "pm-design";
+  }
+
+  return "all";
+}
+
+/**
+ * 게시글 상세의 작성자명이 현재 사용자와 일치하는지 판별합니다.
+ */
+function isMyActivityAuthor(
+  authorName: string | undefined,
+  viewerDisplayName: string,
+  fallbackName: string,
+) {
+  if (!authorName) {
+    return false;
+  }
+
+  return (
+    authorName === viewerDisplayName ||
+    authorName === fallbackName ||
+    authorName.startsWith(`${fallbackName} (`)
+  );
+}
 
 /**
  * 최근 게시글 목록에 사용할 페이지 버튼 토큰을 계산합니다.
@@ -72,16 +125,15 @@ export default function MyActivityTab({ user }: MyActivityTabProps) {
       setPostsErrorMessage("");
 
       try {
-        const [qnaResult, noticeResult] = await Promise.allSettled([
+        const [profileResult, qnaResult, noticeResult] = await Promise.allSettled([
+          getMyProfile(),
           getQnaList({
             page: 0,
             size: MAX_FETCH_SIZE,
-            part: user.track && user.track !== "ETC" ? user.track : undefined,
           }),
           getNoticeList({
             page: 0,
             size: MAX_FETCH_SIZE,
-            part: user.track && user.track !== "ETC" ? user.track : undefined,
           }),
         ]);
 
@@ -90,28 +142,108 @@ export default function MyActivityTab({ user }: MyActivityTabProps) {
         }
 
         const nextItems: ActivityPostItem[] = [];
+        const viewerDisplayName =
+          profileResult.status === "fulfilled"
+            ? buildCommonSpaceViewerDisplayName(profileResult.value, user.name)
+            : user.name;
 
         if (qnaResult.status === "fulfilled") {
-          qnaResult.value.qnaList.forEach((qnaItem) => {
-            nextItems.push({
-              id: `qna-${qnaItem.qnaId}`,
-              category: "질의응답",
-              title: qnaItem.title,
-              createdAt: qnaItem.updatedAt || qnaItem.createdAt,
-              href: `/community/qna/${qnaItem.qnaId}`,
-            });
+          const qnaActivityResults = await Promise.allSettled(
+            qnaResult.value.qnaList.map(async (qnaItem) => {
+              const qnaDetail = await getCommonSpaceQnaDetail(qnaItem.qnaId);
+
+              if (
+                !isMyActivityAuthor(
+                  qnaDetail.authorName,
+                  viewerDisplayName,
+                  user.name,
+                )
+              ) {
+                return null;
+              }
+
+              return {
+                id: `qna-${qnaItem.qnaId}`,
+                category: "질의응답",
+                title: qnaItem.title,
+                createdAt: qnaItem.updatedAt || qnaItem.createdAt,
+                href: buildCommonSpaceQnaDetailHref("all", qnaItem.qnaId),
+              } satisfies ActivityPostItem;
+            }),
+          );
+
+          qnaActivityResults.forEach((result) => {
+            if (result.status === "fulfilled" && result.value) {
+              nextItems.push(result.value);
+            }
           });
         }
 
         if (noticeResult.status === "fulfilled") {
-          noticeResult.value.noticeList.forEach((noticeItem) => {
-            nextItems.push({
-              id: `notice-${noticeItem.noticeId}`,
-              category: "커뮤니티",
-              title: noticeItem.title,
-              createdAt: noticeItem.createdAt,
-              href: `/notice/${noticeItem.noticeId}`,
-            });
+          const noticeActivityResults = await Promise.allSettled(
+            noticeResult.value.noticeList.map(async (noticeItem) => {
+              const commonSpacePartId = mapActivityPartToCommonSpacePartId(
+                noticeItem.part,
+              );
+
+              if (noticeItem.category === "SESSION_DATA") {
+                const materialDetail = await getCommonSpaceMaterialDetail(
+                  noticeItem.noticeId,
+                );
+
+                if (
+                  !isMyActivityAuthor(
+                    materialDetail.authorName,
+                    viewerDisplayName,
+                    user.name,
+                  )
+                ) {
+                  return null;
+                }
+
+                return {
+                  id: `material-${noticeItem.noticeId}`,
+                  category: "세션 자료 공유",
+                  title: noticeItem.title,
+                  createdAt: noticeItem.createdAt,
+                  href: buildCommonSpaceMaterialDetailHref(
+                    commonSpacePartId,
+                    noticeItem.noticeId,
+                  ),
+                } satisfies ActivityPostItem;
+              }
+
+              const noticeDetail = await getCommonSpaceNoticeDetail(
+                noticeItem.noticeId,
+              );
+
+              if (
+                !isMyActivityAuthor(
+                  noticeDetail.authorName,
+                  viewerDisplayName,
+                  user.name,
+                )
+              ) {
+                return null;
+              }
+
+              return {
+                id: `notice-${noticeItem.noticeId}`,
+                category: "전체 공지",
+                title: noticeItem.title,
+                createdAt: noticeItem.createdAt,
+                href: buildCommonSpaceNoticeDetailHref(
+                  commonSpacePartId,
+                  noticeItem.noticeId,
+                ),
+              } satisfies ActivityPostItem;
+            }),
+          );
+
+          noticeActivityResults.forEach((result) => {
+            if (result.status === "fulfilled" && result.value) {
+              nextItems.push(result.value);
+            }
           });
         }
 
@@ -151,7 +283,7 @@ export default function MyActivityTab({ user }: MyActivityTabProps) {
     return () => {
       isMounted = false;
     };
-  }, [user.track]);
+  }, [user.name]);
 
   const totalPostPages = useMemo(
     () => Math.max(1, Math.ceil(postItems.length / POSTS_PAGE_SIZE)),
