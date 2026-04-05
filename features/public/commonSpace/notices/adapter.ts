@@ -1,4 +1,5 @@
 import type { CommonSpacePartId } from "../types";
+import { toCommonSpaceAuthorView } from "../author";
 import {
   COMMON_SPACE_NOTICE_CATEGORY,
   DEFAULT_COMMON_SPACE_NOTICE_PAGE,
@@ -212,12 +213,16 @@ export function toCommonSpaceNoticeCommentImage(
 export function toCommonSpaceNoticeCommentItem(
   item: CommonSpaceNoticeCommentApiItem,
 ): CommonSpaceNoticeCommentItem {
+  const authorView = toCommonSpaceAuthorView(item.author, {
+    fallbackName: item.userName ?? "댓글 작성자",
+  });
+
   return {
     id: item.commentId,
-    authorName: item.userName,
-    authorDescription: undefined,
-    profileImageSrc: "/images/defaultProf.webp",
-    profileImageAlt: `${item.userName} 프로필 사진`,
+    authorName: authorView.authorName ?? item.userName ?? "댓글 작성자",
+    authorDescription: authorView.authorDescription,
+    profileImageSrc: authorView.profileImageSrc,
+    profileImageAlt: authorView.profileImageAlt,
     content: item.content,
     images: item.files
       .filter(isCommonSpaceNoticeCommentImageFile)
@@ -233,10 +238,17 @@ export function toCommonSpaceNoticeDetailItem(
 ): CommonSpaceNoticeDetailItem {
   const attachments = response.files.map(toCommonSpaceNoticeAttachment);
   const notice = response.notice;
+  const authorView = toCommonSpaceAuthorView(response.author, {
+    fallbackName: "운영진",
+  });
 
   return {
     id: notice.noticeId,
     title: notice.title,
+    authorName: authorView.authorName,
+    authorDescription: authorView.authorDescription,
+    profileImageSrc: authorView.profileImageSrc,
+    profileImageAlt: authorView.profileImageAlt,
     content: notice.content,
     partId: mapNoticeApiPartToCommonSpacePartId(notice.noticePart),
     status: notice.status,

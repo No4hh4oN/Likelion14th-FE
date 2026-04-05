@@ -1,4 +1,5 @@
 import type { CommonSpacePartId } from "../types";
+import { toCommonSpaceAuthorView } from "../author";
 import {
   isCommonSpaceNoticeNew,
   toCommonSpaceNoticeCommentItem,
@@ -151,10 +152,17 @@ export function toCommonSpaceMaterialDetailItem(
 ): CommonSpaceMaterialDetailItem {
   const attachments = response.files.map(toCommonSpaceMaterialAttachment);
   const material = response.notice;
+  const authorView = toCommonSpaceAuthorView(response.author, {
+    fallbackName: "운영진",
+  });
 
   return {
     id: material.noticeId,
     title: material.title,
+    authorName: authorView.authorName,
+    authorDescription: authorView.authorDescription,
+    profileImageSrc: authorView.profileImageSrc,
+    profileImageAlt: authorView.profileImageAlt,
     content: material.content,
     partId: mapMaterialApiPartToCommonSpacePartId(material.noticePart),
     status: material.status,

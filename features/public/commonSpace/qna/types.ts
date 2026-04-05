@@ -1,4 +1,5 @@
 import type { CommonSpacePartId } from "../types";
+import type { CommonSpaceAuthorApiItem } from "../author";
 
 /**
  * 질의응답 API가 사용하는 질문 파트 식별자다.
@@ -114,6 +115,8 @@ export type CommonSpaceQnaAnswerApiItem = {
   qnaId: number;
   /** 작성자 식별자 */
   userId: number;
+  /** 작성자 표시 정보 */
+  author?: CommonSpaceAuthorApiItem;
   /** 답변 본문 */
   content: string;
   /** 답변 상태 */
@@ -132,6 +135,8 @@ export type CommonSpaceQnaAnswerApiItem = {
 export type CommonSpaceQnaDetailApiResponse = {
   /** 질문 본문 데이터 */
   qna: CommonSpaceQnaApiItem;
+  /** 질문 작성자 표시 정보 */
+  author?: CommonSpaceAuthorApiItem;
   /** 질문 첨부파일 목록 */
   files: CommonSpaceQnaFileApiItem[];
   /** 답변 목록 */
@@ -311,7 +316,7 @@ export type CommonSpaceQnaAnswerItem = {
   /** 작성자명 */
   authorName: string;
   /** 작성자 부가 정보 */
-  authorDescription: string;
+  authorDescription?: string;
   /** 작성자 프로필 이미지 경로 */
   profileImageSrc?: string;
   /** 작성자 프로필 이미지 대체 텍스트 */

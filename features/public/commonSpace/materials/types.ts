@@ -1,4 +1,5 @@
 import type { CommonSpacePartId } from "../types";
+import type { CommonSpaceAuthorApiItem } from "../author";
 import type {
   CommonSpaceNoticeCommentApiItem,
   CommonSpaceNoticeCommentCreateRequest,
@@ -103,6 +104,8 @@ export type CommonSpaceMaterialApiItem = {
 export type CommonSpaceMaterialDetailApiResponse = {
   /** 자료 본문 데이터 */
   notice: CommonSpaceMaterialApiItem;
+  /** 작성자 표시 정보 */
+  author?: CommonSpaceAuthorApiItem;
   /** 첨부파일 목록 */
   files: CommonSpaceMaterialFileApiItem[];
   /** 댓글 목록 */
@@ -179,6 +182,10 @@ export type CommonSpaceMaterialDetailItem = {
   authorName?: string;
   /** 작성자 부가 정보 */
   authorDescription?: string;
+  /** 작성자 프로필 이미지 경로 */
+  profileImageSrc?: string;
+  /** 작성자 프로필 이미지 대체 텍스트 */
+  profileImageAlt?: string;
   /** 자료 본문 */
   content: string;
   /** 본문 상단에 노출할 이미지 경로 */

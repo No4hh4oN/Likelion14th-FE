@@ -97,7 +97,10 @@ export default function NoticeDetailSection({
       setLoadState("loading");
 
       try {
-        const nextSectionData = await getNoticeDetailSectionData(noticeId, partId);
+        const nextSectionData = await getNoticeDetailSectionData(
+          noticeId,
+          partId,
+        );
 
         if (!isMounted) {
           return;
@@ -208,7 +211,13 @@ export default function NoticeDetailSection({
         </h2>
 
         <div className="mt-7 flex items-center gap-4">
-          <div className="h-12 w-12 shrink-0 rounded-full bg-[#D9D9D9]" />
+          <Image
+            src={noticeDetail.profileImageSrc ?? "/images/defaultProf.webp"}
+            alt={noticeDetail.profileImageAlt ?? "공지 작성자 프로필 사진"}
+            width={48}
+            height={48}
+            className="h-12 w-12 shrink-0 rounded-full object-cover"
+          />
           <div className="flex flex-col gap-1">
             <p className="text-[16px] font-semibold text-white-1">
               {noticeDetail.authorName ?? "운영진"}
@@ -252,6 +261,9 @@ export default function NoticeDetailSection({
             <div className="my-20 h-px w-full bg-gray-5" />
           </>
         ) : null}
+
+        <div className="my-15 h-px w-full bg-gray-4" />
+
         <NoticeCommentsSection
           key={noticeId}
           noticeId={noticeId}

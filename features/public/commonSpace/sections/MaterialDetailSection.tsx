@@ -97,7 +97,10 @@ export default function MaterialDetailSection({
       setLoadState("loading");
 
       try {
-        const nextSectionData = await getMaterialDetailSectionData(materialId, partId);
+        const nextSectionData = await getMaterialDetailSectionData(
+          materialId,
+          partId,
+        );
 
         if (!isMounted) {
           return;
@@ -132,7 +135,10 @@ export default function MaterialDetailSection({
   ) {
     await commonSpaceMaterialApiDataSource.createComment(materialId, payload);
 
-    const nextSectionData = await getMaterialDetailSectionData(materialId, partId);
+    const nextSectionData = await getMaterialDetailSectionData(
+      materialId,
+      partId,
+    );
     setMaterialDetail(nextSectionData.materialDetail);
     setMaterialItems(nextSectionData.materialItems);
     setLoadState(nextSectionData.materialDetail ? "success" : "empty");
@@ -208,7 +214,15 @@ export default function MaterialDetailSection({
         </h2>
 
         <div className="mt-7 flex items-center gap-4">
-          <div className="h-12 w-12 shrink-0 rounded-full bg-[#D9D9D9]" />
+          <Image
+            src={materialDetail.profileImageSrc ?? "/images/defaultProf.webp"}
+            alt={
+              materialDetail.profileImageAlt ?? "세션 자료 작성자 프로필 사진"
+            }
+            width={48}
+            height={48}
+            className="h-12 w-12 shrink-0 rounded-full object-cover"
+          />
           <div className="flex flex-col gap-1">
             <p className="text-[16px] font-semibold text-white-1">
               {materialDetail.authorName ?? "운영진"}
@@ -252,6 +266,8 @@ export default function MaterialDetailSection({
             <div className="my-20 h-px w-full bg-[#5D6475]" />
           </>
         ) : null}
+
+        <div className="my-15 h-px w-full bg-gray-4" />
 
         <NoticeCommentsSection
           key={`material-comments-${materialId}`}

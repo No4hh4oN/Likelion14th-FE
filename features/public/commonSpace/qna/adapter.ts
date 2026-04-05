@@ -1,4 +1,5 @@
 import type { CommonSpacePartId } from "../types";
+import { toCommonSpaceAuthorView } from "../author";
 import {
   DEFAULT_COMMON_SPACE_QNA_PAGE,
   DEFAULT_COMMON_SPACE_QNA_PAGE_SIZE,
@@ -195,12 +196,16 @@ export function toCommonSpaceQnaAnswerItem(
     (file) => !isCommonSpaceQnaImageFileName(file.originalFileName),
   );
 
+  const authorView = toCommonSpaceAuthorView(answer.author, {
+    fallbackName: "운영진",
+  });
+
   return {
     id: answer.answerId,
-    authorName: "운영진",
-    authorDescription: "멋쟁이사자처럼 삼육대학교",
-    profileImageSrc: "/images/defaultProf.webp",
-    profileImageAlt: "운영진 프로필 사진",
+    authorName: authorView.authorName ?? "운영진",
+    authorDescription: authorView.authorDescription,
+    profileImageSrc: authorView.profileImageSrc,
+    profileImageAlt: authorView.profileImageAlt,
     content: answer.content,
     createdAt: answer.createdAt,
     updatedAt: answer.updatedAt,
@@ -215,6 +220,9 @@ export function toCommonSpaceQnaAnswerItem(
 export function toCommonSpaceQnaDetailItem(
   response: CommonSpaceQnaDetailApiResponse,
 ): CommonSpaceQnaDetailItem {
+  const authorView = toCommonSpaceAuthorView(response.author, {
+    fallbackName: "질문 작성자",
+  });
   const attachments = response.files.map(toCommonSpaceQnaAttachment);
   const answers = response.answers
     .filter((answer) => answer.status !== "DELETED")
@@ -227,10 +235,10 @@ export function toCommonSpaceQnaDetailItem(
     isSecret: response.qna.isSecret,
     questionPartId: mapQnaApiPartToQuestionPartId(response.qna.qnaPart),
     answerState: answers.length > 0 ? "completed" : "pending",
-    authorName: "질문 작성자",
-    authorDescription: "멋쟁이사자처럼 삼육대학교",
-    profileImageSrc: "/images/defaultProf.webp",
-    profileImageAlt: "질문 작성자 프로필 사진",
+    authorName: authorView.authorName ?? "질문 작성자",
+    authorDescription: authorView.authorDescription,
+    profileImageSrc: authorView.profileImageSrc,
+    profileImageAlt: authorView.profileImageAlt,
     status: response.qna.status,
     createdAt: response.qna.createdAt,
     updatedAt: response.qna.updatedAt,

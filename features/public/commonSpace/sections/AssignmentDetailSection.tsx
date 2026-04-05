@@ -278,7 +278,13 @@ export default function AssignmentDetailSection({
         </h2>
 
         <div className="mt-7 flex items-center gap-4">
-          <div className="h-12 w-12 shrink-0 rounded-full bg-[#D9D9D9]" />
+          <Image
+            src={assignmentDetail.profileImageSrc ?? "/images/defaultProf.webp"}
+            alt={assignmentDetail.profileImageAlt ?? "과제 작성자 프로필 사진"}
+            width={48}
+            height={48}
+            className="h-12 w-12 shrink-0 rounded-full object-cover"
+          />
           <div className="flex flex-col gap-1">
             <p className="text-[16px] font-semibold text-white-1">
               {assignmentDetail.authorName ?? "운영진"}

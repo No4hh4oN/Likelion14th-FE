@@ -233,9 +233,11 @@ export default function QnaAnswersSection({
                 <p className="text-[16px] font-semibold text-white-1">
                   {answer.authorName}
                 </p>
-                <p className="text-[14px] text-gray-4">
-                  {answer.authorDescription}
-                </p>
+                {answer.authorDescription ? (
+                  <p className="text-[14px] text-gray-4">
+                    {answer.authorDescription}
+                  </p>
+                ) : null}
               </div>
 
               <div

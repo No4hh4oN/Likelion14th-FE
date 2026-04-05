@@ -1,4 +1,5 @@
 import type { CommonSpacePartId } from "../types";
+import type { CommonSpaceAuthorApiItem } from "../author";
 
 /**
  * 공지 목록 조회 API에서 사용하는 카테고리 값이다.
@@ -120,8 +121,10 @@ export type CommonSpaceNoticeCommentApiItem = {
   commentId: number;
   /** 작성자 식별자 */
   userId: number;
-  /** 작성자명 */
-  userName: string;
+  /** 작성자 표시 정보 */
+  author?: CommonSpaceAuthorApiItem;
+  /** 구 명세 호환용 작성자명 */
+  userName?: string;
   /** 댓글 본문 */
   content: string;
   /** 댓글 상태 */
@@ -140,6 +143,8 @@ export type CommonSpaceNoticeCommentApiItem = {
 export type CommonSpaceNoticeDetailApiResponse = {
   /** 공지 본문 데이터 */
   notice: CommonSpaceNoticeApiItem;
+  /** 작성자 표시 정보 */
+  author?: CommonSpaceAuthorApiItem;
   /** 첨부파일 목록 */
   files: CommonSpaceNoticeFileApiItem[];
   /** 댓글 목록 */
@@ -230,6 +235,10 @@ export type CommonSpaceNoticeDetailItem = {
   authorName?: string;
   /** 작성자 부가 정보 */
   authorDescription?: string;
+  /** 작성자 프로필 이미지 경로 */
+  profileImageSrc?: string;
+  /** 작성자 프로필 이미지 대체 텍스트 */
+  profileImageAlt?: string;
   /** 공지 본문 */
   content: string;
   /** 본문 상단에 노출할 이미지 경로 */
