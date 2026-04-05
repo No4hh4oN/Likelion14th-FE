@@ -43,6 +43,7 @@ export default function NoticeDetailPage({ noticeId }: NoticeDetailPageProps) {
   const [content, setContent] = useState("");
   const [category, setCategory] = useState<NoticeCategory>("NOTICE");
   const [part, setPart] = useState<NoticePart>("FRONTEND");
+  const [isPinned, setIsPinned] = useState(false);
   const [status, setStatus] = useState<"ACTIVE" | "INACTIVE" | string>("ACTIVE");
   const [createdAt, setCreatedAt] = useState("");
   const [updatedAt, setUpdatedAt] = useState("");
@@ -61,6 +62,7 @@ export default function NoticeDetailPage({ noticeId }: NoticeDetailPageProps) {
       setContent(response.notice.content);
       setCategory((response.notice.category as NoticeCategory) ?? "NOTICE");
       setPart((response.notice.noticePart as NoticePart) ?? "FRONTEND");
+      setIsPinned(response.notice.pinned);
       setStatus(response.notice.status);
       setCreatedAt(response.notice.createdAt);
       setUpdatedAt(response.notice.updatedAt);
@@ -94,6 +96,7 @@ export default function NoticeDetailPage({ noticeId }: NoticeDetailPageProps) {
           content: content.trim(),
           category,
           part,
+          pinned: isPinned,
         },
         newFiles,
       );
@@ -213,6 +216,15 @@ export default function NoticeDetailPage({ noticeId }: NoticeDetailPageProps) {
                 <option value="ETC">ETC</option>
               </select>
             </div>
+            <label className="mt-3 inline-flex items-center gap-2 text-sm text-gray-2">
+              <input
+                type="checkbox"
+                checked={isPinned}
+                onChange={(event) => setIsPinned(event.target.checked)}
+                className="h-4 w-4 rounded border border-[#5d6478] bg-[#454c5d]"
+              />
+              상단 고정 공지
+            </label>
             <input
               value={title}
               onChange={(event) => setTitle(event.target.value)}

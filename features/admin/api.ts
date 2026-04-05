@@ -270,6 +270,7 @@ export async function updateAdminNotice(
     content: string;
     category?: string;
     part?: string;
+    pinned?: boolean;
   },
   files: File[] = [],
 ): Promise<UpsertAdminNoticeResponse> {

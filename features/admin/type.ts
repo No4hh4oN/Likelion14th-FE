@@ -355,6 +355,7 @@ export type AdminNoticeListItem = {
   title: string;
   category: AdminNoticeCategory;
   part: AdminNoticePart;
+  pinned: boolean;
   createdAt: string;
   fileCount: number;
 };
@@ -385,6 +386,7 @@ export type AdminNotice = {
   content: string;
   category: AdminNoticeCategory;
   noticePart: AdminNoticePart;
+  pinned: boolean;
   status: "ACTIVE" | "INACTIVE" | string;
   createdAt: string;
   updatedAt: string;
@@ -400,6 +402,7 @@ export type CreateAdminNoticeRequest = {
   content: string;
   category: "NOTICE" | "SESSION_DATA";
   part: "FRONTEND" | "BACKEND" | "AI_ML" | "PM_DESIGN" | "ETC";
+  pinned: boolean;
 };
 
 export type UpsertAdminNoticeResponse = {

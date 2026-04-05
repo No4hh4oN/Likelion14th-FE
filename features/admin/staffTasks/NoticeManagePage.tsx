@@ -48,6 +48,7 @@ export default function NoticeManagePage() {
   const [createPart, setCreatePart] = useState<"FRONTEND" | "BACKEND" | "AI_ML" | "PM_DESIGN" | "ETC">(
     "FRONTEND",
   );
+  const [createPinned, setCreatePinned] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
   const load = useCallback(async () => {
@@ -90,15 +91,17 @@ export default function NoticeManagePage() {
     setError("");
     setMessage("");
     try {
-      const response = await createAdminNotice({
-        title: title.trim(),
-        content: content.trim(),
-        category: createCategory,
-        part: createPart,
-      });
+        const response = await createAdminNotice({
+          title: title.trim(),
+          content: content.trim(),
+          category: createCategory,
+          part: createPart,
+          pinned: createPinned,
+        });
       setMessage(response.result || `공지 #${response.noticeId} 생성 완료`);
       setTitle("");
       setContent("");
+      setCreatePinned(false);
       await load();
     } catch {
       setError("공지사항 작성에 실패했습니다.");
@@ -147,6 +150,15 @@ export default function NoticeManagePage() {
               ))}
             </select>
           </div>
+          <label className="mt-3 inline-flex items-center gap-2 text-sm text-gray-2">
+            <input
+              type="checkbox"
+              checked={createPinned}
+              onChange={(event) => setCreatePinned(event.target.checked)}
+              className="h-4 w-4 rounded border border-[#5d6478] bg-[#454c5d]"
+            />
+            상단 고정 공지로 등록
+          </label>
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
@@ -221,6 +233,7 @@ export default function NoticeManagePage() {
                     <th className="px-3 py-2">제목</th>
                     <th className="px-3 py-2">카테고리</th>
                     <th className="px-3 py-2">파트</th>
+                    <th className="px-3 py-2">고정</th>
                     <th className="px-3 py-2">첨부</th>
                     <th className="px-3 py-2">작성일</th>
                   </tr>
@@ -239,6 +252,7 @@ export default function NoticeManagePage() {
                       </td>
                       <td className="px-3 py-2">{item.category}</td>
                       <td className="px-3 py-2">{item.part}</td>
+                      <td className="px-3 py-2">{item.pinned ? "Y" : "-"}</td>
                       <td className="px-3 py-2">{item.fileCount}</td>
                       <td className="px-3 py-2 text-xs text-gray-3">{formatDateTime(item.createdAt)}</td>
                     </tr>
