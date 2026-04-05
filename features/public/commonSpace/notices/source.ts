@@ -70,13 +70,15 @@ export const commonSpaceNoticeMockDataSource: CommonSpaceNoticeDataSource = {
 
 /**
  * 상단 배너에 사용할 pinned 공지 목록을 조회한다.
+ * pinned 공지는 모든 파트/섹션에서 공통 노출되므로 part 조건 없이 전체 공지에서 수집한다.
  */
 export async function getCommonSpacePinnedNoticeItems(
-  partId: CommonSpacePartId,
+  _partId: CommonSpacePartId,
 ): Promise<CommonSpaceNoticeListItem[]> {
+  void _partId;
+
   try {
     const response = await commonSpaceNoticeApiDataSource.getList({
-      partId,
       page: 0,
       size: 100,
     });

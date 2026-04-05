@@ -229,7 +229,7 @@ export default function NoticeCard({
           width={384.3}
           height={332.1}
           quality={90}
-          className="z-10 absolute right-12 -top-36 rotate-[-30deg] h-[332.1px] w-[384.3px]"
+          className="z-0 absolute right-12 -top-36 rotate-[-30deg] h-[332.1px] w-[384.3px]"
         />
       )}
 

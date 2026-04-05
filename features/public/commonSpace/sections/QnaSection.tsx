@@ -193,8 +193,11 @@ export default function QnaSection({ partId }: QnaSectionProps) {
   /**
    * 상단 pinned 공지 상세 화면으로 이동한다.
    */
-  function handlePinnedNoticeClick(noticeId: number) {
-    router.push(buildCommonSpaceNoticeDetailHref(partId, noticeId));
+  function handlePinnedNoticeClick(
+    noticePartId: CommonSpacePartId,
+    noticeId: number,
+  ) {
+    router.push(buildCommonSpaceNoticeDetailHref(noticePartId, noticeId));
   }
 
   /**
@@ -247,7 +250,7 @@ export default function QnaSection({ partId }: QnaSectionProps) {
             title={item.title}
             pinned
             isNew={item.isNew}
-            onClick={() => handlePinnedNoticeClick(item.id)}
+            onClick={() => handlePinnedNoticeClick(item.partId, item.id)}
           />
         ))}
 

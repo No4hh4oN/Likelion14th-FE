@@ -187,6 +187,16 @@ export default function NoticeSection({ partId }: NoticeSectionProps) {
   }
 
   /**
+   * 상단 pinned 공지 카드는 해당 공지의 원래 파트 기준으로 상세 화면을 연다.
+   */
+  function handlePinnedNoticeClick(
+    noticePartId: CommonSpacePartId,
+    noticeId: number,
+  ) {
+    router.push(buildCommonSpaceNoticeDetailHref(noticePartId, noticeId));
+  }
+
+  /**
    * 로딩/에러/빈 상태에서 보여줄 안내 문구다.
    */
   const statusMessage =
@@ -221,7 +231,7 @@ export default function NoticeSection({ partId }: NoticeSectionProps) {
             title={item.title}
             pinned
             isNew={item.isNew}
-            onClick={() => handleNoticeClick(item.id)}
+            onClick={() => handlePinnedNoticeClick(item.partId, item.id)}
           />
         ))}
 

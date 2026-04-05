@@ -25,7 +25,7 @@ type CommonSpaceNoticeListApiParams = {
   page: number;
   size: number;
   category: typeof COMMON_SPACE_NOTICE_CATEGORY;
-  part: CommonSpaceNoticeApiPart;
+  part?: CommonSpaceNoticeApiPart;
 };
 
 const commonSpacePartIdToNoticeApiPart: Record<
@@ -87,13 +87,16 @@ export function buildCommonSpaceNoticeListParams(
 ): CommonSpaceNoticeListApiParams {
   const page = query.page ?? DEFAULT_COMMON_SPACE_NOTICE_PAGE;
   const size = query.size ?? DEFAULT_COMMON_SPACE_NOTICE_PAGE_SIZE;
-  const part = mapCommonSpacePartIdToNoticeApiPart(query.partId ?? "all");
+  const part =
+    query.partId !== undefined
+      ? mapCommonSpacePartIdToNoticeApiPart(query.partId)
+      : undefined;
 
   return {
     page,
     size,
     category: COMMON_SPACE_NOTICE_CATEGORY,
-    part,
+    ...(part ? { part } : {}),
   };
 }
 
