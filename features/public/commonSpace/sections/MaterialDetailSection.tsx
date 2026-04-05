@@ -236,7 +236,7 @@ export default function MaterialDetailSection({
           </div>
         </div>
 
-        <div className="my-15 h-px w-full bg-[#5D6475]" />
+        <div className="my-15 h-px w-full bg-gray-4" />
 
         <div className="mt-8 space-y-7">
           {materialDetail.bodyImageSrc ? (
@@ -263,7 +263,6 @@ export default function MaterialDetailSection({
               attachments={materialDetail.attachments}
               className="mt-8"
             />
-            <div className="my-20 h-px w-full bg-[#5D6475]" />
           </>
         ) : null}
 

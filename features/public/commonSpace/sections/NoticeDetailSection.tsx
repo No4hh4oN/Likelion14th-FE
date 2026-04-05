@@ -258,7 +258,6 @@ export default function NoticeDetailSection({
               attachments={noticeDetail.attachments}
               className="mt-8"
             />
-            <div className="my-20 h-px w-full bg-gray-5" />
           </>
         ) : null}
 

@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   createAdminNotice,
   getAdminNotices,
+  uploadAdminNoticeFiles,
 } from "../api";
 import type { AdminNoticeListItem } from "../type";
 import StaffTasksShell from "./StaffTasksShell";
@@ -32,6 +33,10 @@ function formatDateTime(value: string): string {
 }
 
 export default function NoticeManagePage() {
+  /**
+   * 생성 폼 파일 입력 DOM 참조다.
+   */
+  const createFileInputRef = useRef<HTMLInputElement | null>(null);
   const [page, setPage] = useState(0);
   const [category, setCategory] = useState<CategoryFilter>("ALL");
   const [part, setPart] = useState<PartFilter>("ALL");
@@ -48,6 +53,10 @@ export default function NoticeManagePage() {
   const [createPart, setCreatePart] = useState<"FRONTEND" | "BACKEND" | "AI_ML" | "PM_DESIGN" | "ETC">(
     "FRONTEND",
   );
+  /**
+   * 생성 시 함께 업로드할 첨부파일 목록이다.
+   */
+  const [createFiles, setCreateFiles] = useState<File[]>([]);
   const [createPinned, setCreatePinned] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
@@ -83,6 +92,20 @@ export default function NoticeManagePage() {
     [content, title],
   );
 
+  /**
+   * 생성 폼 파일 선택을 반영한다.
+   */
+  const handleCreateFilesChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    setCreateFiles(Array.from(event.target.files ?? []));
+  }, []);
+
+  /**
+   * 선택한 첨부파일 하나를 생성 폼에서 제거한다.
+   */
+  const handleRemoveCreateFile = useCallback((fileIndex: number) => {
+    setCreateFiles((prev) => prev.filter((_, index) => index !== fileIndex));
+  }, []);
+
   const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!canCreate || isCreating) return;
@@ -91,17 +114,33 @@ export default function NoticeManagePage() {
     setError("");
     setMessage("");
     try {
-        const response = await createAdminNotice({
-          title: title.trim(),
-          content: content.trim(),
-          category: createCategory,
-          part: createPart,
-          pinned: createPinned,
-        });
-      setMessage(response.result || `공지 #${response.noticeId} 생성 완료`);
+      const response = await createAdminNotice({
+        title: title.trim(),
+        content: content.trim(),
+        category: createCategory,
+        part: createPart,
+        pinned: createPinned,
+      });
+
+      let nextMessage = response.result || `공지 #${response.noticeId} 생성 완료`;
+
+      if (createFiles.length > 0) {
+        try {
+          const uploadResult = await uploadAdminNoticeFiles(response.noticeId, createFiles);
+          nextMessage = `${nextMessage} / ${uploadResult}`;
+        } catch {
+          nextMessage = `${nextMessage} / 첨부파일 업로드에 실패했습니다. 상세 페이지에서 다시 업로드해 주세요.`;
+        }
+      }
+
+      setMessage(nextMessage);
       setTitle("");
       setContent("");
       setCreatePinned(false);
+      setCreateFiles([]);
+      if (createFileInputRef.current) {
+        createFileInputRef.current.value = "";
+      }
       await load();
     } catch {
       setError("공지사항 작성에 실패했습니다.");
@@ -172,6 +211,37 @@ export default function NoticeManagePage() {
             placeholder="내용"
             className="mt-3 w-full rounded-md border border-[#5d6478] bg-[#454c5d] p-3 text-sm outline-none"
           />
+          <div className="mt-3 rounded-md border border-[#5d6478] bg-[#454c5d] p-3">
+            <label className="block text-sm font-medium text-gray-2">첨부파일</label>
+            <input
+              ref={createFileInputRef}
+              type="file"
+              multiple
+              onChange={handleCreateFilesChange}
+              className="mt-2 block w-full text-sm text-gray-3 file:mr-3 file:rounded-md file:border-0 file:bg-main-1 file:px-3 file:py-2 file:text-white"
+            />
+            {createFiles.length > 0 ? (
+              <ul className="mt-3 space-y-2 text-sm text-gray-2">
+                {createFiles.map((file, index) => (
+                  <li
+                    key={`${file.name}-${file.size}-${index}`}
+                    className="flex items-center justify-between gap-3 rounded-md bg-[#3f4656] px-3 py-2"
+                  >
+                    <span className="truncate">{file.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveCreateFile(index)}
+                      className="shrink-0 rounded-md bg-[#586176] px-2 py-1 text-xs font-semibold text-white hover:bg-[#6a748c]"
+                    >
+                      제거
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-3 text-sm text-gray-4">선택한 첨부파일이 없습니다.</p>
+            )}
+          </div>
           <button
             type="submit"
             disabled={!canCreate || isCreating}
