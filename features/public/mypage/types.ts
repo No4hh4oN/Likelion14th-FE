@@ -1,7 +1,7 @@
 import type { RecruitmentPhase } from "../recruitmentPhase";
 
 export type UserRole = "게스트" | "아기사자" | "운영진";
-export type MyPageTab = "내 활동" | "과제";
+export type MyPageTab = "내 활동" | "과제" | "출결내역";
 export type MyPageSection = "profile" | "edit" | "history";
 export type UserTrack = "FRONTEND" | "BACKEND" | "AI_ML" | "PM_DESIGN" | "ETC";
 
@@ -213,6 +213,23 @@ export type ProjectListItem = {
   startDate: string;
   deadline: string;
   status: string;
+};
+
+export type AttendanceStatus =
+  | "PRESENT"
+  | "LATE"
+  | "ABSENT"
+  | "EXCUSED";
+
+export type MyAttendanceItem = {
+  date: string;
+  status: AttendanceStatus;
+};
+
+export type MyAttendanceByDateResponse = {
+  date: string;
+  recorded: boolean;
+  status?: AttendanceStatus;
 };
 
 export type CalendarTrack = Exclude<UserTrack, "ETC"> | "COMMON";

@@ -6,6 +6,8 @@ import type {
   CalendarMutationResponse,
   CalendarTrack,
   DashboardItem,
+  MyAttendanceByDateResponse,
+  MyAttendanceItem,
   MyPageUserApiResponse,
   NoticeCategory,
   NoticeListApiResponse,
@@ -155,6 +157,41 @@ export async function getProjectList(
   const response = await apiClient.get<ProjectListItem[]>("/projects", {
     params,
   });
+  return response.data;
+}
+
+type GetMyAttendanceParams = {
+  from?: string;
+  to?: string;
+};
+
+/**
+ * 로그인한 사용자의 출결 내역을 기간별로 조회합니다.
+ */
+export async function getMyAttendance(
+  params: GetMyAttendanceParams = {},
+): Promise<MyAttendanceItem[]> {
+  const response = await apiClient.get<MyAttendanceItem[]>("/attendance/me", {
+    params,
+  });
+  return response.data;
+}
+
+/**
+ * 특정 날짜의 내 출결 상태를 조회합니다.
+ * @param date 조회할 날짜
+ */
+export async function getMyAttendanceByDate(
+  date: string,
+): Promise<MyAttendanceByDateResponse> {
+  const response = await apiClient.get<MyAttendanceByDateResponse>(
+    "/attendance/me/date",
+    {
+      params: {
+        date,
+      },
+    },
+  );
   return response.data;
 }
 

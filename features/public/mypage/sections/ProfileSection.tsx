@@ -5,6 +5,7 @@ import type { MyPageSection, MyPageTab, MyPageUser, UserRole } from "../types";
 import ActionButton from "../components/ActionButton";
 import MyActivityTab from "./MyActivityTab";
 import MyAssignmentsTab from "./MyAssignmentsTab";
+import MyAttendanceTab from "./MyAttendanceTab";
 
 type ProfileSectionProps = {
   user: MyPageUser;
@@ -137,7 +138,7 @@ export default function ProfileSection({
 
           <div className="mt-5 border-b border-white/15">
             <div className="flex">
-              {(["내 활동", "과제"] as const).map((tab) => (
+              {(["내 활동", "과제", "출결내역"] as const).map((tab) => (
                 <button
                   key={tab}
                   type="button"
@@ -161,6 +162,10 @@ export default function ProfileSection({
 
           {shouldShowProtectedContent && activeTab === "과제" ? (
             <MyAssignmentsTab user={user} />
+          ) : null}
+
+          {shouldShowProtectedContent && activeTab === "출결내역" ? (
+            <MyAttendanceTab user={user} />
           ) : null}
 
           {!shouldShowProtectedContent ? (
