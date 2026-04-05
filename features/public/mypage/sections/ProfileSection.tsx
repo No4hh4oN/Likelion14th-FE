@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { MyPageSection, MyPageTab, MyPageUser, UserRole } from "../types";
 import ActionButton from "../components/ActionButton";
 import MyActivityTab from "./MyActivityTab";
+import MyAssignmentsTab from "./MyAssignmentsTab";
 
 type ProfileSectionProps = {
   user: MyPageUser;
@@ -60,7 +61,7 @@ export default function ProfileSection({
 }: ProfileSectionProps) {
   const [activeTab, setActiveTab] = useState<MyPageTab>("내 활동");
   const isGuest = user.role === "게스트";
-  const shouldShowActivityContent = activeTab === "내 활동" && !isGuest;
+  const shouldShowProtectedContent = !isGuest;
   const message =
     activeTab === "내 활동"
       ? getGuestActivityMessage()
@@ -70,7 +71,7 @@ export default function ProfileSection({
     <section className="min-h-screen bg-background px-4 text-white-1 lg:px-6">
       <div
         className={`relative mx-auto w-full ${
-          shouldShowActivityContent ? "max-w-[980px]" : "max-w-[760px]"
+          shouldShowProtectedContent ? "max-w-[980px]" : "max-w-[760px]"
         }`}
       >
         <ActionButton
@@ -154,9 +155,15 @@ export default function ProfileSection({
             </div>
           </div>
 
-          {shouldShowActivityContent ? <MyActivityTab user={user} /> : null}
+          {shouldShowProtectedContent && activeTab === "내 활동" ? (
+            <MyActivityTab user={user} />
+          ) : null}
 
-          {!shouldShowActivityContent ? (
+          {shouldShowProtectedContent && activeTab === "과제" ? (
+            <MyAssignmentsTab user={user} />
+          ) : null}
+
+          {!shouldShowProtectedContent ? (
             <div className="flex min-h-[150px] flex-col items-center justify-center px-2 text-center lg:min-h-[170px]">
               <p className="text-[14px] font-semibold text-white lg:text-[16px]">
                 {message.title}
