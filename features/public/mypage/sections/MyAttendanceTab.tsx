@@ -128,7 +128,9 @@ export default function MyAttendanceTab({ user }: MyAttendanceTabProps) {
   /**
    * 조회된 출결 목록입니다.
    */
-  const [attendanceItems, setAttendanceItems] = useState<MyAttendanceItem[]>([]);
+  const [attendanceItems, setAttendanceItems] = useState<MyAttendanceItem[]>(
+    [],
+  );
   /**
    * 출결 목록 로딩 여부입니다.
    */
@@ -333,8 +335,7 @@ export default function MyAttendanceTab({ user }: MyAttendanceTabProps) {
           <div>
             <h3 className="text-[24px] font-bold text-white">출결내역</h3>
             <p className="mt-1 text-[12px] text-white/55">
-              조회 기간의 출결 현황을 확인하고, 특정 날짜의 상태를 바로 조회할
-              수 있습니다.
+              출결 현황을 확인합니다.
             </p>
           </div>
 
@@ -356,7 +357,7 @@ export default function MyAttendanceTab({ user }: MyAttendanceTabProps) {
             />
             <button
               type="submit"
-              className="h-11 rounded-lg bg-main-1 px-4 text-sm font-semibold text-white"
+              className="h-11 rounded-lg bg-main-1 px-4 text-sm font-semibold text-white cursor-pointer"
             >
               조회
             </button>
@@ -415,10 +416,7 @@ export default function MyAttendanceTab({ user }: MyAttendanceTabProps) {
             <p className="text-[13px] font-semibold text-white/85">
               날짜별 확인
             </p>
-            <form
-              onSubmit={handleDateLookupSubmit}
-              className="mt-3 flex gap-2"
-            >
+            <form onSubmit={handleDateLookupSubmit} className="mt-3 flex gap-2">
               <input
                 type="date"
                 value={dateInput}
@@ -427,7 +425,7 @@ export default function MyAttendanceTab({ user }: MyAttendanceTabProps) {
               />
               <button
                 type="submit"
-                className="h-11 rounded-lg bg-[#485165] px-4 text-sm font-semibold text-white"
+                className="h-11 rounded-lg bg-[#485165] px-4 text-sm font-semibold text-white cursor-pointer"
               >
                 확인
               </button>

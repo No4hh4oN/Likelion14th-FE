@@ -519,6 +519,23 @@ export default function MyCalendarSection({ user }: MyCalendarSectionProps) {
     return new Set(scheduleItemsByDateKey.keys());
   }, [scheduleItemsByDateKey]);
 
+  const homeworkItemsByDateKey = useMemo(() => {
+    const groupedItems = new Map<string, HomeworkEventItem[]>();
+
+    homeworkItems.forEach((item) => {
+      const existingItems = groupedItems.get(item.dateKey);
+
+      if (existingItems) {
+        existingItems.push(item);
+        return;
+      }
+
+      groupedItems.set(item.dateKey, [item]);
+    });
+
+    return groupedItems;
+  }, [homeworkItems]);
+
   const homeworkDateKeys = useMemo(
     () => new Set(homeworkItems.map((item) => item.dateKey)),
     [homeworkItems],
@@ -820,14 +837,31 @@ export default function MyCalendarSection({ user }: MyCalendarSectionProps) {
                 const scheduleTooltipItems = cell.dateKey
                   ? (scheduleItemsByDateKey.get(cell.dateKey) ?? [])
                   : [];
-                const hasScheduleTooltip = scheduleTooltipItems.length > 0;
-                const tooltipItems = scheduleTooltipItems.slice(
+                const homeworkTooltipItems = cell.dateKey
+                  ? (homeworkItemsByDateKey.get(cell.dateKey) ?? [])
+                  : [];
+                const calendarTooltipItems = [
+                  ...scheduleTooltipItems.map((item) => ({
+                    id: `schedule-${item.id}`,
+                    type: "SCHEDULE" as const,
+                    title: item.title,
+                    description: item.content.trim() || "설명이 없습니다.",
+                  })),
+                  ...homeworkTooltipItems.map((item) => ({
+                    id: item.id,
+                    type: "HOMEWORK" as const,
+                    title: item.title,
+                    description: `과제 마감일 · ${formatMonthDay(item.dateParts)}`,
+                  })),
+                ];
+                const hasCalendarTooltip = calendarTooltipItems.length > 0;
+                const tooltipItems = calendarTooltipItems.slice(
                   0,
                   MAX_CALENDAR_TOOLTIP_ITEMS,
                 );
                 const extraTooltipItemCount = Math.max(
                   0,
-                  scheduleTooltipItems.length - MAX_CALENDAR_TOOLTIP_ITEMS,
+                  calendarTooltipItems.length - MAX_CALENDAR_TOOLTIP_ITEMS,
                 );
                 const markerClassName =
                   cell.marker === "today"
@@ -870,10 +904,10 @@ export default function MyCalendarSection({ user }: MyCalendarSectionProps) {
                 return (
                   <span
                     key={cell.dateKey}
-                    className={`group relative mx-auto flex h-8 w-8 items-center justify-center ${hasScheduleTooltip ? "cursor-help" : ""}`}
-                    tabIndex={hasScheduleTooltip ? 0 : undefined}
+                    className={`group relative mx-auto flex h-8 w-8 items-center justify-center ${hasCalendarTooltip ? "cursor-help" : ""}`}
+                    tabIndex={hasCalendarTooltip ? 0 : undefined}
                     aria-describedby={
-                      hasScheduleTooltip
+                      hasCalendarTooltip
                         ? `calendar-schedule-tooltip-${cell.dateKey}`
                         : undefined
                     }
@@ -883,7 +917,7 @@ export default function MyCalendarSection({ user }: MyCalendarSectionProps) {
                     >
                       {cell.day}
                     </span>
-                    {hasScheduleTooltip ? (
+                    {hasCalendarTooltip ? (
                       <span
                         id={`calendar-schedule-tooltip-${cell.dateKey}`}
                         role="tooltip"
@@ -898,11 +932,22 @@ export default function MyCalendarSection({ user }: MyCalendarSectionProps) {
                               key={item.id}
                               className={`block ${tooltipIndex > 0 ? "mt-2 border-t border-white/10 pt-2" : ""}`}
                             >
-                              <span className="line-clamp-1 block text-[11px] font-semibold text-white">
-                                {item.title}
+                              <span className="flex items-center gap-2">
+                                <span
+                                  className={`inline-flex rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${
+                                    item.type === "SCHEDULE"
+                                      ? "bg-[#82D29B]/15 text-[#99E0B0]"
+                                      : "bg-main-3/15 text-main-3"
+                                  }`}
+                                >
+                                  {item.type === "SCHEDULE" ? "일정" : "과제"}
+                                </span>
+                                <span className="line-clamp-1 block text-[11px] font-semibold text-white">
+                                  {item.title}
+                                </span>
                               </span>
                               <span className="mt-1 line-clamp-2 block break-words text-[10px] leading-[1.45] text-white/72">
-                                {item.content.trim() || "설명이 없습니다."}
+                                {item.description}
                               </span>
                             </span>
                           ))}
