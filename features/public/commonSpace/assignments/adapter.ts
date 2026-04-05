@@ -1,4 +1,5 @@
 import type { CommonSpacePartId } from "../types";
+import { toCommonSpaceAuthorView } from "../author";
 import type {
   CommonSpaceAssignmentAttachment,
   CommonSpaceAssignmentDetailApiResponse,
@@ -14,6 +15,7 @@ import type {
 const commonSpacePartIdToAssignmentTrack: Partial<
   Record<CommonSpacePartId, CommonSpaceAssignmentApiTrack>
 > = {
+  all: "COMMON",
   "front-end": "FRONTEND",
   "back-end": "BACKEND",
   "ai-ml": "AI_ML",
@@ -24,6 +26,7 @@ const assignmentTrackToCommonSpacePartId: Record<
   CommonSpaceAssignmentApiTrack,
   CommonSpacePartId
 > = {
+  COMMON: "all",
   FRONTEND: "front-end",
   BACKEND: "back-end",
   AI_ML: "ai-ml",
@@ -32,7 +35,7 @@ const assignmentTrackToCommonSpacePartId: Record<
 
 /**
  * 공통공간 파트 식별자를 과제 목록 API의 track 값으로 변환한다.
- * `all`은 공통 과제를 의미하므로 track 파라미터를 생략한다.
+ * `all`은 공통 과제를 의미하므로 API의 COMMON과 매핑한다.
  */
 export function mapCommonSpacePartIdToAssignmentTrack(
   partId: CommonSpacePartId = "all",
@@ -42,7 +45,7 @@ export function mapCommonSpacePartIdToAssignmentTrack(
 
 /**
  * 과제 API의 track 값을 공통공간 파트 식별자로 정규화한다.
- * 공통 과제는 null/undefined로 내려올 수 있으므로 all로 되돌린다.
+ * 공통 과제는 COMMON 또는 null/undefined로 내려올 수 있으므로 all로 되돌린다.
  */
 export function mapAssignmentTrackToCommonSpacePartId(
   track?: CommonSpaceAssignmentApiTrack | null,
@@ -212,6 +215,9 @@ export function toCommonSpaceAssignmentDetailItem(
   submission?: CommonSpaceAssignmentMySubmissionApiResponse | null,
   now: Date = new Date(),
 ): CommonSpaceAssignmentDetailItem {
+  const authorView = toCommonSpaceAuthorView(detail.author, {
+    fallbackName: "운영진",
+  });
   const assignment = toCommonSpaceAssignmentListItem(
     {
       id: detail.projectId,
@@ -229,6 +235,10 @@ export function toCommonSpaceAssignmentDetailItem(
   return {
     id: detail.projectId,
     title: detail.title,
+    authorName: authorView.authorName,
+    authorDescription: authorView.authorDescription,
+    profileImageSrc: authorView.profileImageSrc,
+    profileImageAlt: authorView.profileImageAlt,
     content: detail.description,
     partId: mapAssignmentTrackToCommonSpacePartId(detail.track),
     createdAt: detail.startDate,

@@ -34,7 +34,7 @@ function createCommonSpaceAssignmentSubmissionFormData(
 
 /**
  * 공통 공간 과제 목록을 조회한다.
- * `all` 파트는 track 파라미터를 생략해 공통 과제를 조회한다.
+ * `all` 파트는 track=COMMON으로 공통 과제를 조회한다.
  */
 export async function getCommonSpaceAssignmentProjects(
   query: CommonSpaceAssignmentListQuery = {},
@@ -44,7 +44,7 @@ export async function getCommonSpaceAssignmentProjects(
   const response = await apiClient.get<CommonSpaceAssignmentProjectListApiItem[]>(
     "/projects",
     {
-      params: track ? { track } : undefined,
+      params: { track },
     },
   );
 

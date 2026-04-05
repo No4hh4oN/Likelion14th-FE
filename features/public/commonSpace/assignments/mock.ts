@@ -259,7 +259,9 @@ export function getMockCommonSpaceAssignmentProjects(
   );
 
   return COMMON_SPACE_ASSIGNMENT_MOCK_PROJECTS.filter((project) =>
-    requestedTrack ? project.track === requestedTrack : !project.track,
+    requestedTrack === "COMMON"
+      ? !project.track || project.track === "COMMON"
+      : project.track === requestedTrack,
   );
 }
 

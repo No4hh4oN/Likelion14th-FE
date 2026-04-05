@@ -1,4 +1,5 @@
 import type { AssignmentItem, CommonSpacePartId } from "../types";
+import type { CommonSpaceAuthorApiItem } from "../author";
 
 /**
  * 과제 API가 사용하는 트랙 식별자다.
@@ -7,7 +8,8 @@ export type CommonSpaceAssignmentApiTrack =
   | "FRONTEND"
   | "BACKEND"
   | "AI_ML"
-  | "PM_DESIGN";
+  | "PM_DESIGN"
+  | "COMMON";
 
 /**
  * 과제 제출 API가 반환하는 제출 상태다.
@@ -36,6 +38,8 @@ export type CommonSpaceAssignmentProjectListApiItem = {
   deadline: string;
   /** 과제 활성 상태 */
   status: string;
+  /** 작성자 표시 정보 */
+  author?: CommonSpaceAuthorApiItem;
 };
 
 /**
@@ -114,6 +118,8 @@ export type CommonSpaceAssignmentDetailApiResponse = {
   endDate: string;
   /** 과제 상태 */
   status: "ACTIVE" | "INACTIVE" | string;
+  /** 작성자 표시 정보 */
+  author?: CommonSpaceAuthorApiItem;
   /** 첨부파일 목록 */
   files: CommonSpaceAssignmentFileApiItem[];
 };
@@ -166,6 +172,10 @@ export type CommonSpaceAssignmentDetailItem = {
   authorName?: string;
   /** 작성자 부가 정보 */
   authorDescription?: string;
+  /** 작성자 프로필 이미지 경로 */
+  profileImageSrc?: string;
+  /** 작성자 프로필 이미지 대체 텍스트 */
+  profileImageAlt?: string;
   /** 과제 본문 */
   content: string;
   /** 본문 상단에 노출할 이미지 경로 */
