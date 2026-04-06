@@ -223,12 +223,14 @@ export default function AssignmentDetailSection({
     );
   }
 
+  const currentAssignmentDetail = assignmentDetail;
+
   /**
    * D-Day 박스를 노출해야 하는지 여부다.
    */
   const shouldShowDdayBox =
-    assignmentDetail.assignment.submissionState === "notSubmitted" ||
-    assignmentDetail.assignment.submissionState === "rejected";
+    currentAssignmentDetail.assignment.submissionState === "notSubmitted" ||
+    currentAssignmentDetail.assignment.submissionState === "rejected";
 
   /**
    * 과제 제출 또는 수정 제출 이후 상세 상태를 새로 불러온다.
@@ -239,7 +241,7 @@ export default function AssignmentDetailSection({
       files: [file],
     } satisfies CommonSpaceAssignmentSubmissionRequest;
 
-    if (assignmentDetail.assignment.submissionState === "rejected") {
+    if (currentAssignmentDetail.assignment.submissionState === "rejected") {
       await commonSpaceAssignmentDataSource.updateSubmission(
         assignmentId,
         submissionPayload,
@@ -274,27 +276,32 @@ export default function AssignmentDetailSection({
 
       <article className="mt-14 rounded-[28px] bg-gray-7 px-19.5 py-28 leading-[1.27] text-white-1">
         <h2 className="text-[34px] font-semibold text-white-1">
-          {assignmentDetail.title}
+          {currentAssignmentDetail.title}
         </h2>
 
         <div className="mt-7 flex items-center gap-4">
           <Image
-            src={assignmentDetail.profileImageSrc ?? "/images/defaultProf.webp"}
-            alt={assignmentDetail.profileImageAlt ?? "과제 작성자 프로필 사진"}
+            src={
+              currentAssignmentDetail.profileImageSrc ?? "/images/defaultProf.webp"
+            }
+            alt={
+              currentAssignmentDetail.profileImageAlt ??
+              "과제 작성자 프로필 사진"
+            }
             width={48}
             height={48}
             className="h-12 w-12 shrink-0 rounded-full object-cover"
           />
           <div className="flex flex-col gap-1">
             <p className="text-[16px] font-semibold text-white-1">
-              {assignmentDetail.authorName ?? "운영진"}
+              {currentAssignmentDetail.authorName ?? "운영진"}
             </p>
             <p className="text-[14px] text-gray-3">
-              {assignmentDetail.authorDescription ??
+              {currentAssignmentDetail.authorDescription ??
                 "멋쟁이사자처럼 삼육대학교"}
             </p>
             <p className="text-[13px] text-gray-4">
-              {formatAssignmentDateTime(assignmentDetail.createdAt)}
+              {formatAssignmentDateTime(currentAssignmentDetail.createdAt)}
             </p>
           </div>
         </div>
@@ -302,11 +309,13 @@ export default function AssignmentDetailSection({
         <div className="my-15 h-px w-full bg-gray-4" />
 
         <div className="mt-8 space-y-7">
-          {assignmentDetail.bodyImageSrc ? (
+          {currentAssignmentDetail.bodyImageSrc ? (
             <div className="overflow-hidden">
               <Image
-                src={assignmentDetail.bodyImageSrc}
-                alt={assignmentDetail.bodyImageAlt ?? "과제 본문 이미지"}
+                src={currentAssignmentDetail.bodyImageSrc}
+                alt={
+                  currentAssignmentDetail.bodyImageAlt ?? "과제 본문 이미지"
+                }
                 width={920}
                 height={520}
                 quality={90}
@@ -316,12 +325,12 @@ export default function AssignmentDetailSection({
           ) : null}
 
           <div className="whitespace-pre-line text-[16px] leading-[1.6] text-white-1">
-            {assignmentDetail.content}
+            {currentAssignmentDetail.content}
           </div>
         </div>
 
         <DetailAttachmentList
-          attachments={assignmentDetail.attachments}
+          attachments={currentAssignmentDetail.attachments}
           className="mt-8"
         />
 
@@ -332,21 +341,21 @@ export default function AssignmentDetailSection({
             <div className="flex items-center justify-between rounded-[12px] border border-[#FFB5B5] bg-[#FFF3F3] px-5 py-4 text-background">
               <span className="rounded-full bg-red-1 px-4 py-1 text-[14px] font-bold text-white-1">
                 {formatAssignmentDday(
-                  assignmentDetail.deadlineAt,
-                  assignmentDetail.displayNowAt,
+                  currentAssignmentDetail.deadlineAt,
+                  currentAssignmentDetail.displayNowAt,
                 )}
               </span>
               <span className="text-[16px] font-semibold text-red-1">
                 {formatAssignmentDateRange(
-                  assignmentDetail.createdAt,
-                  assignmentDetail.deadlineAt,
+                  currentAssignmentDetail.createdAt,
+                  currentAssignmentDetail.deadlineAt,
                 )}
               </span>
             </div>
           ) : null}
 
           <AssignmentCard
-            assignment={assignmentDetail.assignment}
+            assignment={currentAssignmentDetail.assignment}
             onSubmitFile={handleAssignmentSubmit}
           />
         </div>

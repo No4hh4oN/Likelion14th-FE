@@ -158,7 +158,7 @@ export default function AssignmentSubmitDialog({
           <h3 className="text-[18px] font-bold text-background">파일</h3>
           <button
             type="button"
-            onClick={handleClose}
+            onClick={() => handleClose()}
             disabled={isSubmitting}
             className="cursor-pointer text-background disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="과제 제출 팝업 닫기"
@@ -202,7 +202,7 @@ export default function AssignmentSubmitDialog({
           <div className="flex items-center justify-center gap-4">
             <button
               type="button"
-              onClick={handleClose}
+              onClick={() => handleClose()}
               disabled={isSubmitting}
               className="min-w-[110px] rounded-full bg-gray-2 px-8 py-4 text-[16px] font-bold text-gray-5 hover:bg-gray-5 hover:text-white-1 cursor-pointer"
             >
