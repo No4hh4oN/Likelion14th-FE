@@ -275,18 +275,18 @@ export default function MaterialSection({ partId }: MaterialSectionProps) {
 
       <form
         onSubmit={handleSearchSubmit}
-        className="mt-29 flex flex-wrap items-center gap-4"
+        className="mt-10 flex w-full flex-wrap items-center gap-3 sm:mt-12 sm:gap-4 lg:mt-29"
       >
         <input
           value={searchInput}
           onChange={(event) => setSearchInput(event.target.value)}
           maxLength={MATERIAL_SEARCH_MAX_LENGTH}
           placeholder={MATERIAL_SEARCH_PLACEHOLDER}
-          className="h-[52px] w-[280px] rounded-[8px] bg-[#F4F4F4] px-4 text-[14px] text-[#1F1F1F] placeholder:text-[#A0A3AE] focus:outline-none"
+          className="h-[52px] w-full rounded-[8px] bg-[#F4F4F4] px-4 text-[14px] text-[#1F1F1F] placeholder:text-[#A0A3AE] focus:outline-none sm:w-[280px]"
         />
         <button
           type="submit"
-          className="h-[52px] min-w-[90px] rounded-[8px] bg-black px-6 text-[16px] font-semibold text-white-1"
+          className="h-[52px] w-full rounded-[8px] bg-black px-6 text-[16px] font-semibold text-white-1 sm:min-w-[90px] sm:w-auto"
         >
           검색
         </button>
@@ -294,9 +294,9 @@ export default function MaterialSection({ partId }: MaterialSectionProps) {
 
       <nav
         aria-label="세션 자료 페이지네이션"
-        className="mt-29 flex items-center justify-between text-[24px] text-gray-4"
+        className="mt-10 flex flex-wrap items-center justify-center gap-4 text-[16px] text-gray-4 sm:mt-12 sm:gap-5 sm:text-[18px] lg:mt-29 lg:justify-between lg:text-[24px]"
       >
-        <div className="flex gap-5 -mr-3.25">
+        <div className="flex gap-3 sm:gap-4 lg:-mr-3.25 lg:gap-5">
           <button
             type="button"
             onClick={() => setCurrentPage(1)}
@@ -315,7 +315,7 @@ export default function MaterialSection({ partId }: MaterialSectionProps) {
           </button>
         </div>
 
-        <div className="flex justify-center gap-17.25">
+        <div className="order-3 flex w-full justify-center gap-3 sm:gap-4 lg:order-none lg:w-auto lg:gap-17.25">
           {pageNumbers.map((pageNumber) => (
             <button
               key={pageNumber}
@@ -333,7 +333,7 @@ export default function MaterialSection({ partId }: MaterialSectionProps) {
           ))}
         </div>
 
-        <div className="flex gap-5 -ml-3.25">
+        <div className="flex gap-3 sm:gap-4 lg:-ml-3.25 lg:gap-5">
           <button
             type="button"
             onClick={() =>

@@ -199,18 +199,18 @@ export default function NoticeDetailSection({
       <div className="flex justify-end">
         <Link
           href={buildCommonSpaceHref(partId, "notices")}
-          className="rounded-[14px] bg-main-1 px-12.5 py-6.5 text-[20px] font-bold text-white-1"
+          className="rounded-[10px] bg-main-1 px-5 py-3 text-[14px] font-semibold text-white-1 sm:rounded-[12px] sm:px-8 sm:py-4 sm:text-[16px] lg:rounded-[14px] lg:px-12.5 lg:py-6.5 lg:text-[20px] lg:font-bold"
         >
           목록 보기
         </Link>
       </div>
 
-      <article className="mt-14 rounded-[28px] bg-gray-7 px-19.5 py-28 text-white-1 leading-[1.27]">
-        <h2 className="text-[34px] font-semibold text-white-1">
+      <article className="mt-6 w-full rounded-[22px] bg-gray-7 px-4 py-8 text-white-1 leading-[1.27] sm:mt-8 sm:rounded-[24px] sm:px-6 sm:py-10 lg:mt-14 lg:rounded-[28px] lg:px-12 lg:py-20 xl:px-19.5 xl:py-28">
+        <h2 className="text-[28px] font-semibold leading-[1.3] text-white-1 sm:text-[30px] lg:text-[34px]">
           {noticeDetail.title}
         </h2>
 
-        <div className="mt-7 flex items-center gap-4">
+        <div className="mt-6 flex flex-wrap items-center gap-4 sm:mt-7">
           <Image
             src={noticeDetail.profileImageSrc ?? "/images/defaultProf.webp"}
             alt={noticeDetail.profileImageAlt ?? "공지 작성자 프로필 사진"}
@@ -231,9 +231,9 @@ export default function NoticeDetailSection({
           </div>
         </div>
 
-        <div className="my-15 h-px w-full bg-gray-4" />
+        <div className="my-10 h-px w-full bg-gray-4 sm:my-12 lg:my-15" />
 
-        <div className="mt-8 space-y-7">
+        <div className="mt-8 space-y-6 sm:space-y-7">
           {noticeDetail.bodyImageSrc ? (
             <div className="overflow-hidden">
               <Image
@@ -247,7 +247,7 @@ export default function NoticeDetailSection({
             </div>
           ) : null}
 
-          <div className="whitespace-pre-line text-[16px] leading-[1.6] text-white-1">
+          <div className="whitespace-pre-line text-[15px] leading-[1.6] text-white-1 sm:text-[16px]">
             {noticeDetail.content}
           </div>
         </div>
@@ -261,7 +261,7 @@ export default function NoticeDetailSection({
           </>
         ) : null}
 
-        <div className="my-15 h-px w-full bg-gray-4" />
+        <div className="my-10 h-px w-full bg-gray-4 sm:my-12 lg:my-15" />
 
         <NoticeCommentsSection
           key={noticeId}
@@ -271,8 +271,8 @@ export default function NoticeDetailSection({
           onSubmitComment={handleSubmitComment}
         />
 
-        <div className="mt-8 grid gap-4 md:grid-cols-2">
-          <div className="space-y-6">
+        <div className="mt-10 grid gap-4 md:grid-cols-2 lg:mt-29">
+          <div className="space-y-4 sm:space-y-6">
             <div className="flex items-center gap-3">
               <Image
                 src="/icons/right.svg"
@@ -289,18 +289,18 @@ export default function NoticeDetailSection({
                   partId,
                   previousNotice.id,
                 )}
-                className="block truncate rounded-[14px] bg-gray-6 px-5 py-8 text-[18px] font-medium text-white-1 hover:shadow-[0_0_6px_#828797] transition-shadow"
+                className="block truncate rounded-[14px] bg-gray-6 px-4 py-6 text-[16px] font-medium text-white-1 transition-shadow hover:shadow-[0_0_6px_#828797] sm:px-5 sm:py-8 sm:text-[18px]"
               >
                 {previousNotice.title}
               </Link>
             ) : (
-              <div className="rounded-[14px] bg-gray-6 px-5 py-8 text-center text-[18px] text-gray-4">
+              <div className="rounded-[14px] bg-gray-6 px-4 py-6 text-center text-[16px] text-gray-4 sm:px-5 sm:py-8 sm:text-[18px]">
                 이전 글이 없습니다.
               </div>
             )}
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <div className="flex items-center justify-end gap-3">
               <p className="text-[16px] font-bold text-white-1">다음 글</p>
               <Image
@@ -314,12 +314,12 @@ export default function NoticeDetailSection({
             {nextNotice ? (
               <Link
                 href={buildCommonSpaceNoticeDetailHref(partId, nextNotice.id)}
-                className="block truncate rounded-[14px] bg-gray-6 px-5 py-8 text-right text-[18px] font-medium text-white-1 hover:shadow-[0_0_6px_#828797] transition-shadow"
+                className="block truncate rounded-[14px] bg-gray-6 px-4 py-6 text-right text-[16px] font-medium text-white-1 transition-shadow hover:shadow-[0_0_6px_#828797] sm:px-5 sm:py-8 sm:text-[18px]"
               >
                 {nextNotice.title}
               </Link>
             ) : (
-              <div className="rounded-[14px] bg-gray-6 px-5 py-8 text-center text-[18px] text-gray-4">
+              <div className="rounded-[14px] bg-gray-6 px-4 py-6 text-center text-[16px] text-gray-4 sm:px-5 sm:py-8 sm:text-[18px]">
                 다음 글이 없습니다.
               </div>
             )}

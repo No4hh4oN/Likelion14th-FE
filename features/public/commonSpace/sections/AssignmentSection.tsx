@@ -312,18 +312,18 @@ export default function AssignmentSection({ partId }: AssignmentSectionProps) {
 
       <form
         onSubmit={handleSearchSubmit}
-        className="mt-12 flex flex-wrap items-center gap-4"
+        className="mt-10 flex w-full flex-wrap items-center gap-3 sm:mt-12 sm:gap-4"
       >
         <input
           value={searchInput}
           onChange={(event) => setSearchInput(event.target.value)}
           maxLength={ASSIGNMENT_SEARCH_MAX_LENGTH}
           placeholder={ASSIGNMENT_SEARCH_PLACEHOLDER}
-          className="h-[52px] w-[280px] rounded-[8px] bg-[#F4F4F4] px-4 text-[14px] text-[#1F1F1F] placeholder:text-[#A0A3AE] focus:outline-none"
+          className="h-[52px] w-full rounded-[8px] bg-[#F4F4F4] px-4 text-[14px] text-[#1F1F1F] placeholder:text-[#A0A3AE] focus:outline-none sm:w-[280px]"
         />
         <button
           type="submit"
-          className="h-[52px] min-w-[90px] rounded-[8px] bg-black px-6 text-[16px] font-semibold text-white-1"
+          className="h-[52px] w-full rounded-[8px] bg-black px-6 text-[16px] font-semibold text-white-1 sm:min-w-[90px] sm:w-auto"
         >
           검색
         </button>
@@ -331,7 +331,7 @@ export default function AssignmentSection({ partId }: AssignmentSectionProps) {
 
       <nav
         aria-label="과제 안내 페이지네이션"
-        className="mt-11 flex items-center justify-center gap-5 text-[18px] text-gray-4"
+        className="mt-10 flex flex-wrap items-center justify-center gap-3 text-[16px] text-gray-4 sm:mt-11 sm:gap-4 sm:text-[18px] lg:gap-5"
       >
         <button
           type="button"
