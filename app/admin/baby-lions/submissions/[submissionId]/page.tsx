@@ -1,8 +1,6 @@
 import BabyLionsSubmissionDetailPage from "@/features/admin/babyLions/BabyLionsSubmissionDetailPage";
 
-export function generateStaticParams() {
-  return [{ submissionId: "1" }];
-}
+export const dynamic = "force-dynamic";
 
 type AdminBabyLionsSubmissionDetailRouteProps = {
   params: Promise<{ submissionId: string }>;

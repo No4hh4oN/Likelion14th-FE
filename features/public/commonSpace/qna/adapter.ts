@@ -1,5 +1,6 @@
 import type { CommonSpacePartId } from "../types";
 import { toCommonSpaceAuthorView } from "../author";
+import { normalizeCommonSpaceAssetUrl } from "../url";
 import {
   DEFAULT_COMMON_SPACE_QNA_PAGE,
   DEFAULT_COMMON_SPACE_QNA_PAGE_SIZE,
@@ -129,7 +130,7 @@ export function toCommonSpaceQnaAttachment(
   return {
     id: file.fileId,
     name: file.originalFileName,
-    url: file.fileUrl,
+    url: normalizeCommonSpaceAssetUrl(file.fileUrl) ?? file.fileUrl,
   };
 }
 
@@ -141,7 +142,7 @@ export function toCommonSpaceQnaAnswerImage(
 ): CommonSpaceQnaAnswerImage {
   return {
     id: `qna-answer-image-${file.fileId}`,
-    src: file.fileUrl,
+    src: normalizeCommonSpaceAssetUrl(file.fileUrl) ?? file.fileUrl,
     alt: file.originalFileName,
   };
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import clsx from "clsx";
 import type { AssignmentItem } from "../types";
+import { normalizeCommonSpaceAssetUrl } from "../url";
 import AssignmentReviewBadge from "./AssignmentReviewBadge";
 import AssignmentSubmitDialog from "./AssignmentSubmitDialog";
 
@@ -68,7 +69,8 @@ function getAssignmentStatusLabel(
  * 제출 파일 URL에서 표시용 파일명을 추출한다.
  */
 function getAssignmentFileNameFromUrl(fileUrl: string) {
-  const normalizedUrl = fileUrl.split("?")[0] ?? fileUrl;
+  const resolvedFileUrl = normalizeCommonSpaceAssetUrl(fileUrl) ?? fileUrl;
+  const normalizedUrl = resolvedFileUrl.split("?")[0] ?? resolvedFileUrl;
   const fileName = normalizedUrl.split("/").pop();
 
   return fileName ? decodeURIComponent(fileName) : "제출 파일";
@@ -252,7 +254,11 @@ export default function AssignmentCard({
               {submissionFileName &&
                 (assignment.submissionFileUrl ? (
                   <a
-                    href={assignment.submissionFileUrl}
+                    href={
+                      normalizeCommonSpaceAssetUrl(
+                        assignment.submissionFileUrl,
+                      ) ?? assignment.submissionFileUrl
+                    }
                     download
                     target="_blank"
                     rel="noreferrer"

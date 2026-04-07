@@ -1,5 +1,6 @@
 import type { CommonSpacePartId } from "../types";
 import { toCommonSpaceAuthorView } from "../author";
+import { normalizeCommonSpaceAssetUrl } from "../url";
 import type {
   CommonSpaceAssignmentAttachment,
   CommonSpaceAssignmentDetailApiResponse,
@@ -108,7 +109,8 @@ export function getAssignmentFileNameFromUrl(fileUrl?: string) {
     return undefined;
   }
 
-  const normalizedUrl = fileUrl.split("?")[0] ?? fileUrl;
+  const resolvedFileUrl = normalizeCommonSpaceAssetUrl(fileUrl) ?? fileUrl;
+  const normalizedUrl = resolvedFileUrl.split("?")[0] ?? resolvedFileUrl;
   const fileName = normalizedUrl.split("/").pop();
 
   return fileName ? decodeURIComponent(fileName) : "제출 파일";
@@ -188,7 +190,8 @@ export function toCommonSpaceAssignmentListItem(
           : undefined,
     submissionId: submission?.submissionId,
     submissionFileName: getAssignmentFileNameFromUrl(submission?.fileUrl),
-    submissionFileUrl: submission?.fileUrl,
+    submissionFileUrl:
+      normalizeCommonSpaceAssetUrl(submission?.fileUrl) ?? submission?.fileUrl,
     reviewContent: submission?.feedback,
     canResubmit: submissionState === "rejected",
   };
@@ -203,7 +206,7 @@ export function toCommonSpaceAssignmentAttachment(
   return {
     id: file.fileId,
     name: file.originalFileName,
-    url: file.fileUrl,
+    url: normalizeCommonSpaceAssetUrl(file.fileUrl) ?? file.fileUrl,
   };
 }
 

@@ -1,5 +1,6 @@
 import type { CommonSpacePartId } from "../types";
 import { toCommonSpaceAuthorView } from "../author";
+import { normalizeCommonSpaceAssetUrl } from "../url";
 import {
   isCommonSpaceNoticeNew,
   toCommonSpaceNoticeCommentItem,
@@ -99,11 +100,15 @@ export function buildCommonSpaceMaterialListParams(
 export function toCommonSpaceMaterialListItem(
   item: CommonSpaceMaterialSummaryApiItem,
 ): CommonSpaceMaterialListItem {
+  const normalizedThumbnailSrc = normalizeCommonSpaceAssetUrl(
+    item.thumbnailImageUrl,
+  );
+
   return {
     id: item.noticeId,
     title: item.title,
-    thumbnailSrc: item.thumbnailImageUrl || undefined,
-    thumbnailAlt: item.thumbnailImageUrl ? `${item.title} 썸네일` : undefined,
+    thumbnailSrc: normalizedThumbnailSrc,
+    thumbnailAlt: normalizedThumbnailSrc ? `${item.title} 썸네일` : undefined,
     partId: mapMaterialApiPartToCommonSpacePartId(item.part),
     createdAt: item.createdAt,
     fileCount: item.fileCount,
@@ -140,7 +145,7 @@ export function toCommonSpaceMaterialAttachment(
   return {
     id: file.fileId,
     name: file.originalFileName,
-    url: file.fileUrl,
+    url: normalizeCommonSpaceAssetUrl(file.fileUrl) ?? file.fileUrl,
   };
 }
 

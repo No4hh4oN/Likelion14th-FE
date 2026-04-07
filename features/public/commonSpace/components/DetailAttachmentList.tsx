@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { normalizeCommonSpaceAssetUrl } from "../url";
 
 /**
  * 상세 화면 첨부파일 목록의 단일 아이템 데이터다.
@@ -67,7 +68,7 @@ export default function DetailAttachmentList({
       {attachments.map((attachment) => (
         <a
           key={attachment.id}
-          href={attachment.url}
+          href={normalizeCommonSpaceAssetUrl(attachment.url) ?? attachment.url}
           target="_blank"
           rel="noreferrer"
           className="inline-flex max-w-full items-center gap-2 rounded-[10px] leading-[1.27] bg-white-1 px-3.75 py-3.25 text-[15px] font-medium text-gray-6"

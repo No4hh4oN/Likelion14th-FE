@@ -1,5 +1,6 @@
 import type { CommonSpacePartId } from "../types";
 import { toCommonSpaceAuthorView } from "../author";
+import { normalizeCommonSpaceAssetUrl } from "../url";
 import {
   COMMON_SPACE_NOTICE_CATEGORY,
   DEFAULT_COMMON_SPACE_NOTICE_PAGE,
@@ -169,7 +170,7 @@ export function toCommonSpaceNoticeAttachment(
   return {
     id: file.fileId,
     name: file.originalFileName,
-    url: file.fileUrl,
+    url: normalizeCommonSpaceAssetUrl(file.fileUrl) ?? file.fileUrl,
   };
 }
 
@@ -202,7 +203,7 @@ export function toCommonSpaceNoticeCommentImage(
 ): CommonSpaceNoticeCommentImage {
   return {
     id: String(file.fileId),
-    src: file.fileUrl,
+    src: normalizeCommonSpaceAssetUrl(file.fileUrl) ?? file.fileUrl,
     alt: file.originalFileName,
   };
 }

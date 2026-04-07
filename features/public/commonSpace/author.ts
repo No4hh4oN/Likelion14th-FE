@@ -1,6 +1,8 @@
 /**
  * commonSpace 상세/댓글 응답에서 공통으로 사용하는 작성자 정보다.
  */
+import { normalizeCommonSpaceAssetUrl } from "./url";
+
 export type CommonSpaceAuthorApiItem = {
   /** 작성자 식별자 */
   userId?: number;
@@ -150,7 +152,7 @@ export function toCommonSpaceAuthorView(
       options.fallbackDescription,
     ),
     profileImageSrc:
-      author?.profileImageUrl ||
+      normalizeCommonSpaceAssetUrl(author?.profileImageUrl) ||
       options.fallbackProfileImageSrc ||
       DEFAULT_COMMON_SPACE_PROFILE_IMAGE_SRC,
     profileImageAlt: authorName ? `${authorName} 프로필 사진` : undefined,
