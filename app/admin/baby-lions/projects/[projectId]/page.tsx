@@ -1,6 +1,8 @@
 import BabyLionsProjectDetailPage from "@/features/admin/babyLions/BabyLionsProjectDetailPage";
 
-export const dynamic = "force-dynamic";
+export function generateStaticParams() {
+  return [{ projectId: "1" }];
+}
 
 type AdminBabyLionsProjectDetailRouteProps = {
   params: Promise<{ projectId: string }>;
