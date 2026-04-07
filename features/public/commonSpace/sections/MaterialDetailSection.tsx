@@ -202,18 +202,18 @@ export default function MaterialDetailSection({
       <div className="flex justify-end">
         <Link
           href={buildCommonSpaceHref(partId, "materials")}
-          className="rounded-[14px] bg-main-1 px-12.5 py-6.5 text-[20px] font-bold text-white-1"
+          className="rounded-[10px] bg-main-1 px-5 py-3 text-[14px] font-semibold text-white-1 sm:rounded-[12px] sm:px-8 sm:py-4 sm:text-[16px] lg:rounded-[14px] lg:px-12.5 lg:py-6.5 lg:text-[20px] lg:font-bold"
         >
           목록 보기
         </Link>
       </div>
 
-      <article className="mt-14 rounded-[28px] bg-gray-7 px-19.5 py-28 leading-[1.27] text-white-1">
-        <h2 className="text-[34px] font-semibold text-white-1">
+      <article className="mt-6 w-full rounded-[22px] bg-gray-7 px-4 py-8 leading-[1.27] text-white-1 sm:mt-8 sm:rounded-[24px] sm:px-6 sm:py-10 lg:mt-14 lg:rounded-[28px] lg:px-12 lg:py-20 xl:px-19.5 xl:py-28">
+        <h2 className="text-[28px] font-semibold leading-[1.3] text-white-1 sm:text-[30px] lg:text-[34px]">
           {materialDetail.title}
         </h2>
 
-        <div className="mt-7 flex items-center gap-4">
+        <div className="mt-6 flex flex-wrap items-center gap-4 sm:mt-7">
           <Image
             src={materialDetail.profileImageSrc ?? "/images/defaultProf.webp"}
             alt={
@@ -236,9 +236,9 @@ export default function MaterialDetailSection({
           </div>
         </div>
 
-        <div className="my-15 h-px w-full bg-gray-4" />
+        <div className="my-10 h-px w-full bg-gray-4 sm:my-12 lg:my-15" />
 
-        <div className="mt-8 space-y-7">
+        <div className="mt-8 space-y-6 sm:space-y-7">
           {materialDetail.bodyImageSrc ? (
             <div className="overflow-hidden">
               <Image
@@ -252,7 +252,7 @@ export default function MaterialDetailSection({
             </div>
           ) : null}
 
-          <div className="whitespace-pre-line text-[16px] leading-[1.6] text-white-1">
+          <div className="whitespace-pre-line text-[15px] leading-[1.6] text-white-1 sm:text-[16px]">
             {materialDetail.content}
           </div>
         </div>
@@ -266,7 +266,7 @@ export default function MaterialDetailSection({
           </>
         ) : null}
 
-        <div className="my-15 h-px w-full bg-gray-4" />
+        <div className="my-10 h-px w-full bg-gray-4 sm:my-12 lg:my-15" />
 
         <NoticeCommentsSection
           key={`material-comments-${materialId}`}
@@ -276,8 +276,8 @@ export default function MaterialDetailSection({
           onSubmitComment={handleSubmitComment}
         />
 
-        <div className="mt-29 grid gap-4 md:grid-cols-2">
-          <div className="space-y-6">
+        <div className="mt-10 grid gap-4 md:grid-cols-2 lg:mt-29">
+          <div className="space-y-4 sm:space-y-6">
             <div className="flex items-center gap-3">
               <Image
                 src="/icons/right.svg"
@@ -294,18 +294,18 @@ export default function MaterialDetailSection({
                   partId,
                   previousMaterial.id,
                 )}
-                className="block truncate rounded-[14px] bg-gray-6 px-5 py-8 text-[18px] font-medium text-white-1 transition-shadow hover:shadow-[0_0_6px_#828797]"
+                className="block truncate rounded-[14px] bg-gray-6 px-4 py-6 text-[16px] font-medium text-white-1 transition-shadow hover:shadow-[0_0_6px_#828797] sm:px-5 sm:py-8 sm:text-[18px]"
               >
                 {previousMaterial.title}
               </Link>
             ) : (
-              <div className="rounded-[14px] bg-gray-6 px-5 py-8 text-center text-[18px] text-gray-4">
+              <div className="rounded-[14px] bg-gray-6 px-4 py-6 text-center text-[16px] text-gray-4 sm:px-5 sm:py-8 sm:text-[18px]">
                 이전 글이 없습니다.
               </div>
             )}
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <div className="flex items-center justify-end gap-3">
               <p className="text-[16px] font-bold text-white-1">다음 글</p>
               <Image
@@ -322,12 +322,12 @@ export default function MaterialDetailSection({
                   partId,
                   nextMaterial.id,
                 )}
-                className="block truncate rounded-[14px] bg-gray-6 px-5 py-8 text-right text-[18px] font-medium text-white-1 transition-shadow hover:shadow-[0_0_6px_#828797]"
+                className="block truncate rounded-[14px] bg-gray-6 px-4 py-6 text-right text-[16px] font-medium text-white-1 transition-shadow hover:shadow-[0_0_6px_#828797] sm:px-5 sm:py-8 sm:text-[18px]"
               >
                 {nextMaterial.title}
               </Link>
             ) : (
-              <div className="rounded-[14px] bg-gray-6 px-5 py-8 text-center text-[18px] text-gray-4">
+              <div className="rounded-[14px] bg-gray-6 px-4 py-6 text-center text-[16px] text-gray-4 sm:px-5 sm:py-8 sm:text-[18px]">
                 다음 글이 없습니다.
               </div>
             )}

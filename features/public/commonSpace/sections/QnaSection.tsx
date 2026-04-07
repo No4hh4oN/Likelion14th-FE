@@ -287,21 +287,21 @@ export default function QnaSection({ partId }: QnaSectionProps) {
         )}
       </div>
 
-      <div className="mt-16 flex flex-wrap items-end justify-between gap-6">
+      <div className="mt-10 flex flex-col gap-4 sm:mt-12 sm:gap-5 lg:mt-16 lg:flex-row lg:flex-wrap lg:items-end lg:justify-between lg:gap-6">
         <form
           onSubmit={handleSearchSubmit}
-          className="flex flex-wrap items-center gap-4"
+          className="flex w-full flex-wrap items-center gap-3 sm:gap-4 lg:w-auto"
         >
           <input
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
             maxLength={QNA_SEARCH_MAX_LENGTH}
             placeholder={QNA_SEARCH_PLACEHOLDER}
-            className="h-[52px] w-[280px] rounded-[8px] bg-[#F4F4F4] px-4 text-[14px] text-[#1F1F1F] placeholder:text-[#A0A3AE] focus:outline-none"
+            className="h-[52px] w-full rounded-[8px] bg-[#F4F4F4] px-4 text-[14px] text-[#1F1F1F] placeholder:text-[#A0A3AE] focus:outline-none sm:w-[280px]"
           />
           <button
             type="submit"
-            className="h-[52px] min-w-[90px] rounded-[8px] bg-black px-6 text-[16px] font-semibold cursor-pointer text-white-1"
+            className="h-[52px] w-full rounded-[8px] bg-black px-6 text-[16px] font-semibold cursor-pointer text-white-1 sm:min-w-[90px] sm:w-auto"
           >
             검색
           </button>
@@ -310,7 +310,7 @@ export default function QnaSection({ partId }: QnaSectionProps) {
         <button
           type="button"
           onClick={handleCreateQuestionClick}
-          className="h-[52px] rounded-[8px] bg-main-1 px-8 text-[16px] font-semibold cursor-pointer text-white-1"
+          className="h-[52px] w-full rounded-[8px] bg-main-1 px-8 text-[16px] font-semibold cursor-pointer text-white-1 sm:w-auto"
         >
           {QNA_CREATE_BUTTON_LABEL}
         </button>
@@ -318,9 +318,9 @@ export default function QnaSection({ partId }: QnaSectionProps) {
 
       <nav
         aria-label="질의응답 페이지네이션"
-        className="mt-11 flex items-center justify-between text-[24px] text-gray-4"
+        className="mt-10 flex flex-wrap items-center justify-center gap-4 text-[16px] text-gray-4 sm:mt-11 sm:gap-5 sm:text-[18px] lg:justify-between lg:text-[24px]"
       >
-        <div className="flex gap-5 -mr-3.25">
+        <div className="flex gap-3 sm:gap-4 lg:-mr-3.25 lg:gap-5">
           <button
             type="button"
             onClick={() => setCurrentPage(1)}
@@ -339,7 +339,7 @@ export default function QnaSection({ partId }: QnaSectionProps) {
           </button>
         </div>
 
-        <div className="flex justify-center gap-17.25">
+        <div className="order-3 flex w-full justify-center gap-3 sm:gap-4 lg:order-none lg:w-auto lg:gap-17.25">
           {pageNumbers.map((pageNumber) => (
             <button
               key={pageNumber}
@@ -359,7 +359,7 @@ export default function QnaSection({ partId }: QnaSectionProps) {
           ))}
         </div>
 
-        <div className="flex gap-5 -ml-3.25">
+        <div className="flex gap-3 sm:gap-4 lg:-ml-3.25 lg:gap-5">
           <button
             type="button"
             onClick={() =>

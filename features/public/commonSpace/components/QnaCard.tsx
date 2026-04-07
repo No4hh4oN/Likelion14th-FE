@@ -4,25 +4,14 @@ import type {
   CommonSpaceQnaQuestionPartId,
 } from "../qna/types";
 
-/**
- * 질의응답 목록 카드가 받을 표시용 props다.
- */
 export type QnaCardProps = {
-  /** 질문 종류 뱃지에 표시할 파트 */
   questionPartId: CommonSpaceQnaQuestionPartId;
-  /** 답변 상태 뱃지 */
   answerState: CommonSpaceQnaAnswerState;
-  /** 카드 제목 */
   title: string;
-  /** 비밀글 여부 */
   isSecret?: boolean;
-  /** 카드 클릭 시 실행할 핸들러 */
   onClick?: () => void;
 };
 
-/**
- * 비밀글 여부를 표시할 자물쇠 아이콘이다.
- */
 function QnaSecretIcon() {
   return (
     <svg
@@ -42,9 +31,6 @@ function QnaSecretIcon() {
   );
 }
 
-/**
- * 카드 우측 이동 화살표 아이콘이다.
- */
 function QnaCardArrowIcon() {
   return (
     <svg
@@ -67,9 +53,6 @@ function QnaCardArrowIcon() {
   );
 }
 
-/**
- * 질의응답 목록 카드 한 장을 렌더링한다.
- */
 export default function QnaCard({
   questionPartId,
   answerState,
@@ -81,15 +64,15 @@ export default function QnaCard({
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center justify-between gap-6 rounded-[14px] bg-linear-to-r from-[#484D5A] to-[#303136] px-8 py-7 text-left text-white-1 transition-shadow cursor-pointer hover:shadow-[0_0_12px_white]"
+      className="flex w-full flex-col items-start gap-4 rounded-[14px] bg-linear-to-r from-[#484D5A] to-[#303136] px-5 py-5 text-left text-white-1 transition-shadow hover:shadow-[0_0_12px_white] sm:flex-row sm:items-center sm:justify-between sm:gap-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7 cursor-pointer"
       aria-label={`${title} 질문 열기`}
     >
-      <div className="flex min-w-0 flex-1 items-center gap-3">
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2.5 sm:gap-3">
         <QnaPartBadge questionPartId={questionPartId} />
         <QnaAnswerStateBadge answerState={answerState} />
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
-            <p className="min-w-0 max-w-full truncate text-[20px] font-bold leading-[1.27] text-white-1">
+            <p className="min-w-0 max-w-full truncate text-[17px] font-bold leading-[1.35] text-white-1 sm:text-[19px] lg:text-[20px]">
               {title}
             </p>
             {isSecret ? <QnaSecretIcon /> : null}
@@ -97,7 +80,9 @@ export default function QnaCard({
         </div>
       </div>
 
-      <QnaCardArrowIcon />
+      <div className="self-end sm:self-auto">
+        <QnaCardArrowIcon />
+      </div>
     </button>
   );
 }

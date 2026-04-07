@@ -6,15 +6,9 @@ import type { AssignmentItem } from "../types";
 import AssignmentReviewBadge from "./AssignmentReviewBadge";
 import AssignmentSubmitDialog from "./AssignmentSubmitDialog";
 
-/**
- * AssignmentCard 컴포넌트가 받을 props다.
- */
 type AssignmentCardProps = {
-  /** 화면에 그릴 단일 과제 카드 데이터 */
   assignment: AssignmentItem;
-  /** 카드 클릭 시 실행할 핸들러 */
   onClick?: () => void;
-  /** 제출/재제출 파일 업로드 시 실행할 핸들러 */
   onSubmitFile?: (file: File) => Promise<void> | void;
 };
 
@@ -22,10 +16,6 @@ type FileIconProps = {
   className?: string;
 };
 
-/**
- * 공통 공간에서 제출 파일 아이콘을 재사용하기 위한 SVG 컴포넌트다.
- * `currentColor` 기반이라 부모의 `text-*` 클래스로 색상을 바꿀 수 있다.
- */
 function FileIcon({ className }: FileIconProps) {
   return (
     <svg
@@ -53,9 +43,6 @@ function FileIcon({ className }: FileIconProps) {
   );
 }
 
-/**
- * 제출 상태에 대응하는 헤더 라벨을 반환한다.
- */
 function getAssignmentStatusLabel(
   submissionState: AssignmentItem["submissionState"],
 ) {
@@ -64,9 +51,6 @@ function getAssignmentStatusLabel(
     : "미제출";
 }
 
-/**
- * 제출 파일 URL에서 표시용 파일명을 추출한다.
- */
 function getAssignmentFileNameFromUrl(fileUrl: string) {
   const normalizedUrl = fileUrl.split("?")[0] ?? fileUrl;
   const fileName = normalizedUrl.split("/").pop();
@@ -74,92 +58,40 @@ function getAssignmentFileNameFromUrl(fileUrl: string) {
   return fileName ? decodeURIComponent(fileName) : "제출 파일";
 }
 
-/**
- * 상태 기반 과제 카드 UI를 렌더링한다.
- */
 export default function AssignmentCard({
   assignment,
   onClick,
   onSubmitFile,
 }: AssignmentCardProps) {
-  /**
-   * 평가가 공개된 카드에서 피드백 패널의 열림/닫힘 상태를 관리한다.
-   */
   const [isReviewOpen, setIsReviewOpen] = useState(
     assignment.defaultReviewOpen ?? false,
   );
-
-  /**
-   * 과제 제출 팝업의 열림/닫힘 상태다.
-   */
   const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
 
-  /**
-   * 본문을 미제출형 레이아웃으로 그릴지, 제출형 레이아웃으로 그릴지 판별한다.
-   */
   const hasSubmission =
     assignment.submissionState === "submitted" ||
     assignment.submissionState === "rejected";
-
-  /**
-   * 제출 기한이 지났지만 제출하지 못한 상태인지 판별한다.
-   */
   const isClosedAssignment = assignment.submissionState === "closed";
-
-  /**
-   * 미제출 카드 스타일을 그대로 사용해야 하는 상태인지 판별한다.
-   */
   const isUnsubmittedCard =
     assignment.submissionState === "notSubmitted" || isClosedAssignment;
-
-  /**
-   * 아직 제출 가능해 hover 제출 오버레이를 노출할 수 있는 상태인지 판별한다.
-   */
   const isSubmittableAssignment = assignment.submissionState === "notSubmitted";
-
-  /**
-   * 카드 외곽에 적용할 상태별 그림자 스타일이다.
-   */
   const cardShadowClassName = isUnsubmittedCard
     ? "shadow-[0_0_18px_rgba(251,29,29,0.55)]"
     : "shadow-[0_0_18px_rgba(99,125,255,0.55)]";
-
-  /**
-   * 제출 파일 표시 영역을 반려 스타일로 바꿔야 하는 상태인지 판별한다.
-   */
   const isRejectedSubmission = assignment.submissionState === "rejected";
-
-  /**
-   * 평가 본문이 실제로 등록되어 있는지 판별한다.
-   */
   const hasReviewContent =
     assignment.reviewState === "published" && Boolean(assignment.reviewContent);
-
-  /**
-   * 헤더 우측에 노출할 제출 상태 라벨이다.
-   */
   const submissionStatusLabel = getAssignmentStatusLabel(
     assignment.submissionState,
   );
-
-  /**
-   * 화면에 노출할 제출 파일명이다.
-   */
   const submissionFileName =
     assignment.submissionFileName ??
     (assignment.submissionFileUrl
       ? getAssignmentFileNameFromUrl(assignment.submissionFileUrl)
       : null);
-
-  /**
-   * 미제출 상태 카드 본문에 노출할 기본 안내 문구다.
-   */
   const unsubmittedBodyMessage =
     assignment.bodyMessage ?? "아직 과제를 제출하지 않았습니다.";
 
-  /**
-   * 카드 키보드 접근을 처리한다.
-   */
   function handleCardKeyDown(event: React.KeyboardEvent<HTMLElement>) {
     if (!onClick) {
       return;
@@ -171,24 +103,15 @@ export default function AssignmentCard({
     }
   }
 
-  /**
-   * 과제 제출 버튼 클릭 시 파일 업로드 팝업을 연다.
-   */
   function handleOpenSubmitDialog(event: React.MouseEvent<HTMLButtonElement>) {
     event.stopPropagation();
     setIsSubmitDialogOpen(true);
   }
 
-  /**
-   * 과제 제출 팝업을 닫는다.
-   */
   function handleCloseSubmitDialog() {
     setIsSubmitDialogOpen(false);
   }
 
-  /**
-   * 선택한 제출 파일을 상위 제출 로직으로 전달한다.
-   */
   function handleSubmitFile(file: File) {
     return onSubmitFile?.(file);
   }
@@ -206,26 +129,26 @@ export default function AssignmentCard({
       tabIndex={onClick ? 0 : undefined}
     >
       <div
-        className={`flex gap-4 flex-row items-center justify-between px-10 py-6.5 ${
+        className={`flex flex-col items-start justify-between gap-4 px-5 py-4 sm:px-6 sm:py-5 lg:flex-row lg:items-center lg:px-8 lg:py-6.5 ${
           isUnsubmittedCard
             ? "bg-linear-to-r from-main-3 to-[#FFD16E]"
             : "bg-gray-4"
         }`}
       >
-        <p className="min-w-0 truncate font-bold text-background text-[24px]">
+        <p className="min-w-0 text-[18px] font-bold text-background sm:text-[20px] lg:truncate lg:text-[24px]">
           {assignment.title}
         </p>
 
-        <div className="flex shrink-0 items-center gap-6 whitespace-nowrap">
+        <div className="flex w-full flex-wrap items-center justify-between gap-3 sm:gap-4 lg:w-auto lg:flex-nowrap lg:justify-end lg:gap-6">
           <span
-            className={`text-[24px] font-bold ${
+            className={`text-[18px] font-bold sm:text-[20px] lg:text-[24px] ${
               isUnsubmittedCard ? "text-red-1" : "text-main-2"
             }`}
           >
             {assignment.deadline}
           </span>
           <span
-            className={`rounded-full px-3.5 py-2 text-[20px] border-2 font-normal text-white-1 ${isUnsubmittedCard ? "bg-red-1 border-[#BA191C]" : "bg-main-1 border-main-2"}`}
+            className={`rounded-full border-2 px-3 py-1.5 text-[14px] font-normal text-white-1 sm:px-3.5 sm:py-2 sm:text-[16px] lg:text-[20px] ${isUnsubmittedCard ? "bg-red-1 border-[#BA191C]" : "bg-main-1 border-main-2"}`}
           >
             {isClosedAssignment ? "미제출" : submissionStatusLabel}
           </span>
@@ -233,13 +156,25 @@ export default function AssignmentCard({
       </div>
 
       {!hasSubmission ? (
-        <div className="bg-white-1 py-12 text-center font-medium text-[24px] text-gray-5">
+        <div className="bg-white-1 px-4 py-8 text-center text-[18px] font-medium text-gray-5 sm:px-6 sm:py-10 sm:text-[20px] lg:py-12 lg:text-[24px]">
           {isClosedAssignment
             ? "아직 과제를 제출하지 않았습니다."
             : unsubmittedBodyMessage}
+
+          {isSubmittableAssignment ? (
+            <div className="mt-6 flex justify-center md:hidden">
+              <button
+                type="button"
+                onClick={handleOpenSubmitDialog}
+                className="rounded-[12px] bg-main-1 px-6 py-3 text-[16px] font-bold text-white-1"
+              >
+                과제 제출하기
+              </button>
+            </div>
+          ) : null}
         </div>
       ) : (
-        <div className="bg-gray-2 px-8 py-10">
+        <div className="bg-gray-2 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
             <div className="flex min-w-0 flex-1 items-center gap-3">
               <div className="shrink-0">
@@ -258,7 +193,7 @@ export default function AssignmentCard({
                     rel="noreferrer"
                     onClick={(event) => event.stopPropagation()}
                     className={clsx(
-                      "flex min-w-0 flex-1 items-center gap-2 rounded-[10px] leading-[1.27] px-4 py-3.25 text-[20px]",
+                      "flex min-w-0 flex-1 items-center gap-2 rounded-[10px] px-3.5 py-3 text-[15px] leading-[1.27] sm:px-4 sm:py-3.25 sm:text-[17px] lg:text-[20px]",
                       isRejectedSubmission
                         ? "bg-gray-3 text-white-1"
                         : "bg-white-1 text-gray-6",
@@ -284,7 +219,7 @@ export default function AssignmentCard({
                 ) : (
                   <div
                     className={clsx(
-                      "flex min-w-0 flex-1 items-center gap-2 rounded-[10px] leading-[1.27] px-4 py-3.25 text-[20px]",
+                      "flex min-w-0 flex-1 items-center gap-2 rounded-[10px] px-3.5 py-3 text-[15px] leading-[1.27] sm:px-4 sm:py-3.25 sm:text-[17px] lg:text-[20px]",
                       isRejectedSubmission
                         ? "bg-gray-3 text-white-1"
                         : "bg-white-1 text-gray-6",
@@ -316,7 +251,7 @@ export default function AssignmentCard({
                 event.stopPropagation();
                 setIsReviewOpen((prev) => !prev);
               }}
-              className="flex shrink-0 items-center gap-2 self-start whitespace-nowrap text-[18px] cursor-pointer font-medium text-[#355BCB] md:self-auto"
+              className="flex shrink-0 items-center gap-2 self-start whitespace-nowrap text-[16px] font-medium text-[#355BCB] md:self-auto lg:text-[18px] cursor-pointer"
             >
               과제 평가 {isReviewOpen ? "접기" : "열기"}
               <svg
@@ -350,46 +285,46 @@ export default function AssignmentCard({
           >
             <div className="min-h-0 overflow-hidden">
               {hasReviewContent ? (
-                <div className="pt-10.5">
-                  <div className="rounded-[14px] bg-white-1 p-8 text-[20px] leading-[1.27] font-medium text-background">
+                <div className="pt-6 sm:pt-8 lg:pt-10.5">
+                  <div className="rounded-[14px] bg-white-1 p-5 text-[16px] font-medium leading-[1.5] text-background sm:p-6 sm:text-[18px] lg:p-8 lg:text-[20px] lg:leading-[1.27]">
                     <p className="whitespace-pre-line">
                       {assignment.reviewContent}
                     </p>
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-center px-4 pb-14.5 pt-18.5 text-center text-[20px] font-medium text-background">
+                <div className="flex items-center justify-center px-4 pb-10 pt-12 text-center text-[16px] font-medium text-background sm:text-[18px] lg:pb-14.5 lg:pt-18.5 lg:text-[20px]">
                   아직 평가가 등록되지 않았습니다.
                 </div>
               )}
 
-              {assignment.canResubmit && hasReviewContent && (
-                <div className="mt-10.5 flex justify-end">
+              {assignment.canResubmit && hasReviewContent ? (
+                <div className="mt-6 flex justify-end sm:mt-8 lg:mt-10.5">
                   <button
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation();
                       setIsSubmitDialogOpen(true);
                     }}
-                    className="rounded-[14px] bg-main-1 cursor-pointer px-10.75 py-6.75 text-[20px] font-bold text-white-1"
+                    className="rounded-[14px] bg-main-1 px-6 py-3.5 text-[16px] font-bold text-white-1 sm:px-8 sm:py-4 sm:text-[18px] lg:px-10.75 lg:py-6.75 lg:text-[20px] cursor-pointer"
                   >
                     과제 수정하기
                   </button>
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
         </div>
       )}
 
-      {isClosedAssignment && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#303136]/80 text-center text-[24px] font-bold text-white-1 backdrop-blur-[4px]">
+      {isClosedAssignment ? (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#303136]/80 px-6 text-center text-[18px] font-bold text-white-1 backdrop-blur-[4px] sm:text-[20px] lg:text-[24px]">
           기한 내에 과제를 제출하지 않았습니다.
         </div>
-      )}
+      ) : null}
 
-      {isSubmittableAssignment && (
-        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-[#303136]/80 opacity-0 backdrop-blur-[4px] transition-opacity duration-200 group-hover:opacity-100">
+      {isSubmittableAssignment ? (
+        <div className="pointer-events-none absolute inset-0 z-10 hidden items-center justify-center bg-[#303136]/80 opacity-0 backdrop-blur-[4px] transition-opacity duration-200 md:flex md:group-hover:opacity-100">
           <button
             type="button"
             onClick={handleOpenSubmitDialog}
@@ -398,7 +333,7 @@ export default function AssignmentCard({
             과제 제출하기
           </button>
         </div>
-      )}
+      ) : null}
 
       <AssignmentSubmitDialog
         isOpen={isSubmitDialogOpen}

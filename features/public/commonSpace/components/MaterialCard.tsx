@@ -1,24 +1,12 @@
-/**
- * 세션 자료 카드 한 장을 렌더링하기 위한 표시용 props다.
- */
 export type MaterialCardProps = {
-  /** 카드에 노출할 자료 제목 */
   title: string;
-  /** 카드에 노출할 자료 요약문 */
   summary?: string;
-  /** 카드에 노출할 생성일 */
   createdAt: string;
-  /** 카드 우측 대표 이미지 경로 */
   thumbnailSrc?: string;
-  /** 대표 이미지 대체 텍스트 */
   thumbnailAlt?: string;
-  /** 카드 클릭 시 실행할 핸들러 */
   onClick?: () => void;
 };
 
-/**
- * 자료 카드에 노출할 날짜 문자열을 화면용 형식으로 변환한다.
- */
 function formatMaterialCardDate(value: string) {
   const date = new Date(value);
 
@@ -33,9 +21,6 @@ function formatMaterialCardDate(value: string) {
   return `${year}. ${month}. ${day}.`;
 }
 
-/**
- * 세션 자료 섹션에서 사용할 목록 카드를 렌더링한다.
- */
 export default function MaterialCard({
   title,
   summary,
@@ -48,27 +33,27 @@ export default function MaterialCard({
     <button
       type="button"
       onClick={onClick}
-      className="group flex w-full items-stretch gap-6 rounded-[14px] bg-gray-7 px-9 py-8 text-left text-white-1 transition-shadow hover:shadow-[0_0_8px_#484D5A] cursor-pointer"
+      className="group flex w-full flex-col gap-5 rounded-[14px] bg-gray-7 px-5 py-5 text-left text-white-1 transition-shadow hover:shadow-[0_0_8px_#484D5A] sm:flex-row sm:items-stretch sm:gap-6 sm:px-6 sm:py-6 lg:px-8 lg:py-7 cursor-pointer"
       aria-label={`${title} 세션 자료 열기`}
     >
-      <div className="min-w-0 flex-1 flex flex-col justify-between">
-        <p className="truncate text-[24px] font-bold leading-[1.27] text-white-1">
+      <div className="min-w-0 flex flex-1 flex-col justify-between">
+        <p className="truncate text-[20px] font-bold leading-[1.27] text-white-1 sm:text-[22px] lg:text-[24px]">
           {title}
         </p>
 
         {summary ? (
-          <p className="mt-3.75 line-clamp-3 text-[18px] leading-[1.27] text-gray-4">
+          <p className="mt-3 line-clamp-3 text-[15px] leading-[1.45] text-gray-4 sm:text-[16px] lg:mt-3.75 lg:text-[18px] lg:leading-[1.27]">
             {summary}
           </p>
         ) : null}
 
-        <p className="mt-4 text-[18px] font-normal text-white-1">
+        <p className="mt-4 text-[14px] font-normal text-white-1 sm:text-[15px] lg:text-[18px]">
           {formatMaterialCardDate(createdAt)}
         </p>
       </div>
 
       {thumbnailSrc ? (
-        <div className="h-[170px] w-[170px] shrink-0 overflow-hidden rounded-[8px] bg-gray-6">
+        <div className="h-[180px] w-full shrink-0 overflow-hidden rounded-[8px] bg-gray-6 sm:h-[132px] sm:w-[132px] lg:h-[170px] lg:w-[170px]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={thumbnailSrc}
