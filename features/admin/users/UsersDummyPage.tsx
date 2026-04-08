@@ -5,6 +5,81 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { getAdminUserDetail, getAdminUsers } from "../api";
 import type { AdminUserDetail, AdminUserListItem } from "../type";
 
+/**
+ * 회원가입 화면의 학과 enum과 동일하게 맞춘 사용자 관리 학과 필터 옵션이다.
+ */
+const ADMIN_USER_DEPARTMENT_OPTIONS = [
+  "신학과",
+  "간호학과",
+  "약학과",
+  "자유전공학부(창의)",
+  "자유전공학부(미래)",
+  "경영학과",
+  "글로벌한국학과",
+  "영어영문학과",
+  "상담심리학과",
+  "유아교육과",
+  "항공관광외국어학부",
+  "사회복지학과",
+  "음악학과",
+  "아트앤디자인학과",
+  "체육학과",
+  "물리치료학과",
+  "식품영양학과",
+  "동물자원과학과",
+  "바이오융합공학과",
+  "화학생명과학과",
+  "환경디자인원예학과",
+  "인공지능융합학부",
+  "컴퓨터공학부",
+  "건축학과(5년제)",
+  "건축학과(4년제)",
+  "데이터클라우드공학과",
+  "기타",
+] as const;
+
+/**
+ * 사용자 관리 목록이 지원할 정렬 키다.
+ */
+type AdminUserSortKey = "loginId" | "name" | "department" | "studentNo" | "level";
+
+/**
+ * 사용자 관리 목록이 지원할 정렬 방향이다.
+ */
+type AdminUserSortDirection = "asc" | "desc";
+
+/**
+ * level 필터 UI에 사용할 값이다.
+ */
+type AdminUserLevelFilterValue = "ALL" | "STAFF" | "BABY_LION" | "OUTSIDER";
+
+/**
+ * 정렬 기준 선택지다.
+ */
+const ADMIN_USER_SORT_OPTIONS: {
+  value: AdminUserSortKey;
+  label: string;
+}[] = [
+  { value: "loginId", label: "Login ID" },
+  { value: "name", label: "이름" },
+  { value: "department", label: "학과" },
+  { value: "studentNo", label: "학번" },
+  { value: "level", label: "레벨" },
+];
+
+/**
+ * 레벨 필터 선택지다.
+ */
+const ADMIN_USER_LEVEL_FILTER_OPTIONS: {
+  value: AdminUserLevelFilterValue;
+  label: string;
+}[] = [
+  { value: "ALL", label: "전체 레벨" },
+  { value: "STAFF", label: "운영진" },
+  { value: "BABY_LION", label: "아기사자" },
+  { value: "OUTSIDER", label: "외부인" },
+];
+
 function getInitials(name: string) {
   return name
     .split(" ")
@@ -12,6 +87,76 @@ function getInitials(name: string) {
     .join("")
     .slice(0, 2)
     .toUpperCase();
+}
+
+/**
+ * 사용자 level 문자열을 목록 필터용 표준 값으로 정규화한다.
+ */
+function normalizeAdminUserLevel(level: string): Exclude<
+  AdminUserLevelFilterValue,
+  "ALL"
+> {
+  const normalizedLevel = level.trim().toUpperCase();
+
+  if (
+    normalizedLevel === "STAFF" ||
+    normalizedLevel === "ADMIN" ||
+    normalizedLevel === "ROLE_STAFF" ||
+    normalizedLevel === "ROLE_ADMIN" ||
+    normalizedLevel === "운영진"
+  ) {
+    return "STAFF";
+  }
+
+  if (
+    normalizedLevel === "BABY_LION" ||
+    normalizedLevel === "BABYLION" ||
+    normalizedLevel === "ROLE_BABY_LION" ||
+    normalizedLevel === "아기사자"
+  ) {
+    return "BABY_LION";
+  }
+
+  return "OUTSIDER";
+}
+
+/**
+ * URL 쿼리에서 정렬 키를 읽어 표준값으로 정규화한다.
+ */
+function getAdminUserSortKey(value: string | null): AdminUserSortKey {
+  if (
+    value === "loginId" ||
+    value === "name" ||
+    value === "department" ||
+    value === "studentNo" ||
+    value === "level"
+  ) {
+    return value;
+  }
+
+  return "loginId";
+}
+
+/**
+ * URL 쿼리에서 정렬 방향을 읽어 표준값으로 정규화한다.
+ */
+function getAdminUserSortDirection(
+  value: string | null,
+): AdminUserSortDirection {
+  return value === "desc" ? "desc" : "asc";
+}
+
+/**
+ * URL 쿼리에서 레벨 필터값을 읽어 표준값으로 정규화한다.
+ */
+function getAdminUserLevelFilterValue(
+  value: string | null,
+): AdminUserLevelFilterValue {
+  if (value === "STAFF" || value === "BABY_LION" || value === "OUTSIDER") {
+    return value;
+  }
+
+  return "ALL";
 }
 
 function DetailRow({ label, value }: { label: string; value: string | number }) {
@@ -107,7 +252,81 @@ export default function UsersDummyPage() {
     return users.length;
   }, [totalCount, users.length]);
 
+  /**
+   * 현재 URL 쿼리에서 읽은 정렬 기준이다.
+   */
+  const sortKey = getAdminUserSortKey(searchParams.get("sortKey"));
+
+  /**
+   * 현재 URL 쿼리에서 읽은 정렬 방향이다.
+   */
+  const sortDirection = getAdminUserSortDirection(searchParams.get("sortDirection"));
+
+  /**
+   * 현재 URL 쿼리에서 읽은 학과 필터값이다.
+   */
+  const selectedDepartment = searchParams.get("department") ?? "ALL";
+
+  /**
+   * 현재 URL 쿼리에서 읽은 레벨 필터값이다.
+   */
+  const selectedLevel = getAdminUserLevelFilterValue(searchParams.get("level"));
+
+  /**
+   * 필터와 정렬을 모두 반영한 사용자 목록이다.
+   */
+  const filteredUsers = useMemo(() => {
+    const nextUsers = users.filter((user) => {
+      const isDepartmentMatched =
+        selectedDepartment === "ALL" || user.department === selectedDepartment;
+      const isLevelMatched =
+        selectedLevel === "ALL" ||
+        normalizeAdminUserLevel(user.level) === selectedLevel;
+
+      return isDepartmentMatched && isLevelMatched;
+    });
+
+    const sortedUsers = [...nextUsers].sort((leftUser, rightUser) => {
+      const leftValue = leftUser[sortKey];
+      const rightValue = rightUser[sortKey];
+      const comparedValue = String(leftValue).localeCompare(String(rightValue), "ko", {
+        numeric: true,
+        sensitivity: "base",
+      });
+
+      return sortDirection === "asc" ? comparedValue : -comparedValue;
+    });
+
+    return sortedUsers;
+  }, [selectedDepartment, selectedLevel, sortDirection, sortKey, users]);
+
+  /**
+   * 실제 필터링 후 화면에 표시되는 사용자 수다.
+   */
+  const filteredCount = filteredUsers.length;
+
   const selectedDetail = selectedLoginId ? detailCache[selectedLoginId] : null;
+
+  /**
+   * 목록 관련 쿼리스트링을 갱신한다.
+   */
+  const updateListQuery = (nextValues: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    Object.entries(nextValues).forEach(([key, value]) => {
+      if (!value || value === "ALL") {
+        params.delete(key);
+        return;
+      }
+
+      params.set(key, value);
+    });
+
+    const query = params.toString();
+    router.replace(query ? `/admin/users?${query}` : "/admin/users", {
+      scroll: false,
+    });
+  };
 
   const handleSelect = (loginId: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -129,6 +348,82 @@ export default function UsersDummyPage() {
       <div className="mx-auto max-w-[1400px]">
         <h1 className="text-[34px] font-bold tracking-[-0.02em]">Users</h1>
         <p className="mt-2 text-sm text-gray-4">Connected to `/api/admin/users`.</p>
+
+        <div className="mt-6 grid gap-3 rounded-2xl border border-[#3a3d45] bg-[#2d3037] p-4 md:grid-cols-2 xl:grid-cols-4">
+          <label className="text-sm">
+            <span className="mb-2 block text-gray-4">정렬 기준</span>
+            <select
+              value={sortKey}
+              onChange={(event) =>
+                updateListQuery({
+                  sortKey: event.target.value,
+                })
+              }
+              className="h-11 w-full rounded-md border border-[#5d6478] bg-[#454c5d] px-3 text-white outline-none"
+            >
+              {ADMIN_USER_SORT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="text-sm">
+            <span className="mb-2 block text-gray-4">정렬 방향</span>
+            <select
+              value={sortDirection}
+              onChange={(event) =>
+                updateListQuery({
+                  sortDirection: event.target.value,
+                })
+              }
+              className="h-11 w-full rounded-md border border-[#5d6478] bg-[#454c5d] px-3 text-white outline-none"
+            >
+              <option value="asc">오름차순</option>
+              <option value="desc">내림차순</option>
+            </select>
+          </label>
+
+          <label className="text-sm">
+            <span className="mb-2 block text-gray-4">학과 필터</span>
+            <select
+              value={selectedDepartment}
+              onChange={(event) =>
+                updateListQuery({
+                  department: event.target.value,
+                })
+              }
+              className="h-11 w-full rounded-md border border-[#5d6478] bg-[#454c5d] px-3 text-white outline-none"
+            >
+              <option value="ALL">전체 학과</option>
+              {ADMIN_USER_DEPARTMENT_OPTIONS.map((department) => (
+                <option key={department} value={department}>
+                  {department}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="text-sm">
+            <span className="mb-2 block text-gray-4">레벨 필터</span>
+            <select
+              value={selectedLevel}
+              onChange={(event) =>
+                updateListQuery({
+                  level: event.target.value,
+                })
+              }
+              className="h-11 w-full rounded-md border border-[#5d6478] bg-[#454c5d] px-3 text-white outline-none"
+            >
+              {ADMIN_USER_LEVEL_FILTER_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
 
         <div className={`mt-6 grid gap-4 ${selectedLoginId ? "lg:grid-cols-[1fr_1fr]" : ""}`}>
           <div className="overflow-hidden rounded-2xl border border-[#3a3d45] bg-[#2d3037]">
@@ -161,7 +456,7 @@ export default function UsersDummyPage() {
                     </tr>
                   )}
 
-                  {!isLoading && !error && users.length === 0 && (
+                  {!isLoading && !error && filteredUsers.length === 0 && (
                     <tr className="border-t border-[#3a3d45]">
                       <td colSpan={6} className="px-4 py-10 text-center text-gray-3">
                         조회된 유저가 없습니다.
@@ -171,7 +466,7 @@ export default function UsersDummyPage() {
 
                   {!isLoading &&
                     !error &&
-                    users.map((user) => (
+                    filteredUsers.map((user) => (
                       <tr
                         key={user.loginId}
                         className={`border-t border-[#3a3d45] transition-colors ${
@@ -256,7 +551,9 @@ export default function UsersDummyPage() {
           )}
         </div>
 
-        <p className="mt-4 text-xs text-gray-4">totalCount: {safeCount}</p>
+        <p className="mt-4 text-xs text-gray-4">
+          totalCount: {safeCount} / filteredCount: {filteredCount}
+        </p>
       </div>
     </section>
   );
