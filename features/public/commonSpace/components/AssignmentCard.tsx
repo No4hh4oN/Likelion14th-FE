@@ -81,8 +81,6 @@ export default function AssignmentCard({
     ? "shadow-[0_0_18px_rgba(251,29,29,0.55)]"
     : "shadow-[0_0_18px_rgba(99,125,255,0.55)]";
   const isRejectedSubmission = assignment.submissionState === "rejected";
-  const isEditableSubmittedAssignment =
-    assignment.submissionState === "submitted" && Boolean(assignment.canResubmit);
   const hasReviewContent =
     assignment.reviewState === "published" && Boolean(assignment.reviewContent);
   const submissionStatusLabel = getAssignmentStatusLabel(
@@ -253,46 +251,34 @@ export default function AssignmentCard({
                 ))}
             </div>
 
-            <div className="flex shrink-0 items-center gap-3 self-start md:self-auto">
-              {isEditableSubmittedAssignment ? (
-                <button
-                  type="button"
-                  onClick={handleOpenSubmitDialog}
-                  className="rounded-[10px] bg-main-1 px-4 py-2 text-[14px] font-bold text-white-1 sm:text-[15px] lg:text-[16px] cursor-pointer"
-                >
-                  과제 수정하기
-                </button>
-              ) : null}
-
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setIsReviewOpen((prev) => !prev);
-                }}
-                className="flex shrink-0 items-center gap-2 self-start whitespace-nowrap text-[16px] font-medium text-[#355BCB] md:self-auto lg:text-[18px] cursor-pointer"
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                setIsReviewOpen((prev) => !prev);
+              }}
+              className="flex shrink-0 items-center gap-2 self-start whitespace-nowrap text-[16px] font-medium text-[#355BCB] md:self-auto lg:text-[18px] cursor-pointer"
+            >
+              과제 평가 {isReviewOpen ? "접기" : "열기"}
+              <svg
+                className={clsx(
+                  "h-4 w-4 transition-transform",
+                  isReviewOpen && "rotate-180",
+                )}
+                viewBox="0 0 16 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
               >
-                과제 평가 {isReviewOpen ? "접기" : "열기"}
-                <svg
-                  className={clsx(
-                    "h-4 w-4 transition-transform",
-                    isReviewOpen && "rotate-180",
-                  )}
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M3.5 6L8 10.5L12.5 6"
-                    stroke="currentColor"
-                    strokeWidth="1.75"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-            </div>
+                <path
+                  d="M3.5 6L8 10.5L12.5 6"
+                  stroke="currentColor"
+                  strokeWidth="1.75"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
           </div>
 
           <div
@@ -318,7 +304,7 @@ export default function AssignmentCard({
                 </div>
               )}
 
-              {isRejectedSubmission && assignment.canResubmit && hasReviewContent ? (
+              {assignment.canResubmit ? (
                 <div className="mt-6 flex justify-end sm:mt-8 lg:mt-10.5">
                   <button
                     type="button"
