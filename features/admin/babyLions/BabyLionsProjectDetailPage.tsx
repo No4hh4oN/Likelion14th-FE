@@ -21,6 +21,7 @@ import {
   toLocalDateTimeInputValue,
   TRACK_OPTIONS,
 } from "./utils";
+import { normalizeAdminAssetUrl } from "../url";
 
 type BabyLionsProjectDetailPageProps = {
   projectId: number;
@@ -273,7 +274,7 @@ export default function BabyLionsProjectDetailPage({
                   {detail.files.map((file) => (
                     <li key={file.fileId}>
                       <a
-                        href={file.fileUrl}
+                        href={normalizeAdminAssetUrl(file.fileUrl)}
                         target="_blank"
                         rel="noreferrer"
                         className="hover:text-main-1"

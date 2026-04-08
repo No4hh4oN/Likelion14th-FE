@@ -6,6 +6,7 @@ import BabyLionsShell from "./BabyLionsShell";
 import { evaluateSubmission, getSubmissionDetail } from "./api";
 import type { SubmissionDetail } from "./types";
 import { formatDateTime } from "./utils";
+import { normalizeAdminAssetUrl } from "../url";
 
 type BabyLionsSubmissionDetailPageProps = {
   submissionId: number;
@@ -16,7 +17,7 @@ export default function BabyLionsSubmissionDetailPage({
 }: BabyLionsSubmissionDetailPageProps) {
   const [detail, setDetail] = useState<SubmissionDetail | null>(null);
   const [approved, setApproved] = useState(true);
-  const [rejectReason, setRejectReason] = useState("");
+  const [feedbackText, setFeedbackText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
@@ -28,6 +29,8 @@ export default function BabyLionsSubmissionDetailPage({
     try {
       const response = await getSubmissionDetail(submissionId);
       setDetail(response);
+      setApproved(response.status !== "REJECTED");
+      setFeedbackText(response.feedback ?? "");
     } catch {
       setError("제출물 상세를 불러오지 못했습니다.");
       setDetail(null);
@@ -49,7 +52,7 @@ export default function BabyLionsSubmissionDetailPage({
     try {
       const responseMessage = await evaluateSubmission(submissionId, {
         approved,
-        rejectReason: approved ? "" : rejectReason.trim(),
+        rejectReason: feedbackText.trim(),
       });
       setMessage(responseMessage || "평가를 저장했습니다.");
       await load();
@@ -101,12 +104,13 @@ export default function BabyLionsSubmissionDetailPage({
                 <dd>
                   {detail.fileUrl ? (
                     <a
-                      href={detail.fileUrl}
+                      href={normalizeAdminAssetUrl(detail.fileUrl)}
+                      download
                       target="_blank"
                       rel="noreferrer"
                       className="hover:text-main-1"
                     >
-                      파일 열기
+                      파일 다운로드
                     </a>
                   ) : (
                     "-"
@@ -149,15 +153,13 @@ export default function BabyLionsSubmissionDetailPage({
               </label>
             </div>
 
-            {!approved && (
-              <textarea
-                value={rejectReason}
-                onChange={(event) => setRejectReason(event.target.value)}
-                rows={4}
-                placeholder="반려 사유"
-                className="mt-3 w-full rounded-md border border-[#5d6478] bg-[#454c5d] p-3 text-sm outline-none focus:border-main-1"
-              />
-            )}
+            <textarea
+              value={feedbackText}
+              onChange={(event) => setFeedbackText(event.target.value)}
+              rows={4}
+              placeholder={approved ? "과제 평가" : "반려 사유"}
+              className="mt-3 w-full rounded-md border border-[#5d6478] bg-[#454c5d] p-3 text-sm outline-none focus:border-main-1"
+            />
 
             <button
               type="button"

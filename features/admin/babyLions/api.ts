@@ -1,4 +1,5 @@
 ﻿import { apiClient } from "@/lib/axios";
+import { normalizeUploadFileForMultipart } from "@/lib/uploadFile";
 import type {
   AttendanceItem,
   AttendanceSaveRequest,
@@ -17,7 +18,7 @@ function toMultipartFormData(request: unknown, files: File[] = []): FormData {
   );
 
   files.forEach((file) => {
-    formData.append("files", file);
+    formData.append("files", normalizeUploadFileForMultipart(file));
   });
 
   return formData;

@@ -10,6 +10,7 @@ import {
   updateAdminNotice,
   uploadAdminNoticeFiles,
 } from "../api";
+import { normalizeAdminAssetUrl } from "../url";
 import StaffTasksShell from "./StaffTasksShell";
 
 type NoticeDetailPageProps = {
@@ -294,7 +295,12 @@ export default function NoticeDetailPage({ noticeId }: NoticeDetailPageProps) {
                     key={file.fileId}
                     className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-[#434b5e] px-3 py-2"
                   >
-                    <a href={file.fileUrl} target="_blank" rel="noreferrer" className="hover:text-main-1">
+                    <a
+                      href={normalizeAdminAssetUrl(file.fileUrl)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="hover:text-main-1"
+                    >
                       #{file.fileId} {file.originalFileName}
                     </a>
                     <button

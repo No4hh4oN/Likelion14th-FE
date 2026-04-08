@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/axios";
+import { normalizeUploadFileForMultipart } from "@/lib/uploadFile";
 import type {
   CommonSpaceAssignmentDetailApiResponse,
   CommonSpaceAssignmentListQuery,
@@ -17,16 +18,20 @@ function createCommonSpaceAssignmentSubmissionFormData(
   payload: CommonSpaceAssignmentSubmissionRequest,
 ) {
   const formData = new FormData();
+  const normalizedRequestPayload = {
+    content: "",
+    ...payload.request,
+  };
 
   formData.append(
     "request",
-    new Blob([JSON.stringify(payload.request)], {
+    new Blob([JSON.stringify(normalizedRequestPayload)], {
       type: "application/json",
     }),
   );
 
   payload.files.forEach((file) => {
-    formData.append("files", file);
+    formData.append("files", normalizeUploadFileForMultipart(file));
   });
 
   return formData;

@@ -79,6 +79,11 @@ export default function AssignmentSubmitDialog({
    */
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  /**
+   * 제출 실패 시 사용자에게 보여줄 오류 메시지다.
+   */
+  const [submitErrorMessage, setSubmitErrorMessage] = useState("");
+
   useEffect(() => {
     if (!isOpen) {
       return;
@@ -101,6 +106,7 @@ export default function AssignmentSubmitDialog({
     }
 
     setSelectedFile(null);
+    setSubmitErrorMessage("");
     onClose();
   }
 
@@ -116,6 +122,7 @@ export default function AssignmentSubmitDialog({
    */
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     setSelectedFile(event.target.files?.[0] ?? null);
+    setSubmitErrorMessage("");
   }
 
   /**
@@ -128,8 +135,11 @@ export default function AssignmentSubmitDialog({
 
     try {
       setIsSubmitting(true);
+      setSubmitErrorMessage("");
       await onSubmit?.(selectedFile);
       handleClose(true);
+    } catch {
+      setSubmitErrorMessage("파일 제출에 실패했습니다. 다시 시도해 주세요.");
     } finally {
       setIsSubmitting(false);
     }
@@ -196,6 +206,11 @@ export default function AssignmentSubmitDialog({
           <p className="mt-4 text-[14px] font-semibold text-red-1">
             {ASSIGNMENT_SUBMIT_MAX_SIZE_MESSAGE}
           </p>
+          {submitErrorMessage ? (
+            <p className="mt-3 text-[13px] font-medium text-red-1">
+              {submitErrorMessage}
+            </p>
+          ) : null}
         </div>
 
         <div className="border-t border-[#E7E8EC] px-7 py-6">
