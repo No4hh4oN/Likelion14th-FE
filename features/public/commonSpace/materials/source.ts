@@ -3,10 +3,6 @@ import {
   getCommonSpaceMaterialDetail,
   getCommonSpaceMaterialList,
 } from "./api";
-import {
-  getMockCommonSpaceMaterialDetail,
-  getMockCommonSpaceMaterialList,
-} from "./mock";
 import type {
   CommonSpaceMaterialCommentCreateRequest,
   CommonSpaceMaterialDetailItem,
@@ -89,20 +85,5 @@ export const commonSpaceMaterialApiDataSource: CommonSpaceMaterialDataSource = {
   },
   async createComment(materialId, payload) {
     await createCommonSpaceMaterialComment(materialId, payload);
-  },
-};
-
-/**
- * 레이아웃 검증과 스토리 성격 작업에 사용할 mock 데이터 소스다.
- */
-export const commonSpaceMaterialMockDataSource: CommonSpaceMaterialDataSource = {
-  async getList(query = {}) {
-    return getMockCommonSpaceMaterialList(query);
-  },
-  async getDetail(materialId) {
-    return getMockCommonSpaceMaterialDetail(materialId);
-  },
-  async createComment() {
-    return;
   },
 };

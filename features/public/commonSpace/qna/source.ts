@@ -1,10 +1,4 @@
 import {
-  createMockCommonSpaceQnaAnswer,
-  createMockCommonSpaceQnaQuestion,
-  getMockCommonSpaceQnaDetail,
-  getMockCommonSpaceQnaList,
-} from "./mock";
-import {
   getCommonSpaceQnaDetail,
   getCommonSpaceQnaList,
   submitCommonSpaceQnaQuestion,
@@ -63,23 +57,5 @@ export const commonSpaceQnaApiDataSource: CommonSpaceQnaDataSource = {
   },
   async createAnswer(qnaId, payload) {
     return submitCommonSpaceQnaAnswer(qnaId, payload);
-  },
-};
-
-/**
- * 레이아웃 검증과 스토리 성격 작업에 사용할 mock 데이터 소스다.
- */
-export const commonSpaceQnaMockDataSource: CommonSpaceQnaDataSource = {
-  async getList(query = {}) {
-    return getMockCommonSpaceQnaList(query);
-  },
-  async getDetail(qnaId) {
-    return getMockCommonSpaceQnaDetail(qnaId);
-  },
-  async createQuestion(payload) {
-    return createMockCommonSpaceQnaQuestion(payload);
-  },
-  async createAnswer(qnaId, payload) {
-    return createMockCommonSpaceQnaAnswer(qnaId, payload);
   },
 };

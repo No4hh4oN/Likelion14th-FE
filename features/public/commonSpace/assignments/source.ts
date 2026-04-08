@@ -6,14 +6,6 @@ import {
   updateCommonSpaceAssignmentSubmission,
 } from "./api";
 import {
-  getMockCommonSpaceAssignmentDetail,
-  getMockCommonSpaceAssignmentList,
-  getMockCommonSpaceAssignmentMySubmission,
-  getMockCommonSpaceAssignmentProjects,
-  submitMockCommonSpaceAssignment,
-  updateMockCommonSpaceAssignmentSubmission,
-} from "./mock";
-import {
   toCommonSpaceAssignmentDetailItem,
   toCommonSpaceAssignmentListItem,
 } from "./adapter";
@@ -87,31 +79,3 @@ export const commonSpaceAssignmentApiDataSource: CommonSpaceAssignmentDataSource
     return updateCommonSpaceAssignmentSubmission(projectId, payload);
   },
 };
-
-/**
- * 레이아웃 검증과 스토리 성격 작업에 사용할 mock 데이터 소스다.
- */
-export const commonSpaceAssignmentMockDataSource: CommonSpaceAssignmentDataSource = {
-  async getList(query = {}) {
-    return getMockCommonSpaceAssignmentList(query);
-  },
-  async getDetail(projectId) {
-    return getMockCommonSpaceAssignmentDetail(projectId);
-  },
-  async submit(projectId, payload) {
-    return submitMockCommonSpaceAssignment(projectId, payload);
-  },
-  async updateSubmission(projectId, payload) {
-    return updateMockCommonSpaceAssignmentSubmission(projectId, payload);
-  },
-};
-
-/**
- * 목업 과제 목록과 제출 응답을 개별적으로 확인할 때 사용하는 헬퍼다.
- */
-export function getMockCommonSpaceAssignmentData(query: CommonSpaceAssignmentListQuery = {}) {
-  return {
-    projects: getMockCommonSpaceAssignmentProjects(query),
-    getSubmission: getMockCommonSpaceAssignmentMySubmission,
-  };
-}

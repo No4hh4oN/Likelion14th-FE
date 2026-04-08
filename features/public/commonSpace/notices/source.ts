@@ -3,10 +3,6 @@ import {
   getCommonSpaceNoticeDetail,
   getCommonSpaceNoticeList,
 } from "./api";
-import {
-  getMockCommonSpaceNoticeDetail,
-  getMockCommonSpaceNoticeList,
-} from "./mock";
 import type {
   CommonSpaceNoticeCommentCreateRequest,
   CommonSpaceNoticeDetailItem,
@@ -50,21 +46,6 @@ export const commonSpaceNoticeApiDataSource: CommonSpaceNoticeDataSource = {
   },
   async createComment(noticeId, payload) {
     await createCommonSpaceNoticeComment(noticeId, payload);
-  },
-};
-
-/**
- * 레이아웃 검증과 스토리 성격 작업에 사용할 mock 데이터 소스다.
- */
-export const commonSpaceNoticeMockDataSource: CommonSpaceNoticeDataSource = {
-  async getList(query = {}) {
-    return getMockCommonSpaceNoticeList(query);
-  },
-  async getDetail(noticeId) {
-    return getMockCommonSpaceNoticeDetail(noticeId);
-  },
-  async createComment() {
-    return;
   },
 };
 

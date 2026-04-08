@@ -26,7 +26,6 @@ type AssignmentDetailSectionProps = {
 
 /**
  * 과제 상세 섹션이 현재 사용할 데이터 소스다.
- * 실 API 연결 시 mock 대신 api data source로 교체하면 된다.
  */
 const commonSpaceAssignmentDataSource = commonSpaceAssignmentApiDataSource;
 

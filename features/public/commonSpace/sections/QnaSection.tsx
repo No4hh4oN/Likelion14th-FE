@@ -44,7 +44,6 @@ const QNA_CREATE_BUTTON_LABEL = "질문 글 작성하기";
 
 /**
  * 질의응답 섹션이 현재 사용할 데이터 소스다.
- * 실 API 연결 시 mock 대신 api data source로 교체하면 된다.
  */
 const commonSpaceQnaDataSource = commonSpaceQnaApiDataSource;
 
