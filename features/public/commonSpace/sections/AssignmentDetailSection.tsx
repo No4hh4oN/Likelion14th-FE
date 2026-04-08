@@ -10,6 +10,7 @@ import {
   buildCommonSpaceHref,
 } from "../config";
 import { commonSpaceAssignmentApiDataSource } from "../assignments/source";
+import { cacheAssignmentSubmissionFileName } from "../assignments/submissionFileName";
 import type {
   CommonSpaceAssignmentDetailItem,
   CommonSpaceAssignmentListItem,
@@ -255,6 +256,8 @@ export default function AssignmentDetailSection({
         submissionPayload,
       );
     }
+
+    cacheAssignmentSubmissionFileName(assignmentId, file.name);
 
     const nextSectionData = await getAssignmentDetailSectionData(
       partId,

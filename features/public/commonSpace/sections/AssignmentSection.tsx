@@ -14,6 +14,7 @@ import {
   DEFAULT_COMMON_SPACE_ASSIGNMENT_PAGE_SIZE,
 } from "../assignments/constants";
 import { commonSpaceAssignmentApiDataSource } from "../assignments/source";
+import { cacheAssignmentSubmissionFileName } from "../assignments/submissionFileName";
 import type {
   CommonSpaceAssignmentListItem,
   CommonSpaceAssignmentLoadState,
@@ -228,6 +229,8 @@ export default function AssignmentSection({ partId }: AssignmentSectionProps) {
         submissionPayload,
       );
     }
+
+    cacheAssignmentSubmissionFileName(assignmentId, file.name);
 
     const nextSectionData = await getAssignmentSectionData(partId);
 

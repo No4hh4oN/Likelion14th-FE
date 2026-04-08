@@ -12,6 +12,7 @@ import type {
   CommonSpaceAssignmentProjectListApiItem,
   CommonSpaceAssignmentSubmissionApiStatus,
 } from "./types";
+import { getCachedAssignmentSubmissionFileName } from "./submissionFileName";
 
 const commonSpacePartIdToAssignmentTrack: Partial<
   Record<CommonSpacePartId, CommonSpaceAssignmentApiTrack>
@@ -173,6 +174,9 @@ export function toCommonSpaceAssignmentListItem(
     now,
   );
   const reviewState = toAssignmentReviewState(submission);
+  const submissionFileNameFromCache = getCachedAssignmentSubmissionFileName(
+    project.id,
+  );
 
   return {
     id: project.id,
@@ -190,7 +194,9 @@ export function toCommonSpaceAssignmentListItem(
           ? "제출 기간이 종료되었습니다."
           : undefined,
     submissionId: submission?.submissionId,
-    submissionFileName: getAssignmentFileNameFromUrl(submission?.fileUrl),
+    submissionFileName:
+      submissionFileNameFromCache ??
+      getAssignmentFileNameFromUrl(submission?.fileUrl),
     submissionFileUrl:
       normalizeCommonSpaceAssetUrl(submission?.fileUrl) ?? submission?.fileUrl,
     reviewContent: submission?.feedback,

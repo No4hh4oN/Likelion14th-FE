@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import {
   commonSpaceAssignmentApiDataSource,
 } from "../assignments/source";
+import { cacheAssignmentSubmissionFileName } from "../assignments/submissionFileName";
 import type {
   CommonSpaceAssignmentListItem,
   CommonSpaceAssignmentSubmissionRequest,
@@ -274,6 +275,8 @@ export default function HomeSection({ partId }: HomeSectionProps) {
         submissionPayload,
       );
     }
+
+    cacheAssignmentSubmissionFileName(assignmentId, file.name);
 
     const nextHomeSectionData = await getHomeSectionData(partId);
     setPinnedNoticeItems(nextHomeSectionData.pinnedNoticeItems);
