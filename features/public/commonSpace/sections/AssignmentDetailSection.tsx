@@ -241,7 +241,10 @@ export default function AssignmentDetailSection({
       files: [file],
     } satisfies CommonSpaceAssignmentSubmissionRequest;
 
-    if (currentAssignmentDetail.assignment.submissionState === "rejected") {
+    if (
+      currentAssignmentDetail.assignment.submissionState === "rejected" ||
+      currentAssignmentDetail.assignment.submissionState === "submitted"
+    ) {
       await commonSpaceAssignmentDataSource.updateSubmission(
         assignmentId,
         submissionPayload,

@@ -98,7 +98,7 @@ export type AssignmentReviewState = "hidden" | "pending" | "published";
  * @param submissionFileName 제출된 파일명을 카드 본문에 노출할 때 사용하는 값
  * @param submissionFileUrl 제출 파일을 다운로드할 때 사용하는 URL
  * @param reviewContent 피드백 패널을 펼쳤을 때 보여줄 내용
- * @param canResubmit 반려 상태에서 재제출 버튼을 노출할지 여부를 결정하는 값
+ * @param canResubmit 제출 가능 기간 안에 기존 제출본을 수정 제출할 수 있는지 여부를 결정하는 값
  * @param defaultReviewOpen 평가가 공개된 카드에서 초기 렌더링 시 피드백 패널을 열어둘지 여부를 결정하는 값
  */
 export type AssignmentItem = {
@@ -118,7 +118,7 @@ export type AssignmentItem = {
   submissionFileUrl?: string;
   /** 피드백 패널을 펼쳤을 때 보여줄 내용 */
   reviewContent?: string;
-  /** 반려 상태에서 재제출 버튼을 노출할지 여부 */
+  /** 제출 가능 기간 안에 기존 제출본을 수정 제출할 수 있는지 여부 */
   canResubmit?: boolean;
   /** 초기 렌더링 시 평가 패널을 열어둘지 여부 */
   defaultReviewOpen?: boolean;

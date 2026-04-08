@@ -166,6 +166,7 @@ export function toCommonSpaceAssignmentListItem(
   submission?: CommonSpaceAssignmentMySubmissionApiResponse | null,
   now: Date = new Date(),
 ): CommonSpaceAssignmentListItem {
+  const isDeadlinePassed = isAssignmentDeadlinePassed(project.deadline, now);
   const submissionState = toAssignmentSubmissionState(
     submission,
     project.deadline,
@@ -193,7 +194,9 @@ export function toCommonSpaceAssignmentListItem(
     submissionFileUrl:
       normalizeCommonSpaceAssetUrl(submission?.fileUrl) ?? submission?.fileUrl,
     reviewContent: submission?.feedback,
-    canResubmit: submissionState === "rejected",
+    canResubmit:
+      !isDeadlinePassed &&
+      (submissionState === "submitted" || submissionState === "rejected"),
   };
 }
 

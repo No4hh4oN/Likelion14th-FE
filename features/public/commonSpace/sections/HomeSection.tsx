@@ -263,7 +263,7 @@ export default function HomeSection({ partId }: HomeSectionProps) {
       files: [file],
     } satisfies CommonSpaceAssignmentSubmissionRequest;
 
-    if (submissionState === "rejected") {
+    if (submissionState === "rejected" || submissionState === "submitted") {
       await commonSpaceAssignmentDataSource.updateSubmission(
         assignmentId,
         submissionPayload,

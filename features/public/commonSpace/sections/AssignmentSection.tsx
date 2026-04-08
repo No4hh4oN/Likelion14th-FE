@@ -217,7 +217,7 @@ export default function AssignmentSection({ partId }: AssignmentSectionProps) {
       files: [file],
     } satisfies CommonSpaceAssignmentSubmissionRequest;
 
-    if (submissionState === "rejected") {
+    if (submissionState === "rejected" || submissionState === "submitted") {
       await commonSpaceAssignmentDataSource.updateSubmission(
         assignmentId,
         submissionPayload,
