@@ -14,7 +14,10 @@ import {
   DEFAULT_COMMON_SPACE_ASSIGNMENT_PAGE_SIZE,
 } from "../assignments/constants";
 import { commonSpaceAssignmentApiDataSource } from "../assignments/source";
-import { cacheAssignmentSubmissionFileName } from "../assignments/submissionFileName";
+import {
+  cacheAssignmentSubmissionFiles,
+  clearCachedAssignmentSubmissionFiles,
+} from "../assignments/submissionFileName";
 import type {
   CommonSpaceAssignmentListItem,
   CommonSpaceAssignmentLoadState,
@@ -210,26 +213,43 @@ export default function AssignmentSection({ partId }: AssignmentSectionProps) {
   async function handleAssignmentSubmit(
     assignmentId: number,
     submissionState: CommonSpaceAssignmentListItem["submissionState"],
-    file: File,
+    payload: CommonSpaceAssignmentSubmissionRequest,
   ) {
-    const submissionPayload = {
-      request: {},
-      files: [file],
-    } satisfies CommonSpaceAssignmentSubmissionRequest;
-
-    if (submissionState === "rejected" || submissionState === "submitted") {
+    if (submissionState === "submitted") {
       await commonSpaceAssignmentDataSource.updateSubmission(
         assignmentId,
-        submissionPayload,
+        payload,
       );
     } else {
       await commonSpaceAssignmentDataSource.submit(
         assignmentId,
-        submissionPayload,
+        payload,
       );
     }
 
-    cacheAssignmentSubmissionFileName(assignmentId, file.name);
+    cacheAssignmentSubmissionFiles(
+      assignmentId,
+      payload.files.map((file) => ({ name: file.name })),
+    );
+
+    const nextSectionData = await getAssignmentSectionData(partId);
+
+    setAssignmentItems(nextSectionData.assignmentItems);
+    setPinnedNoticeItems(nextSectionData.pinnedNoticeItems);
+    setLoadState(
+      nextSectionData.assignmentItems.length > 0 ||
+        nextSectionData.pinnedNoticeItems.length > 0
+        ? "success"
+        : "empty",
+      );
+  }
+
+  /**
+   * 과제 제출 취소 이후 목록 상태를 갱신한다.
+   */
+  async function handleAssignmentCancel(assignmentId: number) {
+    await commonSpaceAssignmentDataSource.deleteSubmission(assignmentId);
+    clearCachedAssignmentSubmissionFiles(assignmentId);
 
     const nextSectionData = await getAssignmentSectionData(partId);
 
@@ -294,9 +314,10 @@ export default function AssignmentSection({ partId }: AssignmentSectionProps) {
                   key={item.id}
                   assignment={item}
                   onClick={() => handleAssignmentClick(item.id)}
-                  onSubmitFile={(file) =>
-                    handleAssignmentSubmit(item.id, item.submissionState, file)
+                  onSubmit={(payload) =>
+                    handleAssignmentSubmit(item.id, item.submissionState, payload)
                   }
+                  onCancelSubmission={() => handleAssignmentCancel(item.id)}
                 />
               ))}
             </ul>

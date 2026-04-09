@@ -10,9 +10,10 @@ import type {
   CommonSpaceAssignmentListItem,
   CommonSpaceAssignmentMySubmissionApiResponse,
   CommonSpaceAssignmentProjectListApiItem,
+  CommonSpaceAssignmentSubmittedFile,
   CommonSpaceAssignmentSubmissionApiStatus,
 } from "./types";
-import { getCachedAssignmentSubmissionFileName } from "./submissionFileName";
+import { getCachedAssignmentSubmissionFiles } from "./submissionFileName";
 
 const commonSpacePartIdToAssignmentTrack: Partial<
   Record<CommonSpacePartId, CommonSpaceAssignmentApiTrack>
@@ -118,6 +119,60 @@ export function getAssignmentFileNameFromUrl(fileUrl?: string) {
 }
 
 /**
+ * 제출 응답을 화면용 제출 파일 목록으로 정규화한다.
+ * 서버가 아직 `files[]`를 내려주지 않는 경우를 대비해 단일 `fileUrl`과 브라우저 캐시를 함께 사용한다.
+ */
+function toCommonSpaceAssignmentSubmittedFiles(
+  projectId: number,
+  submission?: CommonSpaceAssignmentMySubmissionApiResponse | null,
+): CommonSpaceAssignmentSubmittedFile[] {
+  const cachedSubmissionFiles = getCachedAssignmentSubmissionFiles(projectId);
+
+  if (submission?.files?.length) {
+    return submission.files.map((file) => ({
+      id: file.fileId,
+      name: file.originalFileName,
+      url: normalizeCommonSpaceAssetUrl(file.fileUrl) ?? file.fileUrl,
+      contentType: file.contentType,
+      fileExtension: file.fileExtension,
+    }));
+  }
+
+  if (cachedSubmissionFiles.length > 0) {
+    if (submission?.fileUrl) {
+      return cachedSubmissionFiles.map((file, index) =>
+        index === 0
+          ? {
+              ...file,
+              url: normalizeCommonSpaceAssetUrl(submission.fileUrl) ?? submission.fileUrl,
+              contentType: submission.contentType ?? file.contentType,
+              fileExtension: submission.fileExtension ?? file.fileExtension,
+            }
+          : file,
+      );
+    }
+
+    return cachedSubmissionFiles;
+  }
+
+  if (submission?.fileUrl) {
+    return [
+      {
+        name:
+          submission.originalFileName ??
+          getAssignmentFileNameFromUrl(submission.fileUrl) ??
+          "제출 파일",
+        url: normalizeCommonSpaceAssetUrl(submission.fileUrl) ?? submission.fileUrl,
+        contentType: submission.contentType,
+        fileExtension: submission.fileExtension,
+      },
+    ];
+  }
+
+  return [];
+}
+
+/**
  * 제출 API 상태를 카드의 submissionState로 변환한다.
  */
 export function toAssignmentSubmissionState(
@@ -167,15 +222,15 @@ export function toCommonSpaceAssignmentListItem(
   submission?: CommonSpaceAssignmentMySubmissionApiResponse | null,
   now: Date = new Date(),
 ): CommonSpaceAssignmentListItem {
-  const isDeadlinePassed = isAssignmentDeadlinePassed(project.deadline, now);
   const submissionState = toAssignmentSubmissionState(
     submission,
     project.deadline,
     now,
   );
   const reviewState = toAssignmentReviewState(submission);
-  const submissionFileNameFromCache = getCachedAssignmentSubmissionFileName(
+  const submissionFiles = toCommonSpaceAssignmentSubmittedFiles(
     project.id,
+    submission,
   );
 
   return {
@@ -194,15 +249,12 @@ export function toCommonSpaceAssignmentListItem(
           ? "제출 기간이 종료되었습니다."
           : undefined,
     submissionId: submission?.submissionId,
-    submissionFileName:
-      submissionFileNameFromCache ??
-      getAssignmentFileNameFromUrl(submission?.fileUrl),
-    submissionFileUrl:
-      normalizeCommonSpaceAssetUrl(submission?.fileUrl) ?? submission?.fileUrl,
+    submissionContent: submission?.content,
+    submissionFiles,
     reviewContent: submission?.feedback,
-    canResubmit:
-      !isDeadlinePassed &&
-      (submissionState === "submitted" || submissionState === "rejected"),
+    canResubmit: resolveAssignmentSubmissionApiStatus(submission) === "PENDING",
+    canCancelSubmission:
+      resolveAssignmentSubmissionApiStatus(submission) === "PENDING",
   };
 }
 

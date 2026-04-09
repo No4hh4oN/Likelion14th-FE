@@ -1,4 +1,8 @@
-import type { AssignmentItem, CommonSpacePartId } from "../types";
+import type {
+  AssignmentItem,
+  AssignmentSubmittedFile,
+  CommonSpacePartId,
+} from "../types";
 import type { CommonSpaceAuthorApiItem } from "../author";
 
 /**
@@ -56,8 +60,16 @@ export type CommonSpaceAssignmentMySubmissionApiResponse = {
   status?: CommonSpaceAssignmentSubmissionApiStatus;
   /** 평가 피드백 */
   feedback?: string;
+  /** 제출 파일 목록 */
+  files?: CommonSpaceAssignmentFileApiItem[];
+  /** 제출 파일의 원본 파일명 */
+  originalFileName?: string;
   /** 제출 파일 URL */
   fileUrl?: string;
+  /** 제출 파일 확장자 */
+  fileExtension?: string;
+  /** 제출 파일 MIME 타입 */
+  contentType?: string;
   /** 제출 시각 */
   submittedAt?: string;
 };
@@ -159,6 +171,11 @@ export type CommonSpaceAssignmentAttachment = {
   /** 다운로드 URL */
   url: string;
 };
+
+/**
+ * 과제 제출 응답을 바탕으로 구성한 화면용 제출 파일 모델이다.
+ */
+export type CommonSpaceAssignmentSubmittedFile = AssignmentSubmittedFile;
 
 /**
  * 과제 상세 화면이 사용하는 표시용 데이터다.

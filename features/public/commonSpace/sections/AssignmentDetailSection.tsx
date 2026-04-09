@@ -10,7 +10,10 @@ import {
   buildCommonSpaceHref,
 } from "../config";
 import { commonSpaceAssignmentApiDataSource } from "../assignments/source";
-import { cacheAssignmentSubmissionFileName } from "../assignments/submissionFileName";
+import {
+  cacheAssignmentSubmissionFiles,
+  clearCachedAssignmentSubmissionFiles,
+} from "../assignments/submissionFileName";
 import type {
   CommonSpaceAssignmentDetailItem,
   CommonSpaceAssignmentListItem,
@@ -235,28 +238,42 @@ export default function AssignmentDetailSection({
   /**
    * 과제 제출 또는 수정 제출 이후 상세 상태를 새로 불러온다.
    */
-  async function handleAssignmentSubmit(file: File) {
-    const submissionPayload = {
-      request: {},
-      files: [file],
-    } satisfies CommonSpaceAssignmentSubmissionRequest;
-
-    if (
-      currentAssignmentDetail.assignment.submissionState === "rejected" ||
-      currentAssignmentDetail.assignment.submissionState === "submitted"
-    ) {
+  async function handleAssignmentSubmit(
+    payload: CommonSpaceAssignmentSubmissionRequest,
+  ) {
+    if (currentAssignmentDetail.assignment.submissionState === "submitted") {
       await commonSpaceAssignmentDataSource.updateSubmission(
         assignmentId,
-        submissionPayload,
+        payload,
       );
     } else {
       await commonSpaceAssignmentDataSource.submit(
         assignmentId,
-        submissionPayload,
+        payload,
       );
     }
 
-    cacheAssignmentSubmissionFileName(assignmentId, file.name);
+    cacheAssignmentSubmissionFiles(
+      assignmentId,
+      payload.files.map((file) => ({ name: file.name })),
+    );
+
+    const nextSectionData = await getAssignmentDetailSectionData(
+      partId,
+      assignmentId,
+    );
+
+    setAssignmentDetail(nextSectionData.assignmentDetail);
+    setAssignmentItems(nextSectionData.assignmentItems);
+    setLoadState(nextSectionData.assignmentDetail ? "success" : "empty");
+  }
+
+  /**
+   * 과제 제출을 취소한 뒤 상세 상태를 새로 불러온다.
+   */
+  async function handleAssignmentCancel() {
+    await commonSpaceAssignmentDataSource.deleteSubmission(assignmentId);
+    clearCachedAssignmentSubmissionFiles(assignmentId);
 
     const nextSectionData = await getAssignmentDetailSectionData(
       partId,
@@ -361,7 +378,8 @@ export default function AssignmentDetailSection({
 
           <AssignmentCard
             assignment={currentAssignmentDetail.assignment}
-            onSubmitFile={handleAssignmentSubmit}
+            onSubmit={handleAssignmentSubmit}
+            onCancelSubmission={handleAssignmentCancel}
           />
         </div>
 

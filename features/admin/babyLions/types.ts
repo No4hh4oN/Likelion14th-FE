@@ -51,6 +51,15 @@ export type ProjectStatusItem = {
   profileImageUrl: string | null;
 };
 
+/**
+ * 제출물 상세에 포함되는 단일 첨부파일 정보다.
+ */
+export type SubmissionFile = {
+  fileId?: number;
+  originalFileName?: string | null;
+  fileUrl: string;
+};
+
 export type SubmissionDetail = {
   submissionId: number;
   studentId: number;
@@ -58,6 +67,8 @@ export type SubmissionDetail = {
   studentNo: string;
   content: string;
   fileUrl: string | null;
+  originalFileName?: string | null;
+  files?: SubmissionFile[];
   status: SubmissionStatus;
   feedback: string | null;
   submittedAt: string;

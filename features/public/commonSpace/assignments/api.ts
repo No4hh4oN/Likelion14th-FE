@@ -96,7 +96,7 @@ export async function submitCommonSpaceAssignment(
 }
 
 /**
- * 반려된 공통 공간 과제를 수정 제출한다.
+ * 평가 전에 이미 제출한 공통 공간 과제를 수정 제출한다.
  */
 export async function updateCommonSpaceAssignmentSubmission(
   projectId: number,
@@ -106,6 +106,17 @@ export async function updateCommonSpaceAssignmentSubmission(
     `/projects/${projectId}/submit`,
     createCommonSpaceAssignmentSubmissionFormData(payload),
   );
+
+  return {
+    message: response.data,
+  } satisfies CommonSpaceAssignmentSubmissionMutationResult;
+}
+
+/**
+ * 평가 전에 기존 제출본을 취소한다.
+ */
+export async function deleteCommonSpaceAssignmentSubmission(projectId: number) {
+  const response = await apiClient.delete<string>(`/projects/${projectId}/submit`);
 
   return {
     message: response.data,

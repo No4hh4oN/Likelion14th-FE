@@ -6,7 +6,10 @@ import { useEffect, useState } from "react";
 import {
   commonSpaceAssignmentApiDataSource,
 } from "../assignments/source";
-import { cacheAssignmentSubmissionFileName } from "../assignments/submissionFileName";
+import {
+  cacheAssignmentSubmissionFiles,
+  clearCachedAssignmentSubmissionFiles,
+} from "../assignments/submissionFileName";
 import type {
   CommonSpaceAssignmentListItem,
   CommonSpaceAssignmentSubmissionRequest,
@@ -257,26 +260,38 @@ export default function HomeSection({ partId }: HomeSectionProps) {
   async function handleAssignmentSubmit(
     assignmentId: number,
     submissionState: CommonSpaceAssignmentListItem["submissionState"],
-    file: File,
+    payload: CommonSpaceAssignmentSubmissionRequest,
   ) {
-    const submissionPayload = {
-      request: {},
-      files: [file],
-    } satisfies CommonSpaceAssignmentSubmissionRequest;
-
-    if (submissionState === "rejected" || submissionState === "submitted") {
+    if (submissionState === "submitted") {
       await commonSpaceAssignmentDataSource.updateSubmission(
         assignmentId,
-        submissionPayload,
+        payload,
       );
     } else {
       await commonSpaceAssignmentDataSource.submit(
         assignmentId,
-        submissionPayload,
+        payload,
       );
     }
 
-    cacheAssignmentSubmissionFileName(assignmentId, file.name);
+    cacheAssignmentSubmissionFiles(
+      assignmentId,
+      payload.files.map((file) => ({ name: file.name })),
+    );
+
+    const nextHomeSectionData = await getHomeSectionData(partId);
+    setPinnedNoticeItems(nextHomeSectionData.pinnedNoticeItems);
+    setNoticeItems(nextHomeSectionData.noticeItems);
+    setMaterialItems(nextHomeSectionData.materialItems);
+    setAssignmentItems(nextHomeSectionData.assignmentItems);
+  }
+
+  /**
+   * 홈 과제 프리뷰 카드에서 제출 취소 후 최신 상태를 다시 불러온다.
+   */
+  async function handleAssignmentCancel(assignmentId: number) {
+    await commonSpaceAssignmentDataSource.deleteSubmission(assignmentId);
+    clearCachedAssignmentSubmissionFiles(assignmentId);
 
     const nextHomeSectionData = await getHomeSectionData(partId);
     setPinnedNoticeItems(nextHomeSectionData.pinnedNoticeItems);
@@ -432,9 +447,10 @@ export default function HomeSection({ partId }: HomeSectionProps) {
               key={item.id}
               assignment={item}
               onClick={() => handleAssignmentClick(item.id)}
-              onSubmitFile={(file) =>
-                handleAssignmentSubmit(item.id, item.submissionState, file)
+              onSubmit={(payload) =>
+                handleAssignmentSubmit(item.id, item.submissionState, payload)
               }
+              onCancelSubmission={() => handleAssignmentCancel(item.id)}
             />
           ))}
         </ul>

@@ -4,13 +4,44 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import BabyLionsShell from "./BabyLionsShell";
 import { evaluateSubmission, getSubmissionDetail } from "./api";
-import type { SubmissionDetail } from "./types";
+import type { SubmissionDetail, SubmissionFile } from "./types";
 import { formatDateTime } from "./utils";
 import { normalizeAdminAssetUrl } from "../url";
 
 type BabyLionsSubmissionDetailPageProps = {
   submissionId: number;
 };
+
+/**
+ * 제출 파일 URL에서 화면용 파일명을 추출한다.
+ */
+function getSubmissionFileNameFromUrl(fileUrl: string) {
+  const normalizedUrl = fileUrl.split("?")[0] ?? fileUrl;
+  const fileName = normalizedUrl.split("/").pop();
+
+  return fileName ? decodeURIComponent(fileName) : "첨부파일";
+}
+
+/**
+ * 제출물 상세 응답을 화면용 첨부파일 목록으로 정규화한다.
+ * 명세가 단일 fileUrl만 줄 때와 files[]를 줄 때를 모두 수용한다.
+ */
+function resolveSubmissionFiles(detail: SubmissionDetail): SubmissionFile[] {
+  if (detail.files && detail.files.length > 0) {
+    return detail.files;
+  }
+
+  if (!detail.fileUrl) {
+    return [];
+  }
+
+  return [
+    {
+      fileUrl: detail.fileUrl,
+      originalFileName: detail.originalFileName ?? getSubmissionFileNameFromUrl(detail.fileUrl),
+    },
+  ];
+}
 
 export default function BabyLionsSubmissionDetailPage({
   submissionId,
@@ -63,6 +94,11 @@ export default function BabyLionsSubmissionDetailPage({
     }
   };
 
+  /**
+   * 화면에 표시할 제출 파일 목록이다.
+   */
+  const submissionFiles = detail ? resolveSubmissionFiles(detail) : [];
+
   return (
     <BabyLionsShell
       title={`제출물 상세 #${submissionId}`}
@@ -102,16 +138,25 @@ export default function BabyLionsSubmissionDetailPage({
               <div>
                 <dt className="font-semibold text-gray-2">파일</dt>
                 <dd>
-                  {detail.fileUrl ? (
-                    <a
-                      href={normalizeAdminAssetUrl(detail.fileUrl)}
-                      download
-                      target="_blank"
-                      rel="noreferrer"
-                      className="hover:text-main-1"
-                    >
-                      파일 다운로드
-                    </a>
+                  {submissionFiles.length > 0 ? (
+                    <ul className="space-y-2">
+                      {submissionFiles.map((file, index) => (
+                        <li key={`${file.fileId ?? file.fileUrl}-${index}`}>
+                          <a
+                            href={normalizeAdminAssetUrl(file.fileUrl)}
+                            download
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex max-w-full items-center gap-2 rounded-md bg-[#454c5d] px-3 py-2 text-gray-2 hover:text-main-1"
+                          >
+                            <span className="truncate">
+                              {file.originalFileName ??
+                                getSubmissionFileNameFromUrl(file.fileUrl)}
+                            </span>
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
                   ) : (
                     "-"
                   )}

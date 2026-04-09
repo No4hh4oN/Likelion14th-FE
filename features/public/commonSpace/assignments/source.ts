@@ -1,4 +1,5 @@
 import {
+  deleteCommonSpaceAssignmentSubmission,
   getCommonSpaceAssignmentDetail,
   getCommonSpaceAssignmentMySubmission,
   getCommonSpaceAssignmentProjects,
@@ -38,12 +39,16 @@ export type CommonSpaceAssignmentDataSource = {
     payload: CommonSpaceAssignmentSubmissionRequest,
   ): Promise<CommonSpaceAssignmentSubmissionMutationResult>;
   /**
-   * 반려된 과제를 수정 제출한다.
+   * 제출 후 평가 전 상태의 과제를 수정 제출한다.
    */
   updateSubmission(
     projectId: number,
     payload: CommonSpaceAssignmentSubmissionRequest,
   ): Promise<CommonSpaceAssignmentSubmissionMutationResult>;
+  /**
+   * 평가 전에 기존 제출본을 취소한다.
+   */
+  deleteSubmission(projectId: number): Promise<CommonSpaceAssignmentSubmissionMutationResult>;
 };
 
 /**
@@ -77,5 +82,8 @@ export const commonSpaceAssignmentApiDataSource: CommonSpaceAssignmentDataSource
   },
   async updateSubmission(projectId, payload) {
     return updateCommonSpaceAssignmentSubmission(projectId, payload);
+  },
+  async deleteSubmission(projectId) {
+    return deleteCommonSpaceAssignmentSubmission(projectId);
   },
 };

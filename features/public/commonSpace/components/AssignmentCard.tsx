@@ -3,14 +3,17 @@
 import { useState } from "react";
 import clsx from "clsx";
 import type { AssignmentItem } from "../types";
-import { normalizeCommonSpaceAssetUrl } from "../url";
+import type { CommonSpaceAssignmentSubmissionRequest } from "../assignments/types";
 import AssignmentReviewBadge from "./AssignmentReviewBadge";
 import AssignmentSubmitDialog from "./AssignmentSubmitDialog";
 
 type AssignmentCardProps = {
   assignment: AssignmentItem;
   onClick?: () => void;
-  onSubmitFile?: (file: File) => Promise<void> | void;
+  onSubmit?: (
+    payload: CommonSpaceAssignmentSubmissionRequest,
+  ) => Promise<void> | void;
+  onCancelSubmission?: () => Promise<void> | void;
 };
 
 type FileIconProps = {
@@ -52,23 +55,17 @@ function getAssignmentStatusLabel(
     : "미제출";
 }
 
-function getAssignmentFileNameFromUrl(fileUrl: string) {
-  const resolvedFileUrl = normalizeCommonSpaceAssetUrl(fileUrl) ?? fileUrl;
-  const normalizedUrl = resolvedFileUrl.split("?")[0] ?? resolvedFileUrl;
-  const fileName = normalizedUrl.split("/").pop();
-
-  return fileName ? decodeURIComponent(fileName) : "제출 파일";
-}
-
 export default function AssignmentCard({
   assignment,
   onClick,
-  onSubmitFile,
+  onSubmit,
+  onCancelSubmission,
 }: AssignmentCardProps) {
   const [isReviewOpen, setIsReviewOpen] = useState(
     assignment.defaultReviewOpen ?? false,
   );
   const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
+  const [isCancellingSubmission, setIsCancellingSubmission] = useState(false);
 
   const hasSubmission =
     assignment.submissionState === "submitted" ||
@@ -86,13 +83,12 @@ export default function AssignmentCard({
   const submissionStatusLabel = getAssignmentStatusLabel(
     assignment.submissionState,
   );
-  const submissionFileName =
-    assignment.submissionFileName ??
-    (assignment.submissionFileUrl
-      ? getAssignmentFileNameFromUrl(assignment.submissionFileUrl)
-      : null);
+  const submissionFiles = assignment.submissionFiles ?? [];
   const unsubmittedBodyMessage =
     assignment.bodyMessage ?? "아직 과제를 제출하지 않았습니다.";
+  const canModifySubmission = Boolean(assignment.canResubmit);
+  const canCancelSubmission = Boolean(assignment.canCancelSubmission);
+  const submitDialogButtonLabel = hasSubmission ? "수정 제출" : "제출";
 
   function handleCardKeyDown(event: React.KeyboardEvent<HTMLElement>) {
     if (!onClick) {
@@ -114,8 +110,37 @@ export default function AssignmentCard({
     setIsSubmitDialogOpen(false);
   }
 
-  function handleSubmitFile(file: File) {
-    return onSubmitFile?.(file);
+  function handleSubmit(
+    payload: CommonSpaceAssignmentSubmissionRequest,
+  ) {
+    return onSubmit?.(payload);
+  }
+
+  async function handleCancelSubmission(
+    event: React.MouseEvent<HTMLButtonElement>,
+  ) {
+    event.stopPropagation();
+
+    if (!onCancelSubmission || isCancellingSubmission) {
+      return;
+    }
+
+    const shouldCancelSubmission = window.confirm(
+      "현재 제출한 과제를 취소하시겠습니까?",
+    );
+
+    if (!shouldCancelSubmission) {
+      return;
+    }
+
+    try {
+      setIsCancellingSubmission(true);
+      await onCancelSubmission();
+    } catch {
+      window.alert("과제 제출 취소에 실패했습니다. 다시 시도해 주세요.");
+    } finally {
+      setIsCancellingSubmission(false);
+    }
   }
 
   return (
@@ -186,69 +211,72 @@ export default function AssignmentCard({
                 />
               </div>
 
-              {submissionFileName &&
-                (assignment.submissionFileUrl ? (
-                  <a
-                    href={
-                      normalizeCommonSpaceAssetUrl(
-                        assignment.submissionFileUrl,
-                      ) ?? assignment.submissionFileUrl
-                    }
-                    download
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={(event) => event.stopPropagation()}
-                    className={clsx(
-                      "flex min-w-0 flex-1 items-center gap-2 rounded-[10px] px-3.5 py-3 text-[15px] leading-[1.27] sm:px-4 sm:py-3.25 sm:text-[17px] lg:text-[20px]",
-                      isRejectedSubmission
-                        ? "bg-gray-3 text-white-1"
-                        : "bg-white-1 text-gray-6",
-                    )}
-                  >
-                    <FileIcon
-                      className={clsx(
-                        "h-[18px] w-[17px] shrink-0",
-                        isRejectedSubmission
-                          ? "text-white-1"
-                          : "text-[#606060]",
-                      )}
-                    />
-                    <span
-                      className={clsx(
-                        "truncate",
-                        isRejectedSubmission && "line-through",
-                      )}
-                    >
-                      {submissionFileName}
-                    </span>
-                  </a>
-                ) : (
-                  <div
-                    className={clsx(
-                      "flex min-w-0 flex-1 items-center gap-2 rounded-[10px] px-3.5 py-3 text-[15px] leading-[1.27] sm:px-4 sm:py-3.25 sm:text-[17px] lg:text-[20px]",
-                      isRejectedSubmission
-                        ? "bg-gray-3 text-white-1"
-                        : "bg-white-1 text-gray-6",
-                    )}
-                  >
-                    <FileIcon
-                      className={clsx(
-                        "h-[18px] w-[17px] shrink-0",
-                        isRejectedSubmission
-                          ? "text-white-1"
-                          : "text-[#606060]",
-                      )}
-                    />
-                    <span
-                      className={clsx(
-                        "truncate",
-                        isRejectedSubmission && "line-through",
-                      )}
-                    >
-                      {submissionFileName}
-                    </span>
-                  </div>
-                ))}
+              {submissionFiles.length > 0 ? (
+                <div className="flex min-w-0 flex-1 flex-col gap-2">
+                  {submissionFiles.map((file, index) =>
+                    file.url ? (
+                      <a
+                        key={`${file.id ?? file.url ?? file.name}-${index}`}
+                        href={file.url}
+                        download
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={(event) => event.stopPropagation()}
+                        className={clsx(
+                          "flex min-w-0 items-center gap-2 rounded-[10px] px-3.5 py-3 text-[15px] leading-[1.27] sm:px-4 sm:py-3.25 sm:text-[17px] lg:text-[20px]",
+                          isRejectedSubmission
+                            ? "bg-gray-3 text-white-1"
+                            : "bg-white-1 text-gray-6",
+                        )}
+                      >
+                        <FileIcon
+                          className={clsx(
+                            "h-[18px] w-[17px] shrink-0",
+                            isRejectedSubmission
+                              ? "text-white-1"
+                              : "text-[#606060]",
+                          )}
+                        />
+                        <span
+                          className={clsx(
+                            "truncate",
+                            isRejectedSubmission && "line-through",
+                          )}
+                        >
+                          {file.name}
+                        </span>
+                      </a>
+                    ) : (
+                      <div
+                        key={`${file.id ?? file.name}-${index}`}
+                        className={clsx(
+                          "flex min-w-0 items-center gap-2 rounded-[10px] px-3.5 py-3 text-[15px] leading-[1.27] sm:px-4 sm:py-3.25 sm:text-[17px] lg:text-[20px]",
+                          isRejectedSubmission
+                            ? "bg-gray-3 text-white-1"
+                            : "bg-white-1 text-gray-6",
+                        )}
+                      >
+                        <FileIcon
+                          className={clsx(
+                            "h-[18px] w-[17px] shrink-0",
+                            isRejectedSubmission
+                              ? "text-white-1"
+                              : "text-[#606060]",
+                          )}
+                        />
+                        <span
+                          className={clsx(
+                            "truncate",
+                            isRejectedSubmission && "line-through",
+                          )}
+                        >
+                          {file.name}
+                        </span>
+                      </div>
+                    ),
+                  )}
+                </div>
+              ) : null}
             </div>
 
             <button
@@ -304,18 +332,31 @@ export default function AssignmentCard({
                 </div>
               )}
 
-              {assignment.canResubmit ? (
-                <div className="mt-6 flex justify-end sm:mt-8 lg:mt-10.5">
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setIsSubmitDialogOpen(true);
-                    }}
-                    className="rounded-[14px] bg-main-1 px-6 py-3.5 text-[16px] font-bold text-white-1 sm:px-8 sm:py-4 sm:text-[18px] lg:px-10.75 lg:py-6.75 lg:text-[20px] cursor-pointer"
-                  >
-                    과제 수정하기
-                  </button>
+              {canModifySubmission || canCancelSubmission ? (
+                <div className="mt-6 flex justify-end gap-3 sm:mt-8 lg:mt-10.5">
+                  {canCancelSubmission ? (
+                    <button
+                      type="button"
+                      onClick={handleCancelSubmission}
+                      disabled={isCancellingSubmission}
+                      className="rounded-[14px] bg-gray-4 px-6 py-3.5 text-[16px] font-bold text-white-1 sm:px-8 sm:py-4 sm:text-[18px] lg:px-10.75 lg:py-6.75 lg:text-[20px] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isCancellingSubmission ? "취소 중" : "제출 취소하기"}
+                    </button>
+                  ) : null}
+
+                  {canModifySubmission ? (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setIsSubmitDialogOpen(true);
+                      }}
+                      className="rounded-[14px] bg-main-1 px-6 py-3.5 text-[16px] font-bold text-white-1 sm:px-8 sm:py-4 sm:text-[18px] lg:px-10.75 lg:py-6.75 lg:text-[20px] cursor-pointer"
+                    >
+                      과제 수정하기
+                    </button>
+                  ) : null}
                 </div>
               ) : null}
             </div>
@@ -344,7 +385,10 @@ export default function AssignmentCard({
       <AssignmentSubmitDialog
         isOpen={isSubmitDialogOpen}
         onClose={handleCloseSubmitDialog}
-        onSubmit={handleSubmitFile}
+        onSubmit={handleSubmit}
+        initialContent={assignment.submissionContent}
+        initialFiles={submissionFiles}
+        submitButtonLabel={submitDialogButtonLabel}
       />
     </li>
   );

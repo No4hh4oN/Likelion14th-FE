@@ -89,16 +89,33 @@ export type AssignmentSubmissionState =
 export type AssignmentReviewState = "hidden" | "pending" | "published";
 
 /**
+ * 사용자가 제출한 단일 과제 파일의 화면용 모델이다.
+ */
+export type AssignmentSubmittedFile = {
+  /** 제출 파일 식별자 */
+  id?: number;
+  /** 화면에 노출할 원본 파일명 */
+  name: string;
+  /** 다운로드에 사용할 URL */
+  url?: string;
+  /** 파일 MIME 타입 */
+  contentType?: string;
+  /** 파일 확장자 */
+  fileExtension?: string;
+};
+
+/**
  * 공통 공간 과제 카드 한 장을 렌더링하기 위한 상태 기반 데이터 모델이다.
  * @param title 과제 제목
  * @param deadline 마감일
  * @param submissionState 과제 제출 상태
  * @param reviewState 과제 평가 상태
  * @param bodyMessage 제출 전에는 미제출 안내 문구로, 제출 후에는 본문에 노출할 메시지
- * @param submissionFileName 제출된 파일명을 카드 본문에 노출할 때 사용하는 값
- * @param submissionFileUrl 제출 파일을 다운로드할 때 사용하는 URL
+ * @param submissionContent 사용자가 제출 시 함께 작성한 본문
+ * @param submissionFiles 제출된 파일 목록
  * @param reviewContent 피드백 패널을 펼쳤을 때 보여줄 내용
- * @param canResubmit 제출 가능 기간 안에 기존 제출본을 수정 제출할 수 있는지 여부를 결정하는 값
+ * @param canResubmit 평가 전까지 기존 제출본을 수정 제출할 수 있는지 여부를 결정하는 값
+ * @param canCancelSubmission 평가 전까지 기존 제출본을 취소할 수 있는지 여부를 결정하는 값
  * @param defaultReviewOpen 평가가 공개된 카드에서 초기 렌더링 시 피드백 패널을 열어둘지 여부를 결정하는 값
  */
 export type AssignmentItem = {
@@ -112,14 +129,16 @@ export type AssignmentItem = {
   reviewState: AssignmentReviewState;
   /** 미제출/마감 안내 또는 제출 후 문구 */
   bodyMessage?: string;
-  /** 제출된 파일명을 표시할 때 사용하는 값 */
-  submissionFileName?: string;
-  /** 제출 파일 다운로드 URL */
-  submissionFileUrl?: string;
+  /** 제출 시 함께 작성한 본문 */
+  submissionContent?: string;
+  /** 제출 파일 목록 */
+  submissionFiles?: AssignmentSubmittedFile[];
   /** 피드백 패널을 펼쳤을 때 보여줄 내용 */
   reviewContent?: string;
-  /** 제출 가능 기간 안에 기존 제출본을 수정 제출할 수 있는지 여부 */
+  /** 평가 전까지 기존 제출본을 수정 제출할 수 있는지 여부 */
   canResubmit?: boolean;
+  /** 평가 전까지 기존 제출본을 취소할 수 있는지 여부 */
+  canCancelSubmission?: boolean;
   /** 초기 렌더링 시 평가 패널을 열어둘지 여부 */
   defaultReviewOpen?: boolean;
 };
