@@ -114,7 +114,7 @@ export type AssignmentSubmittedFile = {
  * @param submissionContent 사용자가 제출 시 함께 작성한 본문
  * @param submissionFiles 제출된 파일 목록
  * @param reviewContent 피드백 패널을 펼쳤을 때 보여줄 내용
- * @param canResubmit 평가 전까지 기존 제출본을 수정 제출할 수 있는지 여부를 결정하는 값
+ * @param canResubmit 평가 전이거나 반려된 제출본을 다시 수정 제출할 수 있는지 여부를 결정하는 값
  * @param canCancelSubmission 평가 전까지 기존 제출본을 취소할 수 있는지 여부를 결정하는 값
  * @param defaultReviewOpen 평가가 공개된 카드에서 초기 렌더링 시 피드백 패널을 열어둘지 여부를 결정하는 값
  */
@@ -135,7 +135,7 @@ export type AssignmentItem = {
   submissionFiles?: AssignmentSubmittedFile[];
   /** 피드백 패널을 펼쳤을 때 보여줄 내용 */
   reviewContent?: string;
-  /** 평가 전까지 기존 제출본을 수정 제출할 수 있는지 여부 */
+  /** 평가 전이거나 반려된 제출본을 수정 제출할 수 있는지 여부 */
   canResubmit?: boolean;
   /** 평가 전까지 기존 제출본을 취소할 수 있는지 여부 */
   canCancelSubmission?: boolean;
