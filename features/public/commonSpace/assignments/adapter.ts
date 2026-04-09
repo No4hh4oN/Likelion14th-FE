@@ -127,18 +127,19 @@ function toCommonSpaceAssignmentSubmittedFiles(
   submission?: CommonSpaceAssignmentMySubmissionApiResponse | null,
 ): CommonSpaceAssignmentSubmittedFile[] {
   const cachedSubmissionFiles = getCachedAssignmentSubmissionFiles(projectId);
+  const submissionStatus = resolveAssignmentSubmissionApiStatus(submission);
 
   if (submission?.files?.length) {
     return submission.files.map((file) => ({
       id: file.fileId,
       name: file.originalFileName,
       url: normalizeCommonSpaceAssetUrl(file.fileUrl) ?? file.fileUrl,
-      contentType: file.contentType,
-      fileExtension: file.fileExtension,
+      contentType: undefined,
+      fileExtension: undefined,
     }));
   }
 
-  if (cachedSubmissionFiles.length > 0) {
+  if (cachedSubmissionFiles.length > 0 && submissionStatus !== "NOT_SUBMITTED") {
     if (submission?.fileUrl) {
       return cachedSubmissionFiles.map((file, index) =>
         index === 0
@@ -222,6 +223,8 @@ export function toCommonSpaceAssignmentListItem(
   submission?: CommonSpaceAssignmentMySubmissionApiResponse | null,
   now: Date = new Date(),
 ): CommonSpaceAssignmentListItem {
+  const submissionStatus = resolveAssignmentSubmissionApiStatus(submission);
+  const isDeadlinePassed = isAssignmentDeadlinePassed(project.deadline, now);
   const submissionState = toAssignmentSubmissionState(
     submission,
     project.deadline,
@@ -252,9 +255,10 @@ export function toCommonSpaceAssignmentListItem(
     submissionContent: submission?.content,
     submissionFiles,
     reviewContent: submission?.feedback,
-    canResubmit: resolveAssignmentSubmissionApiStatus(submission) === "PENDING",
-    canCancelSubmission:
-      resolveAssignmentSubmissionApiStatus(submission) === "PENDING",
+    canResubmit:
+      !isDeadlinePassed &&
+      (submissionStatus === "PENDING" || submissionStatus === "REJECTED"),
+    canCancelSubmission: submissionStatus === "PENDING",
   };
 }
 

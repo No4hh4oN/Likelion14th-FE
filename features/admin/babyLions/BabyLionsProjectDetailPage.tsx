@@ -36,6 +36,18 @@ type EditFormState = {
   deleteFileIdsText: string;
 };
 
+/**
+ * 제출 현황판에 표시할 사용자 이름을 정규화한다.
+ */
+function getProjectStatusDisplayName(item: ProjectStatusItem) {
+  return (
+    item.name?.trim() ||
+    item.studentName?.trim() ||
+    item.loginId?.trim() ||
+    `유저 #${item.userId}`
+  );
+}
+
 const EMPTY_EDIT_FORM: EditFormState = {
   title: "",
   description: "",
@@ -446,7 +458,9 @@ export default function BabyLionsProjectDetailPage({
                   <tbody>
                     {statusBoard.map((item) => (
                       <tr key={item.userId} className="border-b border-[#41485a] text-gray-2">
-                        <td className="px-3 py-2">{item.name}</td>
+                        <td className="px-3 py-2">
+                          {getProjectStatusDisplayName(item)}
+                        </td>
                         <td className="px-3 py-2">{item.status}</td>
                         <td className="px-3 py-2">
                           {item.submissionId ? (

@@ -1,3 +1,4 @@
+import { getAccessToken } from "@/lib/axios";
 import type { AssignmentSubmittedFile } from "../types";
 
 const ASSIGNMENT_SUBMISSION_FILE_STORAGE_KEY =
@@ -6,10 +7,51 @@ const ASSIGNMENT_SUBMISSION_FILE_STORAGE_KEY =
 type AssignmentSubmissionFileMap = Record<string, AssignmentSubmittedFile[]>;
 
 /**
+ * 현재 로그인 계정을 구분할 수 있는 캐시 스코프 키를 만든다.
+ * 토큰 payload에서 식별자를 읽고, 실패하면 토큰 문자열 자체를 fallback으로 사용한다.
+ */
+function getAssignmentSubmissionScopeKey() {
+  if (typeof window === "undefined") {
+    return "anonymous";
+  }
+
+  const accessToken = getAccessToken();
+
+  if (!accessToken) {
+    return "anonymous";
+  }
+
+  try {
+    const [, payloadToken = ""] = accessToken.split(".");
+    const normalizedPayloadToken = payloadToken
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
+    const paddedPayloadToken = normalizedPayloadToken.padEnd(
+      Math.ceil(normalizedPayloadToken.length / 4) * 4,
+      "=",
+    );
+    const decodedPayload = window.atob(paddedPayloadToken);
+    const parsedPayload = JSON.parse(decodedPayload) as {
+      sub?: string;
+      loginId?: string;
+      userId?: number | string;
+    };
+
+    return (
+      parsedPayload.loginId ??
+      parsedPayload.sub ??
+      String(parsedPayload.userId ?? accessToken)
+    );
+  } catch {
+    return accessToken;
+  }
+}
+
+/**
  * 제출 파일 캐시에 사용할 과제 식별자 키를 생성한다.
  */
 function getAssignmentSubmissionFileCacheKey(projectId: number) {
-  return String(projectId);
+  return `${getAssignmentSubmissionScopeKey()}:${projectId}`;
 }
 
 /**

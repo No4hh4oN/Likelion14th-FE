@@ -45,7 +45,9 @@ export type ProjectDetail = {
 
 export type ProjectStatusItem = {
   userId: number;
-  name: string;
+  name: string | null;
+  studentName?: string | null;
+  loginId?: string | null;
   status: SubmissionStatus;
   submissionId: number | null;
   profileImageUrl: string | null;
