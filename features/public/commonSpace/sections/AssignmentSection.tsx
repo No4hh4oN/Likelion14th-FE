@@ -215,7 +215,10 @@ export default function AssignmentSection({ partId }: AssignmentSectionProps) {
     submissionState: CommonSpaceAssignmentListItem["submissionState"],
     payload: CommonSpaceAssignmentSubmissionRequest,
   ) {
-    if (submissionState === "submitted") {
+    if (
+      submissionState === "submitted" ||
+      submissionState === "rejected"
+    ) {
       await commonSpaceAssignmentDataSource.updateSubmission(
         assignmentId,
         payload,

@@ -241,7 +241,10 @@ export default function AssignmentDetailSection({
   async function handleAssignmentSubmit(
     payload: CommonSpaceAssignmentSubmissionRequest,
   ) {
-    if (currentAssignmentDetail.assignment.submissionState === "submitted") {
+    if (
+      currentAssignmentDetail.assignment.submissionState === "submitted" ||
+      currentAssignmentDetail.assignment.submissionState === "rejected"
+    ) {
       await commonSpaceAssignmentDataSource.updateSubmission(
         assignmentId,
         payload,
