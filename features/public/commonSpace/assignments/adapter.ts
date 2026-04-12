@@ -139,13 +139,18 @@ function toCommonSpaceAssignmentSubmittedFiles(
     }));
   }
 
-  if (cachedSubmissionFiles.length > 0 && submissionStatus !== "NOT_SUBMITTED") {
+  if (
+    cachedSubmissionFiles.length > 0 &&
+    submissionStatus !== "NOT_SUBMITTED"
+  ) {
     if (submission?.fileUrl) {
       return cachedSubmissionFiles.map((file, index) =>
         index === 0
           ? {
               ...file,
-              url: normalizeCommonSpaceAssetUrl(submission.fileUrl) ?? submission.fileUrl,
+              url:
+                normalizeCommonSpaceAssetUrl(submission.fileUrl) ??
+                submission.fileUrl,
               contentType: submission.contentType ?? file.contentType,
               fileExtension: submission.fileExtension ?? file.fileExtension,
             }
@@ -163,7 +168,9 @@ function toCommonSpaceAssignmentSubmittedFiles(
           submission.originalFileName ??
           getAssignmentFileNameFromUrl(submission.fileUrl) ??
           "제출 파일",
-        url: normalizeCommonSpaceAssetUrl(submission.fileUrl) ?? submission.fileUrl,
+        url:
+          normalizeCommonSpaceAssetUrl(submission.fileUrl) ??
+          submission.fileUrl,
         contentType: submission.contentType,
         fileExtension: submission.fileExtension,
       },
