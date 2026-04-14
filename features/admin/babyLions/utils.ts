@@ -42,6 +42,10 @@ export function selectedDateCheckedAtString(attendanceDate: string): string {
 }
 
 export function toLocalDateTimeInputValue(value: string): string {
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(?:\.\d+)?)?$/.test(value)) {
+    return value.slice(0, 16);
+  }
+
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return "";
 
@@ -60,7 +64,8 @@ export function toLocalDateTimeInputValue(value: string): string {
 
 export function fromLocalDateTimeInputValue(value: string): string {
   if (!value) return "";
-  return new Date(value).toISOString();
+
+  return value.length === 16 ? `${value}:00` : value;
 }
 
 export function parseNumberList(value: string): number[] {
