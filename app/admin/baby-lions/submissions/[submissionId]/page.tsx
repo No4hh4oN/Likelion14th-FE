@@ -3,13 +3,13 @@ import BabyLionsSubmissionDetailPage from "@/features/admin/babyLions/BabyLionsS
 export const dynamic = "force-dynamic";
 
 type AdminBabyLionsSubmissionDetailRouteProps = {
-  params: { submissionId: string };
+  params: Promise<{ submissionId: string }>;
 };
 
 export default async function AdminBabyLionsSubmissionDetailRoutePage(
   props: AdminBabyLionsSubmissionDetailRouteProps,
 ) {
-  const params = props.params;
+  const params = await props.params;
   const submissionId = Number(params.submissionId);
 
   if (!Number.isInteger(submissionId) || submissionId <= 0) {

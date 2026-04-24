@@ -3,13 +3,13 @@ import BabyLionsProjectDetailPage from "@/features/admin/babyLions/BabyLionsProj
 export const dynamic = "force-dynamic";
 
 type AdminBabyLionsProjectDetailRouteProps = {
-  params: { projectId: string };
+  params: Promise<{ projectId: string }>;
 };
 
 export default async function AdminBabyLionsProjectDetailPage(
   props: AdminBabyLionsProjectDetailRouteProps,
 ) {
-  const params = props.params;
+  const params = await props.params;
   const projectId = Number(params.projectId);
 
   if (!Number.isInteger(projectId) || projectId <= 0) {
