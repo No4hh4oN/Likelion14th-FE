@@ -37,6 +37,11 @@ type EditFormState = {
 };
 
 /**
+ * 과제 제출 API 직접 실행 도구를 개발 환경에서만 노출할지 결정한다.
+ */
+const SHOULD_SHOW_SUBMISSION_API_TOOL = process.env.NODE_ENV === "development";
+
+/**
  * 제출 현황판에 표시할 사용자 이름을 정규화한다.
  */
 function getProjectStatusDisplayName(item: ProjectStatusItem) {
@@ -391,52 +396,54 @@ export default function BabyLionsProjectDetailPage({
             </button>
           </form>
 
-          <section className="rounded-xl border border-[#43485a] bg-[#363c4a] p-4">
-            <h2 className="text-lg font-semibold">과제 제출 API 테스트/운영</h2>
-            <p className="mt-1 text-sm text-gray-4">
-              제출/수정/삭제 API를 이 화면에서 바로 실행할 수 있습니다.
-            </p>
+          {SHOULD_SHOW_SUBMISSION_API_TOOL && (
+            <section className="rounded-xl border border-[#43485a] bg-[#363c4a] p-4">
+              <h2 className="text-lg font-semibold">과제 제출 API 테스트/운영</h2>
+              <p className="mt-1 text-sm text-gray-4">
+                제출/수정/삭제 API를 이 화면에서 바로 실행할 수 있습니다.
+              </p>
 
-            <textarea
-              value={submitRequestText}
-              onChange={(event) => setSubmitRequestText(event.target.value)}
-              rows={5}
-              className="mt-3 w-full rounded-md border border-[#5d6478] bg-[#454c5d] p-3 font-mono text-xs outline-none focus:border-main-1"
-            />
-            <input
-              type="file"
-              multiple
-              onChange={(event) => setSubmitFiles(fileListToArray(event.target.files))}
-              className="mt-2 block w-full text-sm text-gray-3 file:mr-3 file:rounded-md file:border-0 file:bg-[#56607a] file:px-3 file:py-2 file:text-white"
-            />
+              <textarea
+                value={submitRequestText}
+                onChange={(event) => setSubmitRequestText(event.target.value)}
+                rows={5}
+                className="mt-3 w-full rounded-md border border-[#5d6478] bg-[#454c5d] p-3 font-mono text-xs outline-none focus:border-main-1"
+              />
+              <input
+                type="file"
+                multiple
+                onChange={(event) => setSubmitFiles(fileListToArray(event.target.files))}
+                className="mt-2 block w-full text-sm text-gray-3 file:mr-3 file:rounded-md file:border-0 file:bg-[#56607a] file:px-3 file:py-2 file:text-white"
+              />
 
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={handleCreateSubmission}
-                disabled={isSubmitting}
-                className="rounded-lg bg-main-1 px-4 py-2 text-sm font-semibold disabled:opacity-60"
-              >
-                제출 생성
-              </button>
-              <button
-                type="button"
-                onClick={handleUpdateSubmission}
-                disabled={isSubmitting}
-                className="rounded-lg bg-[#56607a] px-4 py-2 text-sm font-semibold disabled:opacity-60"
-              >
-                제출 수정
-              </button>
-              <button
-                type="button"
-                onClick={handleDeleteSubmission}
-                disabled={isSubmitting}
-                className="rounded-lg bg-[#a63f4a] px-4 py-2 text-sm font-semibold disabled:opacity-60"
-              >
-                제출 삭제
-              </button>
-            </div>
-          </section>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={handleCreateSubmission}
+                  disabled={isSubmitting}
+                  className="rounded-lg bg-main-1 px-4 py-2 text-sm font-semibold disabled:opacity-60"
+                >
+                  제출 생성
+                </button>
+                <button
+                  type="button"
+                  onClick={handleUpdateSubmission}
+                  disabled={isSubmitting}
+                  className="rounded-lg bg-[#56607a] px-4 py-2 text-sm font-semibold disabled:opacity-60"
+                >
+                  제출 수정
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteSubmission}
+                  disabled={isSubmitting}
+                  className="rounded-lg bg-[#a63f4a] px-4 py-2 text-sm font-semibold disabled:opacity-60"
+                >
+                  제출 삭제
+                </button>
+              </div>
+            </section>
+          )}
 
           <section className="rounded-xl border border-[#43485a] bg-[#363c4a] p-4">
             <h2 className="text-lg font-semibold">제출 현황판</h2>
