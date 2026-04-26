@@ -20,6 +20,7 @@ api-docs.json
 
 # production
 /build
+/release/
 
 # misc
 .DS_Store

@@ -8,6 +8,7 @@ import Sidebar from "@/components/layout/Sidebar";
 import Login from "@/components/layout/Login";
 import UserInfo from "@/components/layout/UserInfo";
 import { getMyInfo } from "@/features/public/api";
+import { canAccessAdmin } from "@/features/admin/permissions";
 import { getActiveRecruitment } from "@/features/public/home/api";
 import type { MeResponse } from "@/features/public/type";
 import type { ActiveRecruitmentResponse } from "@/features/public/home/types";
@@ -169,6 +170,9 @@ export default function Header() {
     };
   }, [activeEndAt]);
 
+  const activeRole = me?.roles.find((role) => role.active) ?? me?.roles[0];
+  const canUseAdminPage = me ? canAccessAdmin(me) : false;
+
   const authSection = me ? (
     <UserInfo
       name={me.homepage.name}
@@ -177,9 +181,10 @@ export default function Header() {
         me.homepage.profileImageUrl ??
         undefined
       }
-      generation={me.roles[0]?.generation}
-      role={me.roles[0]?.level}
-      track={me.roles[0]?.track}
+      generation={activeRole?.generation}
+      role={activeRole?.level}
+      track={activeRole?.track}
+      canAccessAdmin={canUseAdminPage}
       onLoggedOut={() => setMe(null)}
     />
   ) : (

@@ -4,12 +4,17 @@ import Link from "next/link";
 import { useState } from "react";
 import { logout } from "@/features/public/api";
 
+/**
+ * 헤더/사이드바 사용자 정보 영역에 표시할 사용자 프로필과 이동 권한 정보입니다.
+ */
 type UserInfoProps = {
   name: string;
   profileImageUrl?: string;
   generation?: number | null;
   role?: string;
   track?: string;
+  /** admin 접근 권한이 있는 사용자인지 여부입니다. */
+  canAccessAdmin?: boolean;
   onLoggedOut?: () => void;
 };
 
@@ -36,6 +41,7 @@ export default function UserInfo({
   generation,
   role,
   track,
+  canAccessAdmin,
   onLoggedOut,
 }: UserInfoProps) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -47,10 +53,10 @@ export default function UserInfo({
     ? `${generation}기 ${roleLabel}`
     : roleLabel;
   const trackText = track ?? "";
-  const isStaff = role === "STAFF";
+  const canUseAdminPage = canAccessAdmin ?? role === "STAFF";
   const myPageHref = "/14/mypage";
-  const rolePageLabel = isStaff ? "운영진 페이지" : "아기사자 페이지";
-  const rolePageHref = isStaff ? "/admin" : "/14/commonSpace";
+  const rolePageLabel = canUseAdminPage ? "운영진 페이지" : "아기사자 페이지";
+  const rolePageHref = canUseAdminPage ? "/admin" : "/14/commonSpace";
 
   const handleLogout = async () => {
     if (isLoggingOut) {

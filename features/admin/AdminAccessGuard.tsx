@@ -5,15 +5,15 @@ import { getAccessToken } from "@/lib/axios";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { canAccessAdmin } from "./permissions";
 
 type AdminAccessGuardProps = {
   children: ReactNode;
 };
 
-function isStaffRole(level: string | undefined): boolean {
-  return level === "STAFF";
-}
-
+/**
+ * 로그인 상태와 admin 접근 권한을 확인한 뒤 admin 하위 화면을 렌더링합니다.
+ */
 export default function AdminAccessGuard({ children }: AdminAccessGuardProps) {
   const router = useRouter();
   const [isAllowed, setIsAllowed] = useState(false);
@@ -31,10 +31,8 @@ export default function AdminAccessGuard({ children }: AdminAccessGuardProps) {
 
       try {
         const profile = await getMyInfo();
-        const activeRole =
-          profile.roles.find((role) => role.active) ?? profile.roles[0];
 
-        if (!isStaffRole(activeRole?.level)) {
+        if (!canAccessAdmin(profile)) {
           router.replace("/");
           return;
         }
@@ -66,4 +64,3 @@ export default function AdminAccessGuard({ children }: AdminAccessGuardProps) {
 
   return <>{children}</>;
 }
-
