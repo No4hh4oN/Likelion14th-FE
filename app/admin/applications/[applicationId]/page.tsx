@@ -1,9 +1,7 @@
-﻿import { Suspense } from "react";
+import { Suspense } from "react";
 import ApplicationDetailPage from "@/features/admin/applications/ApplicationDetailPage";
-
-export function generateStaticParams() {
-  return [{ applicationId: "1" }];
-}
+import AdminRouteErrorMessage from "@/features/admin/components/AdminRouteErrorMessage";
+import { parsePositiveIntegerRouteParam } from "@/features/admin/routeParams";
 
 type AdminApplicationDetailRouteProps = {
   params: Promise<{
@@ -15,9 +13,18 @@ export default async function AdminApplicationDetailRoute({
   params,
 }: AdminApplicationDetailRouteProps) {
   const resolvedParams = await params;
-  const parsed = Number(resolvedParams.applicationId);
-  if (!Number.isInteger(parsed) || parsed <= 0) {
-    return <div className="px-4 py-16 text-white">잘못된 지원서 ID입니다.</div>;
+  const applicationId = parsePositiveIntegerRouteParam(
+    resolvedParams.applicationId,
+  );
+
+  if (!applicationId) {
+    return (
+      <AdminRouteErrorMessage
+        description="지원서 ID는 1 이상의 숫자여야 합니다."
+        actionHref="/admin/applications"
+        actionLabel="지원자 목록으로 이동"
+      />
+    );
   }
 
   return (
@@ -30,7 +37,7 @@ export default async function AdminApplicationDetailRoute({
         </section>
       }
     >
-      <ApplicationDetailPage applicationId={parsed} />
+      <ApplicationDetailPage applicationId={applicationId} />
     </Suspense>
   );
 }

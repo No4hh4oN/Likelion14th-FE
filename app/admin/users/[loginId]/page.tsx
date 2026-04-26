@@ -1,8 +1,6 @@
 import UserDetailDummyPage from "@/features/admin/users/UserDetailDummyPage";
-
-export function generateStaticParams() {
-  return [{ loginId: "admin" }];
-}
+import AdminRouteErrorMessage from "@/features/admin/components/AdminRouteErrorMessage";
+import { parseNonEmptyRouteParam } from "@/features/admin/routeParams";
 
 type AdminUserDetailPageProps = {
   params: Promise<{
@@ -10,7 +8,21 @@ type AdminUserDetailPageProps = {
   }>;
 };
 
-export default async function AdminUserDetailPage({ params }: AdminUserDetailPageProps) {
-  const { loginId } = await params;
-  return <UserDetailDummyPage loginId={decodeURIComponent(loginId)} />;
+export default async function AdminUserDetailPage({
+  params,
+}: AdminUserDetailPageProps) {
+  const { loginId: rawLoginId } = await params;
+  const loginId = parseNonEmptyRouteParam(rawLoginId);
+
+  if (!loginId) {
+    return (
+      <AdminRouteErrorMessage
+        description="사용자 loginId가 비어 있습니다."
+        actionHref="/admin/users"
+        actionLabel="사용자 목록으로 이동"
+      />
+    );
+  }
+
+  return <UserDetailDummyPage loginId={loginId} />;
 }
