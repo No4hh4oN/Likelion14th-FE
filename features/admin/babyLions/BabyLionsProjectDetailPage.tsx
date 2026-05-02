@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import { isAxiosError } from "axios";
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import BabyLionsShell from "./BabyLionsShell";
@@ -12,14 +13,14 @@ import {
   updateProject,
   updateProjectSubmission,
 } from "./api";
-import type { ProjectDetail, ProjectStatusItem, Track } from "./types";
+import type { ProjectDetail, ProjectStatusItem, ProjectTrack } from "./types";
 import {
   fileListToArray,
   formatDateTime,
   fromLocalDateTimeInputValue,
   parseNumberList,
+  PROJECT_TRACK_OPTIONS,
   toLocalDateTimeInputValue,
-  TRACK_OPTIONS,
 } from "./utils";
 import { normalizeAdminAssetUrl } from "../url";
 
@@ -30,7 +31,7 @@ type BabyLionsProjectDetailPageProps = {
 type EditFormState = {
   title: string;
   description: string;
-  track: "" | Track;
+  track: ProjectTrack;
   startDate: string;
   endDate: string;
   deleteFileIdsText: string;
@@ -53,10 +54,45 @@ function getProjectStatusDisplayName(item: ProjectStatusItem) {
   );
 }
 
+/**
+ * axios 에러 응답의 서버 메시지를 관리자 화면용 문구로 정규화한다.
+ *
+ * @param error API 호출 중 발생한 원본 에러
+ * @param fallback 서버 메시지가 없을 때 사용할 기본 문구
+ * @returns 사용자에게 보여줄 에러 문구
+ */
+function getApiErrorMessage(error: unknown, fallback: string) {
+  if (!isAxiosError(error)) {
+    return fallback;
+  }
+
+  const data = error.response?.data;
+
+  if (typeof data === "string" && data.trim().length > 0) {
+    return data;
+  }
+
+  if (
+    data &&
+    typeof data === "object" &&
+    "message" in data &&
+    typeof data.message === "string" &&
+    data.message.trim().length > 0
+  ) {
+    return data.message;
+  }
+
+  return fallback;
+}
+
+/**
+ * 과제 수정 폼의 초기 입력값입니다.
+ * 공통 과제는 API 명세의 COMMON 트랙으로 저장합니다.
+ */
 const EMPTY_EDIT_FORM: EditFormState = {
   title: "",
   description: "",
-  track: "",
+  track: "COMMON",
   startDate: "",
   endDate: "",
   deleteFileIdsText: "",
@@ -67,6 +103,7 @@ export default function BabyLionsProjectDetailPage({
 }: BabyLionsProjectDetailPageProps) {
   const [detail, setDetail] = useState<ProjectDetail | null>(null);
   const [statusBoard, setStatusBoard] = useState<ProjectStatusItem[]>([]);
+  const [statusBoardError, setStatusBoardError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -82,25 +119,59 @@ export default function BabyLionsProjectDetailPage({
   const loadDetail = useCallback(async () => {
     setIsLoading(true);
     setError("");
+    setStatusBoardError("");
 
     try {
-      const [detailResponse, statusResponse] = await Promise.all([
+      const [detailResult, statusResult] = await Promise.allSettled([
         getProjectDetail(projectId),
         getProjectStatus(projectId),
       ]);
+
+      if (detailResult.status === "rejected") {
+        setError(
+          getApiErrorMessage(
+            detailResult.reason,
+            "과제 상세 정보를 불러오지 못했습니다.",
+          ),
+        );
+        setDetail(null);
+        setStatusBoard([]);
+        return;
+      }
+
+      const detailResponse = detailResult.value;
       setDetail(detailResponse);
-      setStatusBoard(statusResponse);
+
+      if (statusResult.status === "fulfilled") {
+        setStatusBoard(statusResult.value);
+      } else {
+        const statusFallbackMessage =
+          "제출 현황판을 불러오지 못했습니다. 과제 수정은 가능합니다.";
+        const statusApiMessage = getApiErrorMessage(
+          statusResult.reason,
+          statusFallbackMessage,
+        );
+
+        setStatusBoard([]);
+        setStatusBoardError(
+          statusApiMessage === statusFallbackMessage
+            ? statusFallbackMessage
+            : `${statusFallbackMessage} (${statusApiMessage})`,
+        );
+      }
 
       setEditForm({
         title: detailResponse.title,
         description: detailResponse.description,
-        track: detailResponse.track ?? "",
+        track: detailResponse.track ?? "COMMON",
         startDate: toLocalDateTimeInputValue(detailResponse.startDate),
         endDate: toLocalDateTimeInputValue(detailResponse.endDate),
         deleteFileIdsText: "",
       });
-    } catch {
-      setError("과제 상세 정보를 불러오지 못했습니다.");
+    } catch (loadError) {
+      setError(
+        getApiErrorMessage(loadError, "과제 상세 정보를 불러오지 못했습니다."),
+      );
       setDetail(null);
       setStatusBoard([]);
     } finally {
@@ -133,7 +204,7 @@ export default function BabyLionsProjectDetailPage({
       const request = {
         title: editForm.title.trim(),
         description: editForm.description.trim(),
-        track: editForm.track || null,
+        track: editForm.track,
         startDate: fromLocalDateTimeInputValue(editForm.startDate),
         endDate: fromLocalDateTimeInputValue(editForm.endDate),
         deleteFileIds: parseNumberList(editForm.deleteFileIdsText),
@@ -268,7 +339,7 @@ export default function BabyLionsProjectDetailPage({
               </div>
               <div>
                 <dt className="font-semibold text-gray-2">트랙</dt>
-                <dd>{detail.track ?? "ALL"}</dd>
+                <dd>{detail.track ?? "COMMON"}</dd>
               </div>
               <div>
                 <dt className="font-semibold text-gray-2">시작</dt>
@@ -332,14 +403,13 @@ export default function BabyLionsProjectDetailPage({
               <select
                 value={editForm.track}
                 onChange={(event) =>
-                  setEditForm((prev) => ({ ...prev, track: event.target.value as "" | Track }))
+                  setEditForm((prev) => ({ ...prev, track: event.target.value as ProjectTrack }))
                 }
                 className="h-11 rounded-md border border-[#5d6478] bg-[#454c5d] px-3 text-sm outline-none focus:border-main-1"
               >
-                <option value="">공통(ALL)</option>
-                {TRACK_OPTIONS.map((track) => (
+                {PROJECT_TRACK_OPTIONS.map((track) => (
                   <option key={track} value={track}>
-                    {track}
+                    {track === "COMMON" ? "공통(COMMON)" : track}
                   </option>
                 ))}
               </select>
@@ -447,7 +517,10 @@ export default function BabyLionsProjectDetailPage({
 
           <section className="rounded-xl border border-[#43485a] bg-[#363c4a] p-4">
             <h2 className="text-lg font-semibold">제출 현황판</h2>
-            {statusBoard.length === 0 && (
+            {statusBoardError && (
+              <p className="mt-2 text-sm text-[#ffbd8f]">{statusBoardError}</p>
+            )}
+            {!statusBoardError && statusBoard.length === 0 && (
               <p className="mt-2 text-sm text-gray-4">
                 아기사자로 등록된 학생이 없어 제출 현황이 없습니다.
               </p>

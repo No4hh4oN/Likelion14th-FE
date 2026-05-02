@@ -4,32 +4,36 @@ import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import BabyLionsShell from "./BabyLionsShell";
 import { createProject, getProjects } from "./api";
-import type { ProjectListItem, Track } from "./types";
+import type { ProjectListItem, ProjectTrack } from "./types";
 import {
   fileListToArray,
   formatDateTime,
   fromLocalDateTimeInputValue,
-  TRACK_OPTIONS,
+  PROJECT_TRACK_OPTIONS,
 } from "./utils";
 
 type ProjectFormState = {
   title: string;
   description: string;
-  track: "" | Track;
+  track: ProjectTrack;
   startDate: string;
   endDate: string;
 };
 
+/**
+ * 과제 생성 폼의 초기 입력값입니다.
+ * track은 API 명세에 맞춰 공통 과제를 COMMON으로 보냅니다.
+ */
 const EMPTY_FORM: ProjectFormState = {
   title: "",
   description: "",
-  track: "",
+  track: "COMMON",
   startDate: "",
   endDate: "",
 };
 
 export default function BabyLionsProjectsPage() {
-  const [trackFilter, setTrackFilter] = useState<"ALL" | Track>("ALL");
+  const [trackFilter, setTrackFilter] = useState<"ALL" | ProjectTrack>("ALL");
   const [projects, setProjects] = useState<ProjectListItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -77,7 +81,7 @@ export default function BabyLionsProjectsPage() {
     const request = {
       title: form.title.trim(),
       description: form.description.trim(),
-      track: form.track || null,
+      track: form.track,
       startDate: fromLocalDateTimeInputValue(form.startDate),
       endDate: fromLocalDateTimeInputValue(form.endDate),
     };
@@ -125,14 +129,13 @@ export default function BabyLionsProjectsPage() {
             <select
               value={form.track}
               onChange={(event) =>
-                setForm((prev) => ({ ...prev, track: event.target.value as "" | Track }))
+                setForm((prev) => ({ ...prev, track: event.target.value as ProjectTrack }))
               }
               className="h-11 rounded-md border border-[#5d6478] bg-[#454c5d] px-3 text-sm outline-none focus:border-main-1"
             >
-              <option value="">공통(ALL)</option>
-              {TRACK_OPTIONS.map((track) => (
+              {PROJECT_TRACK_OPTIONS.map((track) => (
                 <option key={track} value={track}>
-                  {track}
+                  {track === "COMMON" ? "공통(COMMON)" : track}
                 </option>
               ))}
             </select>
@@ -186,13 +189,13 @@ export default function BabyLionsProjectsPage() {
             <h2 className="text-lg font-semibold">과제 목록</h2>
             <select
               value={trackFilter}
-              onChange={(event) => setTrackFilter(event.target.value as "ALL" | Track)}
+              onChange={(event) => setTrackFilter(event.target.value as "ALL" | ProjectTrack)}
               className="h-10 rounded-md border border-[#5d6478] bg-[#454c5d] px-3 text-sm outline-none focus:border-main-1"
             >
               <option value="ALL">ALL</option>
-              {TRACK_OPTIONS.map((track) => (
+              {PROJECT_TRACK_OPTIONS.map((track) => (
                 <option key={track} value={track}>
-                  {track}
+                  {track === "COMMON" ? "COMMON" : track}
                 </option>
               ))}
             </select>
@@ -233,7 +236,7 @@ export default function BabyLionsProjectsPage() {
                         </Link>
                         <p className="mt-1 line-clamp-2 text-xs text-gray-4">{project.description}</p>
                       </td>
-                      <td className="px-3 py-2">{project.track ?? "ALL"}</td>
+                      <td className="px-3 py-2">{project.track ?? "COMMON"}</td>
                       <td className="px-3 py-2 text-xs text-gray-3">
                         {formatDateTime(project.startDate)}
                         <br />

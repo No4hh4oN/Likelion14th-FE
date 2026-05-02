@@ -6,6 +6,7 @@ import type {
   ProjectDetail,
   ProjectListItem,
   ProjectStatusItem,
+  ProjectTrack,
   SubmissionDetail,
   Track,
 } from "./types";
@@ -24,7 +25,7 @@ function toMultipartFormData(request: unknown, files: File[] = []): FormData {
   return formData;
 }
 
-export async function getProjects(track?: Track): Promise<ProjectListItem[]> {
+export async function getProjects(track?: ProjectTrack): Promise<ProjectListItem[]> {
   const response = await apiClient.get<ProjectListItem[]>("/projects", {
     params: track ? { track } : undefined,
   });

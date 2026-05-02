@@ -1,5 +1,11 @@
 ﻿export const TRACK_OPTIONS = ["FRONTEND", "BACKEND", "AI_ML", "PM_DESIGN"] as const;
 
+/**
+ * 과제 생성/수정 화면에서 선택할 수 있는 API 트랙 옵션입니다.
+ * COMMON은 공통공간 전체 과제를 의미합니다.
+ */
+export const PROJECT_TRACK_OPTIONS = ["COMMON", ...TRACK_OPTIONS] as const;
+
 export function formatDateTime(value: string): string {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return "-";

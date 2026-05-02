@@ -1,5 +1,11 @@
 ﻿export type Track = "FRONTEND" | "BACKEND" | "AI_ML" | "PM_DESIGN";
 
+/**
+ * 과제 API가 사용하는 트랙 값입니다.
+ * COMMON은 공통공간 전체 과제 생성/수정에 사용합니다.
+ */
+export type ProjectTrack = Track | "COMMON";
+
 export type ProjectStatus = "ACTIVE" | "INACTIVE" | string;
 
 export type SubmissionStatus =
@@ -20,7 +26,7 @@ export type ProjectListItem = {
   id: number;
   title: string;
   description: string;
-  track: Track | null;
+  track: ProjectTrack | null;
   startDate: string;
   deadline: string;
   status: ProjectStatus;
@@ -36,7 +42,7 @@ export type ProjectDetail = {
   projectId: number;
   title: string;
   description: string;
-  track: Track | null;
+  track: ProjectTrack | null;
   startDate: string;
   endDate: string;
   status: ProjectStatus;
@@ -97,7 +103,7 @@ export type AttendanceSaveRequest = {
 export type ProjectUpsertRequest = {
   title: string;
   description: string;
-  track: Track | null;
+  track: ProjectTrack;
   startDate: string;
   endDate: string;
   deleteFileIds?: number[];
