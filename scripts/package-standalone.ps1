@@ -6,6 +6,8 @@ $staticSourceDir = Join-Path $repoRoot ".next\static"
 $staticTargetDir = Join-Path $standaloneDir ".next\static"
 $publicSourceDir = Join-Path $repoRoot "public"
 $publicTargetDir = Join-Path $standaloneDir "public"
+$deploymentGuidePath = Join-Path $repoRoot "DEPLOYMENT.md"
+$handoffGuideTargetPath = Join-Path $standaloneDir "README.md"
 $releaseDir = Join-Path $repoRoot "release"
 $zipPath = Join-Path $releaseDir "frontend-standalone.zip"
 
@@ -30,6 +32,10 @@ if (Test-Path -LiteralPath $publicSourceDir) {
   }
 
   Copy-Item -LiteralPath $publicSourceDir -Destination $publicTargetDir -Recurse -Force
+}
+
+if (Test-Path -LiteralPath $deploymentGuidePath) {
+  Copy-Item -LiteralPath $deploymentGuidePath -Destination $handoffGuideTargetPath -Force
 }
 
 New-Item -ItemType Directory -Path $releaseDir -Force | Out-Null
